@@ -5,3 +5,6 @@ docker compose exec api alembic upgrade head
 
 pip install passlib[bcrypt]
 echo "passlib[bcrypt]" >> requirements.txt
+
+
+deactivate
