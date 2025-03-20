@@ -1,30 +1,45 @@
 import os
+from pathlib import Path
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
+
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+
 from dotenv import load_dotenv
 
-# Base를 한 번만 가져오기
+# 1. .env 파일 로드
+base_dir = Path(__file__).resolve().parent.parent
+
+# 기본 ENV 선택 (dev or prod)
+load_dotenv(dotenv_path=base_dir / ".env")
+env = os.getenv("ENV", "dev")
+env_path = base_dir / f".env.{env}"
+
+# 환경별 .env 로드 (.env.dev 또는 .env.prod)
+load_dotenv(dotenv_path=env_path, override=True)
+
+# 2. DB 연결 정보 설정
+from app.database import DATABASE_URL
 from app.model.base import Base
-from app.database import DATABASE_URL  # DATABASE_URL 직접 가져오기
+
+# 모델 import: 자동 생성에 필요함
+from app.model import user, phonebook
 
 # Alembic 설정 객체
 config = context.config
 
-# 로그 설정
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-
-# 환경변수 로드
-load_dotenv()
+# sqlalchemy.url 설정
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
-# target_metadata 설정 (모델 자동 인식)
+# 로그 설정
+if config.config_file_name:
+    fileConfig(config.config_file_name)
+
+# metadata 등록
 target_metadata = Base.metadata
 
-# 오프라인 마이그레이션 실행
+# 오프라인 모드
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -32,28 +47,26 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
-# 온라인 마이그레이션 실행
+# 온라인 모드
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
         )
-
         with context.begin_transaction():
             context.run_migrations()
 
-# 실행 모드 확인
+# 실행
 if context.is_offline_mode():
     run_migrations_offline()
 else:

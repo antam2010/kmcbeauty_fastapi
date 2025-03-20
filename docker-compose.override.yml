@@ -1,3 +1,0 @@
-networks:
-  fastapi_network:
-    driver: bridge  # 🛠️ 로컬 실행 시 bridge 사용
