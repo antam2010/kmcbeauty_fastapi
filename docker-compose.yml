@@ -28,7 +28,7 @@ services:
           - node.role == worker
     stop_grace_period: 30s
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/hc || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 3
