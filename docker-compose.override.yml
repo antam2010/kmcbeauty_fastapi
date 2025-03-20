@@ -1,3 +1,14 @@
+services:
+  api:
+    networks:
+      - fastapi_network  # 동일한 네트워크 사용
+    ports:
+      - "8000:8000"  # ✅ 로컬에서는 직접 포트 매핑
+    deploy:
+      replicas: 1  # ✅ 개발 환경에서는 1개의 컨테이너만 실행
+    volumes:
+      - .:/app  # ✅ 코드 변경 시 바로 반영
+
 networks:
   fastapi_network:
-    driver: bridge  # 🛠️ 로컬 실행 시 bridge 사용
+    driver: bridge  # ✅ 로컬에서는 bridge 네트워크 사용

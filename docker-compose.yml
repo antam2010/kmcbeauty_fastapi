@@ -41,4 +41,5 @@ services:
 
 networks:
   fastapi_network:
-    driver: ${NETWORK_DRIVER:-bridge}
+    driver: overlay  # 🚀 Swarm에서는 overlay 네트워크 필수!
+    attachable: true  # Swarm 컨테이너에서 접근 가능하도록 설정

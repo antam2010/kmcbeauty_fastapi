@@ -7,4 +7,6 @@ pip install passlib[bcrypt]
 echo "passlib[bcrypt]" >> requirements.txt
 
 
+source venv/bin/activate
+
 deactivate
