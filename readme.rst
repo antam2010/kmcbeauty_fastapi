@@ -3,9 +3,7 @@ docker compose exec api alembic revision --autogenerate -m "update user model: r
 docker compose exec api alembic upgrade head
 
 
-pip install passlib[bcrypt]
-echo "passlib[bcrypt]" >> requirements.txt
-
+pip freeze > requirements.txt
 
 source venv/bin/activate
 
