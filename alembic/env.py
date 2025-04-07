@@ -1,11 +1,11 @@
 import os
-from pathlib import Path
 from logging.config import fileConfig
-
-from alembic import context
-from sqlalchemy import engine_from_config, pool
+from pathlib import Path
 
 from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 
 # 1. .env 파일 로드
 base_dir = Path(__file__).resolve().parent.parent
@@ -20,10 +20,10 @@ load_dotenv(dotenv_path=env_path, override=True)
 
 # 2. DB 연결 정보 설정
 from app.database import DATABASE_URL
-from app.model.base import Base
 
 # 모델 import: 자동 생성에 필요함
-from app.model import user, phonebook
+from app.model import phonebook, user
+from app.model.base import Base
 
 # Alembic 설정 객체
 config = context.config
@@ -38,6 +38,7 @@ if config.config_file_name:
 # metadata 등록
 target_metadata = Base.metadata
 
+
 # 오프라인 모드
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
@@ -49,6 +50,7 @@ def run_migrations_offline() -> None:
     )
     with context.begin_transaction():
         context.run_migrations()
+
 
 # 온라인 모드
 def run_migrations_online() -> None:
@@ -65,6 +67,7 @@ def run_migrations_online() -> None:
         )
         with context.begin_transaction():
             context.run_migrations()
+
 
 # 실행
 if context.is_offline_mode():

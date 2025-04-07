@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 
 # 추가할 라우터
-from app.routers import user
+from app.routers import auth, user
 
 # 로그 설정
 logging.basicConfig(
@@ -64,3 +64,4 @@ async def health_check():
 
 # 사용자 관련 API 라우터 등록
 app.include_router(user.router)
+app.include_router(auth.router)

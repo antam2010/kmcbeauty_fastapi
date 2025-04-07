@@ -36,12 +36,15 @@ start_local.sh 실행::
 
 마이그레이션 파일 생성::
 
-    docker compose exec api alembic revision --autogenerate -m "update user model: rename password, add age"
+    alembic revision --autogenerate -m "update user model: rename password, add age"
 
 DB에 마이그레이션 반영::
 
-    docker compose exec api alembic upgrade head
+    alembic upgrade head
 
+DB에 마이그레이션 롤백::
+
+    alembic downgrade -1
 
 4. FastAPI API 문서 접속
 ==========================
@@ -79,6 +82,11 @@ DB에 마이그레이션 반영::
     docker-compose.dev.yml
     start_local.sh
 
+7. -isort 및 black 적용
+========================
+코드 스타일을 통일하기 위해 ``isort``와 ``black``을 사용합니다.
+
+    isort . && black .
 
 추가 TODO
 =============
@@ -87,3 +95,4 @@ DB에 마이그레이션 반영::
 - seed 데이터 추가 방법 문서화
 - 운영 배포용 ``.env.prod``, ``start_swarm.sh`` 설명 추가
 - ``Makefile``로 명령어 자동화 정리
+

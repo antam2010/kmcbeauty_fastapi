@@ -1,5 +1,8 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column
+from sqlalchemy import Enum as sqlEnum
+from sqlalchemy import Integer, String
 
+from app.enum.role import UserRole
 from app.model.base import Base
 
 
@@ -11,3 +14,9 @@ class User(Base):
     name = Column(String(50), nullable=False, comment="유저 이름")
     token = Column(String(100), nullable=True, comment="유저 토큰")
     password = Column(String(100), nullable=False)
+    role = Column(
+        sqlEnum(UserRole),
+        nullable=False,
+        server_default=UserRole.MASTER,
+        comment="유저 권한",
+    )
