@@ -8,6 +8,7 @@ if docker info | grep -q "Swarm: active"; then
     docker swarm leave --force
     echo "✅ Swarm 모드 종료 완료."
 else
-    docker-compose down
+    docker-compose -f docker-compose.dev.yml down
+    docker-compose -f docker-compose.stage.yml down
     echo "✅ 로컬 컨테이너 종료 완료."
 fi
