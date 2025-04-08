@@ -1,7 +1,4 @@
-from sqlalchemy import Column, DateTime
-from sqlalchemy import Enum as sqlEnum
-from sqlalchemy import Integer, String, func, text
-
+from sqlalchemy import Column, DateTime, Enum as sqlEnum, Integer, String, func, text
 from app.enum.role import UserRole
 from app.model.base import Base
 

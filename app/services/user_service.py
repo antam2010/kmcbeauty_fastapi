@@ -13,11 +13,11 @@ def get_user_if_authorized(db: Session, user_id: int, current_user: User) -> Use
     user_id로 사용자 조회. 관리자 또는 본인만 접근 가능
     """
     if current_user.role != "ADMIN" and current_user.id != user_id:
-        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
+        raise HTTPException(status_code=403)
 
     user = get_user_by_id(db, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+        raise HTTPException(status_code=404)
 
     return user
 
@@ -44,6 +44,6 @@ def create_user_service(
     사용자 생성: 관리자만 가능
     """
     if current_user.role != "ADMIN":
-        raise HTTPException(status_code=403, detail="사용자 생성 권한이 없습니다.")
+        raise HTTPException(status_code=403)
 
     return create_user(db, user_create)
