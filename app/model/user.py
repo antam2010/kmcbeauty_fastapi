@@ -1,6 +1,6 @@
-from sqlalchemy import Column
+from sqlalchemy import Column, DateTime
 from sqlalchemy import Enum as sqlEnum
-from sqlalchemy import Integer, String
+from sqlalchemy import Integer, String, func, text
 
 from app.enum.role import UserRole
 from app.model.base import Base
@@ -19,4 +19,10 @@ class User(Base):
         nullable=False,
         server_default=UserRole.MASTER,
         comment="유저 권한",
+    )
+    created_at = Column(DateTime, server_default=func.now(), comment="생성일")
+    updated_at = Column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
+        comment="수정일",
     )

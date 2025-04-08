@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 
 # 추가할 라우터
-from app.routers import auth, user
+from app.api import auth, user
 
 # 로그 설정
 logging.basicConfig(
@@ -24,6 +24,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    debug=True,
 )
 
 # CORS 설정 (Cross-Origin Resource Sharing)

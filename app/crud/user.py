@@ -1,17 +1,19 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password
 from app.model.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate
 
 
 def create_user(db: Session, user: UserCreate) -> User:
-    # Pydantic 객체를 dict로 변환하고 password만 해시 처리
+    """
+    사용자 생성: 비밀번호 해시 후 저장
+    """
     user_data = user.model_dump()
     user_data["password"] = hash_password(user.password)
 
-    db_user = User(**user_data)  # model에 직접 매핑
+    db_user = User(**user_data)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -19,27 +21,20 @@ def create_user(db: Session, user: UserCreate) -> User:
     return db_user
 
 
-def select_user(db: Session, user_email: str):
-    user = db.query(User).filter(User.email == user_email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    return user
+def get_user_by_id(db: Session, user_id: int) -> User | None:
+    """
+    user_id 기준 사용자 단순 조회 (권한 체크 없음)
+    """
+    return db.query(User).filter(User.id == user_id).first()
 
 
-def authenticate_user(db: Session, user_email: str, password: str, token: str | None):
-    user = db.query(User).filter(User.email == user_email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    if not verify_password(password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password"
-        )
-    if token:
-        user.token = token
-        db.commit()
-        db.refresh(user)
-    return user
+def update_user_db(db: Session, db_user: User, user_data: dict) -> User:
+    """
+    이미 조회된 User 객체에 대해 업데이트 수행
+    """
+    for key, value in user_data.items():
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
