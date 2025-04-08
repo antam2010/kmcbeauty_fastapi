@@ -11,7 +11,7 @@ from app.core.config import (
     SECRET_KEY,
 )
 from app.core.security import create_access_token, verify_password
-from app.model.user import User
+from app.models.user import User
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User:

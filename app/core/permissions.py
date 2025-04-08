@@ -2,7 +2,7 @@
 from fastapi import Depends, HTTPException, status
 
 from app.core.auth import get_current_user
-from app.model.user import User
+from app.models.user import User
 
 
 # 관리자만 접근 가능

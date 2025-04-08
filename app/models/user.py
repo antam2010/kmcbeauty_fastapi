@@ -1,10 +1,11 @@
 from sqlalchemy import Column, DateTime, Enum as sqlEnum, Integer, String, func, text
 from app.enum.role import UserRole
-from app.model.base import Base
+from app.models.base import Base
 
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {"comment": "유저 테이블"}
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(50), nullable=False, unique=True, comment="유저 이메일")

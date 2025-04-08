@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import ALGORITHM, SECRET_KEY
 from app.core.redis_client import redis_client
 from app.database import get_db
-from app.model.user import User
+from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -41,6 +41,7 @@ def get_current_user(
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise credentials_exception
+        
 
     # Redis에 캐시 저장
     redis_client.setex(

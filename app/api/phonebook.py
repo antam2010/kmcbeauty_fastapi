@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 
 from app.core.auth import get_current_user
-from app.model.user import User
+from app.models.user import User
 from app.schemas.phonebook import PhonebookCreate, PhonebookResponse, PhonebookUpdate
 from app.services.phonebook_service import (
     create_phonebook_service,
@@ -13,7 +13,7 @@ from app.services.phonebook_service import (
     get_phonebook_list
 )
 
-router = APIRouter(prefix="/phonebook", tags=["Phonebook"])
+router = APIRouter(prefix="/phonebook", tags=["전화번호부"])
 
 # 전화번호부 목록 조회
 @router.get("/", response_model=list[PhonebookResponse], summary="전화번호부 목록 조회", description="전화번호부 목록을 조회합니다.")

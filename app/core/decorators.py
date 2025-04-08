@@ -3,7 +3,7 @@ from functools import wraps
 from fastapi import Depends, HTTPException, Request, status
 
 from app.core.auth import get_current_user
-from app.model.user import User
+from app.models.user import User
 
 
 def role_required(roles: list[str]):

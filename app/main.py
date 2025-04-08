@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # 추가할 라우터
-from app.api import auth, user, phonebook
+from app.api import auth, user, phonebook, treatment, treatment_menu
 from app.core.config import APP_ENV
 
 # 로그 설정
@@ -52,3 +52,5 @@ async def health_check():
 app.include_router(user.router)
 app.include_router(auth.router)
 app.include_router(phonebook.router)
+app.include_router(treatment.router)
+app.include_router(treatment_menu.router)

@@ -2,8 +2,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from app.model.phonebook import Phonebook
-from app.model.user import User
+from app.models.phonebook import Phonebook
+from app.models.user import User
 from app.schemas.phonebook import PhonebookCreate, PhonebookUpdate
 
 import logging

@@ -22,8 +22,8 @@ load_dotenv(dotenv_path=env_path, override=True)
 from app.database import DATABASE_URL
 
 # 모델 import: 자동 생성에 필요함
-from app.model import phonebook, user
-from app.model.base import Base
+from app import models
+from app.models.base import Base
 
 # Alembic 설정 객체
 config = context.config

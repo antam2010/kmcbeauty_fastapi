@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.crud.user import create_user, get_user_by_id, update_user_db
-from app.model.user import User
+from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
 

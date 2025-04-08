@@ -1,9 +1,10 @@
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, func, UniqueConstraint
-from app.model.base import Base
+from app.models.base import Base
 
 
 class Phonebook(Base):
     __tablename__ = "phonebook"
+    __table_args__ = {"comment": "전화번호부 테이블"}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
