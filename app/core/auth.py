@@ -41,7 +41,6 @@ def get_current_user(
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise credentials_exception
-        
 
     # Redis에 캐시 저장
     redis_client.setex(

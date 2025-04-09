@@ -1,4 +1,5 @@
 import redis
+
 from app.core.config import APP_ENV
 
 if APP_ENV == "debug":

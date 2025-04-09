@@ -1,4 +1,14 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, func, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
+
 from app.models.base import Base
 
 

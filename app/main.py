@@ -4,12 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # 추가할 라우터
-from app.api import auth, user, phonebook, treatment, treatment_menu
+from app.api import auth, phonebook, treatment, treatment_menu, user
 from app.core.config import APP_ENV
 
 # 로그 설정
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler("logs/app.log"),  # 로그 파일
         logging.StreamHandler(),  # 콘솔 출력
@@ -41,6 +42,7 @@ app.add_middleware(
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
     allow_headers=["*"],  # 모든 헤더 허용
 )
+
 
 # 헬스체크 엔드포인트 (서버 상태 확인)
 @app.get("/health", tags=["System"])

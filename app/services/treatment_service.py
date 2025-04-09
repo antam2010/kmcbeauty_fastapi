@@ -1,13 +1,16 @@
-from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
+from sqlalchemy.orm import Session, joinedload
+
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
 from app.models.treatment_menu_detail import TreatmentMenuDetail
-from app.schemas.treatment import TreatmentCreate
 from app.models.user import User
+from app.schemas.treatment import TreatmentCreate
 
 
-def create_treatment(data: TreatmentCreate, db: Session, current_user: User) -> Treatment:
+def create_treatment(
+    data: TreatmentCreate, db: Session, current_user: User
+) -> Treatment:
     # 실제 받은 금액 (프론트에서 입력한 total_price)
     treatment = Treatment(
         user_id=current_user.id,
@@ -20,16 +23,22 @@ def create_treatment(data: TreatmentCreate, db: Session, current_user: User) -> 
     db.add(treatment)
     db.flush()
 
-
     for item in data.items:
-        menu_detail = db.query(TreatmentMenuDetail).filter_by(id=item.menu_detail_id).first()
+        menu_detail = (
+            db.query(TreatmentMenuDetail).filter_by(id=item.menu_detail_id).first()
+        )
         if not menu_detail:
-            raise HTTPException(status_code=400, detail=f"시술 항목 {item.menu_detail_id}이 존재하지 않음")
+            raise HTTPException(
+                status_code=400,
+                detail=f"시술 항목 {item.menu_detail_id}이 존재하지 않음",
+            )
 
-        db.add(TreatmentItem(
-            treatment_id=treatment.id,
-            menu_detail_id=menu_detail.id,
-        ))
+        db.add(
+            TreatmentItem(
+                treatment_id=treatment.id,
+                menu_detail_id=menu_detail.id,
+            )
+        )
 
     db.commit()
     db.refresh(treatment)

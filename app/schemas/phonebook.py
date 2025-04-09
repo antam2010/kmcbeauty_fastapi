@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
+
+from pydantic import BaseModel, Field
+
 
 class PhonebookCreate(BaseModel):
     group_name: str | None = Field(None, max_length=100)

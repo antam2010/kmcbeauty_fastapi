@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.database import get_db
+
 from app.core.auth import get_current_user
-from app.schemas.treatment_menu import TreatmentMenuCreate, TreatmentMenuDetailCreate
-from app.services.treatment_menu_service import create_treatment_menu, create_treatment_menu_detail
+from app.database import get_db
 from app.models.user import User
+from app.schemas.treatment_menu import TreatmentMenuCreate, TreatmentMenuDetailCreate
+from app.services.treatment_menu_service import (
+    create_treatment_menu,
+    create_treatment_menu_detail,
+)
 
 router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
+
 
 @router.post("/")
 def create_menu(
@@ -18,7 +23,12 @@ def create_menu(
 
 
 @router.post("/{menu_id}/details")
-def create_menu_detail(menu_id: int, data: TreatmentMenuDetailCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def create_menu_detail(
+    menu_id: int,
+    data: TreatmentMenuDetailCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     return create_treatment_menu_detail(
         menu_id=menu_id,
         user_id=current_user.id,
