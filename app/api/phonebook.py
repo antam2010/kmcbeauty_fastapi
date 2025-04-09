@@ -24,7 +24,7 @@ router = APIRouter(prefix="/phonebook", tags=["전화번호부"])
     description="전화번호부 목록을 조회합니다.",
 )
 def list_phonebook(
-    page: int = Query(0, ge=0),
+    page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -51,7 +51,7 @@ def read_phonebook_handler(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return get_phonebook_if_authorized(db, phonebook_id, current_user)
+    return get_phonebook_if_authorized(db, current_user, phonebook_id)
 
 
 # 전화번호부 생성

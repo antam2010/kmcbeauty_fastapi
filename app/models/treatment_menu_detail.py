@@ -1,4 +1,5 @@
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import relationship
 
 from app.models.base import Base
 
@@ -30,3 +31,9 @@ class TreatmentMenuDetail(Base):
         DateTime, server_default=func.now(), onupdate=func.now(), comment="수정일시"
     )
     deleted_at = Column(DateTime, nullable=True, comment="삭제일시 (soft delete)")
+
+    # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)
+    # TreatmentItem.menu_detail 와 양방향 연결됨
+    treatment_items = relationship(
+        "TreatmentItem", back_populates="menu_detail", cascade="all, delete-orphan"
+    )

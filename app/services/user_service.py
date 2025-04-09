@@ -1,5 +1,5 @@
-# app/services/user_service.py
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
@@ -8,42 +8,50 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
 
-def get_user_if_authorized(db: Session, user_id: int, current_user: User) -> User:
-    """
-    user_id로 사용자 조회. 관리자 또는 본인만 접근 가능
-    """
-    if current_user.role != "ADMIN" and current_user.id != user_id:
-        raise HTTPException(status_code=403)
-
-    user = get_user_by_id(db, user_id)
+# 내 정보 조회
+def get_user_service(db: Session, current_user: User) -> User:
+    user = get_user_by_id(db, current_user.id)
     if not user:
-        raise HTTPException(status_code=404)
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return user
 
 
-def update_user_if_authorized(
-    db: Session, user_id: int, user_update: UserUpdate, current_user: User
+# 회원 생성
+def create_user_service(db: Session, user_create: UserCreate) -> User:
+    user_data = user_create.model_dump()
+    user_data["password"] = hash_password(user_create.password)
+    try:
+        return create_user(db, user_data)
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+# 회원 수정
+def update_user_service(
+    db: Session, user_update: UserUpdate, current_user: User
 ) -> User:
-    """
-    user_id 기준 사용자 정보 수정 (본인 또는 관리자만)
-    """
-    user = get_user_if_authorized(db, user_id, current_user)
+    try:
+        # 현재 로그인한 유저 정보 조회
+        user = get_user_service(db, current_user)
 
-    user_data = user_update.model_dump(exclude_unset=True)
-    if "password" in user_data:
-        user_data["password"] = hash_password(user_data["password"])
+        user_data = user_update.model_dump(exclude_unset=True)
 
-    return update_user_db(db, user, user_data)
+        # 비밀번호 해시 처리
+        if user_data.get("password"):
+            user_data["password"] = hash_password(user_data["password"])
 
-
-def create_user_service(
-    db: Session, user_create: UserCreate, current_user: User
-) -> User:
-    """
-    사용자 생성: 관리자만 가능
-    """
-    if current_user.role != "ADMIN":
-        raise HTTPException(status_code=403)
-
-    return create_user(db, user_create)
+        return update_user_db(db, user, user_data)
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

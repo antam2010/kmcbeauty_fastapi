@@ -24,4 +24,8 @@ class TreatmentItem(Base):
 
     created_at = Column(DateTime, server_default=func.now(), comment="생성일시")
 
+    # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)
+    # Treatment.items 와 양방향 연결됨
     treatment = relationship("Treatment", back_populates="items")
+
+    menu_detail = relationship("TreatmentMenuDetail", back_populates="treatment_items")

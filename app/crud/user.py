@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
@@ -6,19 +6,15 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
 
-def create_user(db: Session, user: UserCreate) -> User:
+def create_user(db: Session, user_data: dict) -> User:
     """
-    사용자 생성: 비밀번호 해시 후 저장
+    사용자 생성
     """
-    user_data = user.model_dump()
-    user_data["password"] = hash_password(user.password)
-
-    db_user = User(**user_data)
-    db.add(db_user)
+    new_user = User(**user_data)
+    db.add(new_user)
     db.commit()
-    db.refresh(db_user)
-
-    return db_user
+    db.refresh(new_user)
+    return new_user
 
 
 def get_user_by_id(db: Session, user_id: int) -> User | None:
@@ -28,13 +24,17 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 
-def update_user_db(db: Session, db_user: User, user_data: dict) -> User:
-    """
-    이미 조회된 User 객체에 대해 업데이트 수행
-    """
+def update_user_db(db: Session, user: User, user_data: dict) -> User:
     for key, value in user_data.items():
-        setattr(db_user, key, value)
+        setattr(user, key, value)
 
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+    try:
+        db.commit()
+        db.refresh(user)
+        return user
+    except IntegrityError as e:
+        db.rollback()
+        raise e
+    except Exception as e:
+        db.rollback()
+        raise e

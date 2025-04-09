@@ -1,9 +1,41 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.enum.treatment_status import TreatmentStatus
+
+
+class TreatmentFilterParams(BaseModel):
+    page: int = Field(
+        default=1,
+        ge=1,
+        description="페이지 번호 (1부터 시작)",
+    )
+    page_size: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="페이지 사이즈 (1~100)",
+    )
+    start_date: date | None = Field(
+        default=None,
+        description="예약 시작일 (YYYY-MM-DD)",
+    )
+    end_date: date | None = Field(
+        default=None,
+        description="예약 종료일 (YYYY-MM-DD)",
+    )
+    status: str | None = Field(
+        default=None,
+        description="예약 상태 (예약, 대기, 완료, 취소)",
+    )
+    search: str | None = Field(
+        default=None,
+        description="예약자 이름, 전화번호, 시술 항목으로 검색합니다.",
+    )
+    sort_by: str | None = Field(default="reserved_at", description="정렬 기준")
+    sort_order: str | None = Field(default="desc", description="정렬 순서 (asc, desc)")
 
 
 class TreatmentItemCreate(BaseModel):

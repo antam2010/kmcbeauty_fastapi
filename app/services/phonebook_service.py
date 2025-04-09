@@ -10,7 +10,7 @@ from app.schemas.phonebook import PhonebookCreate, PhonebookUpdate
 
 
 def get_phonebook_if_authorized(
-    db: Session, phonebook_id: int, current_user: User
+    db: Session, current_user: User, phonebook_id: int
 ) -> Phonebook:
     phonebook = db.query(Phonebook).filter(Phonebook.id == phonebook_id).first()
     if not phonebook:
@@ -65,16 +65,18 @@ def delete_phonebook_if_authorized(db: Session, phonebook_id: int, current_user:
 def get_phonebook_list(
     db: Session,
     current_user: User,
+    page: int,
+    page_size: int,
     group_name: str | None = None,
-    page: int = 0,
-    page_size: int = 10,
 ) -> list[Phonebook]:
+
+    offset = (page - 1) * page_size
     return (
         db.query(Phonebook)
         .filter(Phonebook.user_id == current_user.id)
         .filter(Phonebook.group_name == group_name if group_name else True)
         .order_by(Phonebook.id.desc())
-        .offset(page)
+        .offset(offset)
         .limit(page_size)
         .all()
     )

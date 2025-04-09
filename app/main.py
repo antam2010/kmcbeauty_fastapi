@@ -1,27 +1,15 @@
-import logging
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # 추가할 라우터
 from app.api import auth, phonebook, treatment, treatment_menu, user
+
+# config
 from app.core.config import APP_ENV
+from app.core.logging import setup_logging
 
 # 로그 설정
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/app.log"),  # 로그 파일
-        logging.StreamHandler(),  # 콘솔 출력
-    ],
-)
-
-# 환경별 로그 레벨 설정
-if APP_ENV == "local":
-    logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
-elif APP_ENV == "production":
-    logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR)
+setup_logging(app_env=APP_ENV)
 
 
 # FastAPI 앱 생성
