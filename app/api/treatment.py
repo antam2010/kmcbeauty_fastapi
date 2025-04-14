@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
-from app.schemas.treatment import TreatmentCreate, TreatmentFilterParams, TreatmentRead
+from app.schemas.treatment import TreatmentCreateRequest, TreatmentFilterParams, TreatmentRead, TreatmentCreateResponse
 from app.services.treatment_service import (
     create_treatment_service,
     get_treatment_list_service,
@@ -16,15 +16,15 @@ router = APIRouter(prefix="/treatments", tags=["시술 예약"])
 # 시술 예약 생성
 @router.post(
     "/",
-    response_model=TreatmentRead,
+    response_model=TreatmentCreateResponse,
     summary="시술 예약 생성",
     description="시술 예약을 생성합니다.",
 )
 def create_treatment_api(
-    data: TreatmentCreate,
+    data: TreatmentCreateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> TreatmentCreateResponse:
     return create_treatment_service(data, db, current_user)
 
 
@@ -39,7 +39,7 @@ def list_treatments_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     filters: TreatmentFilterParams = Depends(),
-):
+) -> list[TreatmentRead]:
     return get_treatment_list_service(
         db=db,
         current_user=current_user,

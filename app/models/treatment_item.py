@@ -22,6 +22,14 @@ class TreatmentItem(Base):
         comment="시술 상세 ID",
     )
 
+    base_price = Column(
+        Integer, nullable=False, server_default="0", comment="기본 가격"
+    )
+
+    duration_min = Column(
+        Integer, nullable=False, server_default="0", comment="소요 시간 (분)"
+    )
+
     created_at = Column(DateTime, server_default=func.now(), comment="생성일시")
 
     # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)

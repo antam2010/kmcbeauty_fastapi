@@ -6,11 +6,11 @@ from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
 from app.models.treatment_menu_detail import TreatmentMenuDetail
 from app.models.user import User
-from app.schemas.treatment import TreatmentCreate, TreatmentFilterParams
+from app.schemas.treatment import TreatmentCreateRequest, TreatmentFilterParams
 
 
 def create_treatment_with_items(
-    db: Session, data: TreatmentCreate, user: User
+    db: Session, data: TreatmentCreateRequest, user: User
 ) -> Treatment:
     try:
         treatment = Treatment(
@@ -35,6 +35,8 @@ def create_treatment_with_items(
                 TreatmentItem(
                     treatment_id=treatment.id,
                     menu_detail_id=menu_detail.id,
+                    base_price=item.base_price,
+                    duration_min=item.duration_min,
                 )
             )
 
