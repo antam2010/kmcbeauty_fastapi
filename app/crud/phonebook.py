@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
 from app.models.phonebook import Phonebook
-
 from app.schemas.phonebook import PhonebookCreate, PhonebookListRequest, PhonebookUpdate
 
 
@@ -16,21 +15,25 @@ def get_phonebooks_by_user(
 
     return query.order_by(Phonebook.id.desc())
 
+
 # 전화번호부 상세 조회
 def get_phonebook_by_id(
     db: Session, phonebook_id: int, user_id: int
 ) -> Phonebook | None:
-    phonebook = db.query(Phonebook).filter(
-        Phonebook.id == phonebook_id, Phonebook.user_id == user_id
-    ).first()
+    phonebook = (
+        db.query(Phonebook)
+        .filter(Phonebook.id == phonebook_id, Phonebook.user_id == user_id)
+        .first()
+    )
     return phonebook
-    
+
 
 # 전화번호부 생성
 def create_phonebook(db: Session, data: PhonebookCreate, user_id: int) -> Phonebook:
     item = Phonebook(**data.model_dump(), user_id=user_id)
     db.add(item)
     return item
+
 
 # 전화번호부 수정
 def update_phonebook(

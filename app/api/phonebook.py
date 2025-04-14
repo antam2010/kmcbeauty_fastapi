@@ -14,8 +14,8 @@ from app.schemas.phonebook import (
 from app.services.phonebook_service import (
     create_phonebook_service,
     delete_phonebook_service,
-    get_phonebook_service,
     get_phonebook_list_service,
+    get_phonebook_service,
     update_phonebook_service,
 )
 

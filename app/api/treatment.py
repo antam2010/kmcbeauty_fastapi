@@ -14,7 +14,12 @@ router = APIRouter(prefix="/treatments", tags=["시술 예약"])
 
 
 # 시술 예약 생성
-@router.post("/", response_model=TreatmentRead, summary="시술 예약 생성", description="시술 예약을 생성합니다.")
+@router.post(
+    "/",
+    response_model=TreatmentRead,
+    summary="시술 예약 생성",
+    description="시술 예약을 생성합니다.",
+)
 def create_treatment_api(
     data: TreatmentCreate,
     db: Session = Depends(get_db),

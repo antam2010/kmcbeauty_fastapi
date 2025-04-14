@@ -14,8 +14,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(50), nullable=False, unique=True, comment="유저 이메일")
     name = Column(String(50), nullable=False, comment="유저 이름")
-    password = Column(String(100), nullable=False, comment="비밀번호")
-    token = Column(String(100), nullable=True, comment="유저 토큰")
+    password = Column(String(255), nullable=False, comment="비밀번호")
+    token = Column(String(255), nullable=True, comment="유저 토큰")
 
     role = Column(
         SqlEnum(UserRole),

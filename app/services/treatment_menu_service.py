@@ -1,33 +1,79 @@
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
+
+from app.crud.treatment_menu import create_treatment_menu, create_treatment_menu_detail, get_treatment_menus_by_user, get_treatment_menu_details_by_user
 
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
 
+from app.schemas.treatment_menu import (
+    TreatmentMenuListRequest,
+    TreatmentMenuDetailCreate,
+    TreatmentMenuCreate,
+    TreatmentMenuDetailResponse
+)
 
-def create_treatment_menu(name: str, user_id: int, db: Session) -> TreatmentMenu:
-    menu = TreatmentMenu(name=name, user_id=user_id)
-    db.add(menu)
-    db.commit()
-    db.refresh(menu)
-    return menu
+from app.schemas.treatment_menu import (
+    TreatmentMenuCreateResponse,
+)
+
+# 시술 메뉴 생성 서비스
+def create_treatment_menu_service(
+    params: TreatmentMenuCreate, user_id: int, db: Session
+) -> TreatmentMenuCreateResponse:
+    return create_treatment_menu(db=db, name=params.name, user_id=user_id)
 
 
-def create_treatment_menu_detail(
+# 시술 메뉴 조회 서비스
+def get_treatment_menus_service(
+    db: Session,
+    user_id: int,
+    params: TreatmentMenuListRequest,
+) -> Page[TreatmentMenu]:
+    list = get_treatment_menus_by_user(
+        db, user_id=user_id, name=params.name
+    )
+    return paginate(list)
+
+
+# 시술 메뉴 상세 조회 서비스
+def get_treatment_menu_detail_service(
     menu_id: int,
     user_id: int,
-    name: str,
-    duration_min: int,
-    base_price: int,
     db: Session,
-) -> TreatmentMenuDetail:
-    detail = TreatmentMenuDetail(
+) -> TreatmentMenuDetailResponse:
+    result = get_treatment_menu_details_by_user(
+        db=db,
         menu_id=menu_id,
         user_id=user_id,
-        name=name,
-        duration_min=duration_min,
-        base_price=base_price,
     )
-    db.add(detail)
-    db.commit()
-    db.refresh(detail)
-    return detail
+    return result
+    
+
+
+# 시술 메뉴 상세 조회 서비스
+def create_treatment_menu_detail_service(
+    menu_id: int,
+    user_id: int,
+    params: TreatmentMenuDetailCreate,
+    db: Session,
+) -> TreatmentMenuDetail:
+    
+    menu = db.query(TreatmentMenu).filter(TreatmentMenu.id == menu_id).first()
+    if not menu:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if menu.user_id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    if menu.deleted_at:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="is already deleted")
+    
+    return create_treatment_menu_detail(
+        db=db,
+        menu_id=menu_id,
+        name=params.name,
+        duration_min=params.duration_min,
+        base_price=params.base_price,
+    )
+

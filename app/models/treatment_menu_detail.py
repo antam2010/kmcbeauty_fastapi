@@ -15,12 +15,6 @@ class TreatmentMenuDetail(Base):
         nullable=False,
         comment="시술 메뉴 대분류 ID",
     )
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-        comment="유저 ID",
-    )
 
     name = Column(String(255), nullable=False, comment="시술 항목명")
     duration_min = Column(Integer, nullable=False, comment="기본 시술 시간 (분)")
@@ -36,4 +30,9 @@ class TreatmentMenuDetail(Base):
     # TreatmentItem.menu_detail 와 양방향 연결됨
     items = relationship(
         "TreatmentItem", back_populates="menu_detail", cascade="all, delete-orphan"
+    )
+
+    menu = relationship(
+        "TreatmentMenu",
+        back_populates="details",
     )

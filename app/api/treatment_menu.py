@@ -1,39 +1,93 @@
 from fastapi import APIRouter, Depends
+from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
-from app.schemas.treatment_menu import TreatmentMenuCreate, TreatmentMenuDetailCreate
+from app.schemas.treatment_menu import (
+    TreatmentMenuCreate, 
+    TreatmentMenuDetailCreate, 
+    TreatmentMenuResponse,
+    TreatmentMenuListRequest,
+    TreatmentMenuDetailResponse,
+    TreatmentMenuCreateResponse
+)
 from app.services.treatment_menu_service import (
-    create_treatment_menu,
-    create_treatment_menu_detail,
+    create_treatment_menu_detail_service,
+    create_treatment_menu_service,
+    get_treatment_menus_service,
+    get_treatment_menu_detail_service
 )
 
 router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
 
-
-@router.post("/")
-def create_menu(
-    data: TreatmentMenuCreate,
+@router.get(
+    "/",
+    response_model=Page[TreatmentMenuResponse],
+    summary="시술 메뉴 목록 조회",
+    description="시술 메뉴 목록을 조회합니다.",
+)
+def get_menus(
+    params: TreatmentMenuListRequest = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return create_treatment_menu(name=data.name, user_id=current_user.id, db=db)
+    return get_treatment_menus_service(
+        db=db,
+        user_id=current_user.id,
+        params=params,
+    )
+
+@router.post(
+    "/",
+    response_model=TreatmentMenuCreateResponse,
+    summary="시술 메뉴 생성",
+    description="시술 메뉴를 생성합니다.",
+)
+def create_menu(
+    params: TreatmentMenuCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> TreatmentMenuCreateResponse:
+    return create_treatment_menu_service(params=params, user_id=current_user.id, db=db)
 
 
-@router.post("/{menu_id}/details")
+# 시술 메뉴 상세 조회
+@router.get(
+    "/{menu_id}/details",
+    response_model=list[TreatmentMenuDetailResponse],
+    summary="시술 메뉴 상세 조회",
+    description="시술 메뉴 상세를 조회합니다.",
+)
+def get_menu_detail(
+    menu_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[TreatmentMenuDetailResponse]:
+    return get_treatment_menu_detail_service(
+        menu_id=menu_id,
+        user_id=current_user.id,
+        db=db,
+    )
+
+
+# 시술 메뉴 상세 생성
+@router.post(
+    "/{menu_id}/details",
+    response_model=TreatmentMenuDetailResponse,
+    summary="시술 메뉴 상세 생성",
+    description="시술 메뉴 상세를 생성합니다.",
+)
 def create_menu_detail(
     menu_id: int,
-    data: TreatmentMenuDetailCreate,
+    params: TreatmentMenuDetailCreate,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    return create_treatment_menu_detail(
+    return create_treatment_menu_detail_service(
         menu_id=menu_id,
         user_id=current_user.id,
-        name=data.name,
-        duration_min=data.duration_min,
-        base_price=data.base_price,
+        params=params,
         db=db,
     )

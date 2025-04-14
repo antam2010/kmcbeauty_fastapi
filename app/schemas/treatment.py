@@ -47,8 +47,10 @@ class TreatmentMenuDetailOut(BaseModel):
     name: str
     duration_min: int
     base_price: int
+
     class Config:
         orm_mode = True
+
 
 class TreatmentItemRead(BaseModel):
     id: int
