@@ -84,7 +84,6 @@ def get_treatment_list(
             or_(
                 Phonebook.name.ilike(keyword),
                 Phonebook.phone_number.ilike(keyword),
-                func.coalesce(TreatmentItem.name, "").ilike(keyword),
             )
         )
 

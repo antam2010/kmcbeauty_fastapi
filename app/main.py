@@ -1,5 +1,10 @@
 from fastapi import FastAPI
+
+# FastAPI의 라우터
 from fastapi.middleware.cors import CORSMiddleware
+
+# 라이브러리
+from fastapi_pagination import add_pagination
 
 # 추가할 라우터
 from app.api import auth, phonebook, treatment, treatment_menu, user
@@ -10,7 +15,6 @@ from app.core.logging import setup_logging
 
 # 로그 설정
 setup_logging(app_env=APP_ENV)
-
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -44,3 +48,7 @@ app.include_router(auth.router)
 app.include_router(phonebook.router)
 app.include_router(treatment.router)
 app.include_router(treatment_menu.router)
+
+
+# FastAPI Pagination 설정
+add_pagination(app)

@@ -26,7 +26,7 @@ class TreatmentFilterParams(BaseModel):
         default=None,
         description="예약 종료일 (YYYY-MM-DD)",
     )
-    status: str | None = Field(
+    status: TreatmentStatus | None = Field(
         default=None,
         description="예약 상태 (예약, 대기, 완료, 취소)",
     )

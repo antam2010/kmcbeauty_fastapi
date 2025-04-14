@@ -1,82 +1,81 @@
-import logging
-
-from fastapi import HTTPException
+from fastapi import HTTPException, status
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.crud.phonebook import get_phonebooks_by_user, create_phonebook, get_phonebook_by_id, update_phonebook
 from app.models.phonebook import Phonebook
 from app.models.user import User
-from app.schemas.phonebook import PhonebookCreate, PhonebookUpdate
+from app.schemas.phonebook import PhonebookCreate, PhonebookListRequest, PhonebookUpdate
 
 
-def get_phonebook_if_authorized(
+# 전화번호부 목록 조회 서비스
+def get_phonebook_list_service(
+    db: Session, current_user: User, params: PhonebookListRequest
+) -> Page[Phonebook]:
+    list = get_phonebooks_by_user(
+        db, user_id=current_user.id, group_name=params.group_name
+    )
+    return paginate(list)
+
+# 전화번호부 상세 조회 서비스
+def get_phonebook_service(
     db: Session, current_user: User, phonebook_id: int
 ) -> Phonebook:
-    phonebook = db.query(Phonebook).filter(Phonebook.id == phonebook_id).first()
+    phonebook = get_phonebook_by_id(db, phonebook_id, current_user.id)
     if not phonebook:
-        raise HTTPException(status_code=404)
-    if phonebook.user_id != current_user.id and current_user.role != "ADMIN":
-        raise HTTPException(status_code=403)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return phonebook
 
 
-# 이 함수는 새로운 전화번호부 항목을 생성하는 데 사용됩니다.
+# 전화번호부 생성
 def create_phonebook_service(
     db: Session, data: PhonebookCreate, current_user: User
 ) -> Phonebook:
 
-    new_item = Phonebook(**data.model_dump(), user_id=current_user.id)
-    db.add(new_item)
-
+    new_item = create_phonebook(db, data, current_user.id)
     try:
         db.commit()
     except IntegrityError as e:
         db.rollback()
-        logging.warning(f"IntegrityError: {e}")
-        raise HTTPException(status_code=409)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     except SQLAlchemyError as e:
         db.rollback()
-        logging.error(f"SQLAlchemyError: {e}")
-        raise HTTPException(status_code=500)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     db.refresh(new_item)
 
     return new_item
 
-
-def update_phonebook_if_authorized(
+# 전화번호부 수정
+def update_phonebook_service(
     db: Session, phonebook_id: int, data: PhonebookUpdate, current_user: User
 ) -> Phonebook:
-    phonebook = get_phonebook_if_authorized(db, phonebook_id, current_user)
-    update_data = data.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(phonebook, key, value)
-    db.commit()
+    
+    phonebook = get_phonebook_by_id(db, phonebook_id, current_user.id)
+    if not phonebook:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    update_phonebook(db, phonebook, data)
+
+    try:
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     db.refresh(phonebook)
     return phonebook
 
-
-def delete_phonebook_if_authorized(db: Session, phonebook_id: int, current_user: User):
-    phonebook = get_phonebook_if_authorized(db, phonebook_id, current_user)
+def delete_phonebook_service(db: Session, phonebook_id: int, current_user: User):
+    phonebook = get_phonebook_by_id(db, phonebook_id, current_user.id)
+    if not phonebook:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    try:
+        db.delete(phonebook)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     db.delete(phonebook)
     db.commit()
-
-
-def get_phonebook_list(
-    db: Session,
-    current_user: User,
-    page: int,
-    page_size: int,
-    group_name: str | None = None,
-) -> list[Phonebook]:
-
-    offset = (page - 1) * page_size
-    return (
-        db.query(Phonebook)
-        .filter(Phonebook.user_id == current_user.id)
-        .filter(Phonebook.group_name == group_name if group_name else True)
-        .order_by(Phonebook.id.desc())
-        .offset(offset)
-        .limit(page_size)
-        .all()
-    )
