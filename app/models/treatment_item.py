@@ -28,4 +28,4 @@ class TreatmentItem(Base):
     # Treatment.items 와 양방향 연결됨
     treatment = relationship("Treatment", back_populates="items")
 
-    menu_detail = relationship("TreatmentMenuDetail", back_populates="treatment_items")
+    menu_detail = relationship("TreatmentMenuDetail", back_populates="items")

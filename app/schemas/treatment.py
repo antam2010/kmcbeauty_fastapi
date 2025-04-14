@@ -42,9 +42,18 @@ class TreatmentItemCreate(BaseModel):
     menu_detail_id: int
 
 
+class TreatmentMenuDetailOut(BaseModel):
+    id: int
+    name: str
+    duration_min: int
+    base_price: int
+    class Config:
+        orm_mode = True
+
 class TreatmentItemRead(BaseModel):
     id: int
     menu_detail_id: int | None
+    menu_detail: TreatmentMenuDetailOut
 
     class Config:
         orm_mode = True

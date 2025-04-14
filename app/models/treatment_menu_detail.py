@@ -34,6 +34,6 @@ class TreatmentMenuDetail(Base):
 
     # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)
     # TreatmentItem.menu_detail 와 양방향 연결됨
-    treatment_items = relationship(
+    items = relationship(
         "TreatmentItem", back_populates="menu_detail", cascade="all, delete-orphan"
     )

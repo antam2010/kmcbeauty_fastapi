@@ -17,7 +17,7 @@ router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
 def create_menu(
     data: TreatmentMenuCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),  # ✅ 타입도 명시
+    current_user: User = Depends(get_current_user),
 ):
     return create_treatment_menu(name=data.name, user_id=current_user.id, db=db)
 
