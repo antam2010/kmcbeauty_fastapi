@@ -32,10 +32,10 @@ def get_menus(
     params: TreatmentMenuListRequest = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> Page[TreatmentMenuResponse]:
     return get_treatment_menus_service(
         db=db,
-        user_id=current_user.id,
+        current_user=current_user,
         params=params,
     )
 

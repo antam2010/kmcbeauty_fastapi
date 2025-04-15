@@ -7,6 +7,7 @@ from app.crud.treatment_menu import create_treatment_menu, create_treatment_menu
 
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
+from app.models.user import User
 
 from app.schemas.treatment_menu import (
     TreatmentMenuListRequest,
@@ -29,11 +30,11 @@ def create_treatment_menu_service(
 # 시술 메뉴 조회 서비스
 def get_treatment_menus_service(
     db: Session,
-    user_id: int,
+    current_user: User,
     params: TreatmentMenuListRequest,
 ) -> Page[TreatmentMenu]:
     list = get_treatment_menus_by_user(
-        db, user_id=user_id, name=params.name
+        db, user_id=current_user.id, name=params.name
     )
     return paginate(list)
 
