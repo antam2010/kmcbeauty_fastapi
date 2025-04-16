@@ -4,15 +4,12 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.crud.phonebook import (
-    create_phonebook,
-    get_phonebook_by_id,
-    get_phonebooks_by_user,
-    update_phonebook,
-)
+from app.crud.phonebook import (create_phonebook, get_phonebook_by_id,
+                                get_phonebooks_by_user, update_phonebook)
 from app.models.phonebook import Phonebook
 from app.models.user import User
-from app.schemas.phonebook import PhonebookCreate, PhonebookListRequest, PhonebookUpdate
+from app.schemas.phonebook import (PhonebookCreate, PhonebookListRequest,
+                                   PhonebookUpdate)
 
 
 # 전화번호부 목록 조회 서비스

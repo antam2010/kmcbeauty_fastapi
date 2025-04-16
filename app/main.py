@@ -1,14 +1,11 @@
 from fastapi import FastAPI
-
 # FastAPI의 라우터
 from fastapi.middleware.cors import CORSMiddleware
-
 # 라이브러리
 from fastapi_pagination import add_pagination
 
 # 추가할 라우터
-from app.api import auth, phonebook, treatment, treatment_menu, user
-
+from app.api import auth, phonebook, shop, treatment, treatment_menu, user
 # config
 from app.core.config import APP_ENV
 from app.core.logging import setup_logging
@@ -29,12 +26,11 @@ app = FastAPI(
 # CORS 설정 (Cross-Origin Resource Sharing)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://kmc2.daeho2.shop", "localhost:5137"],  # 모든 도메인 허용 (보안 강화하려면 특정 도메인만 허용)
+    allow_origins=["http://kmc2.daeho2.shop", "http://localhost:5137", "http://localhost:8000"],  # 모든 도메인 허용 (보안 강화하려면 특정 도메인만 허용)
     allow_credentials=True,  # 쿠키 허용
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
     allow_headers=["*"],  # 모든 헤더 허용
 )
-
 
 # 헬스체크 엔드포인트 (서버 상태 확인)
 @app.get("/health", tags=["System"])
@@ -48,7 +44,7 @@ app.include_router(auth.router)
 app.include_router(phonebook.router)
 app.include_router(treatment.router)
 app.include_router(treatment_menu.router)
-
+app.include_router(shop.router)
 
 # FastAPI Pagination 설정
 add_pagination(app)

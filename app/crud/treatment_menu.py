@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session, joinedload
+
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
+
 
 def create_treatment_menu(db: Session, name: str, user_id: int) -> TreatmentMenu:
     menu = TreatmentMenu(name=name, user_id=user_id)

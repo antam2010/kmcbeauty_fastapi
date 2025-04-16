@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.models.phonebook import Phonebook
-from app.schemas.phonebook import PhonebookCreate, PhonebookListRequest, PhonebookUpdate
+from app.schemas.phonebook import (PhonebookCreate, PhonebookListRequest,
+                                   PhonebookUpdate)
 
 
 # 전화번호부 리스트 조회

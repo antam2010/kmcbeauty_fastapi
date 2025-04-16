@@ -5,11 +5,8 @@ from app.core.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
-from app.services.user_service import (
-    create_user_service,
-    get_user_service,
-    update_user_service,
-)
+from app.services.user_service import (create_user_service, get_user_service,
+                                       update_user_service)
 
 # 사용자 관련 API 그룹 지
 router = APIRouter(prefix="/users", tags=["Users"])

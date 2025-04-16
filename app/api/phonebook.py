@@ -5,21 +5,15 @@ from sqlalchemy.orm import Session
 from app.core.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
-from app.schemas.phonebook import (
-    PhonebookCreate,
-    PhonebookListRequest,
-    PhonebookResponse,
-    PhonebookUpdate,
-)
-from app.services.phonebook_service import (
-    create_phonebook_service,
-    delete_phonebook_service,
-    get_phonebook_list_service,
-    get_phonebook_service,
-    update_phonebook_service,
-)
+from app.schemas.phonebook import (PhonebookCreate, PhonebookListRequest,
+                                   PhonebookResponse, PhonebookUpdate)
+from app.services.phonebook_service import (create_phonebook_service,
+                                            delete_phonebook_service,
+                                            get_phonebook_list_service,
+                                            get_phonebook_service,
+                                            update_phonebook_service)
 
-router = APIRouter(prefix="/phonebook", tags=["전화번호부"])
+router = APIRouter(prefix="/phonebooks", tags=["전화번호부"])
 
 
 # 전화번호부 목록 조회

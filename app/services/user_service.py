@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -19,14 +21,18 @@ def get_user_service(db: Session, current_user: User) -> User:
 # 회원 생성
 def create_user_service(db: Session, user_create: UserCreate) -> User:
     user_data = user_create.model_dump()
-    user_data["password"] = hash_password(user_create.password)
     try:
+        user_data["password"] = hash_password(user_create.password)
         return create_user(db, user_data)
     except IntegrityError:
+        db.rollback()
+        logging.warning(f"User with email {user_create.email} already exists.")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
         )
-    except Exception:
+    except Exception as e:
+        db.rollback()
+        logging.error(f"Error creating user: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

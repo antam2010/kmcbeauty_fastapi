@@ -31,9 +31,9 @@ class User(Base):
         comment="수정일",
     )
 
-    # ✅ 관계 정의
-    # User → Phonebook (1:N)
-    # 해당 유저가 소유한 전화번호부 리스트
-    phonebook_list = relationship(
-        "Phonebook", back_populates="user", cascade="all, delete-orphan"
+    # User → shop (1:N)
+    # User는 여러 개의 shop을 가질 수 있다.
+    shops = relationship(
+        "Shop", back_populates="owner", cascade="all, delete-orphan"
     )
+

@@ -4,12 +4,8 @@ from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from app.core.config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    ALGORITHM,
-    REFRESH_TOKEN_EXPIRE_DAYS,
-    SECRET_KEY,
-)
+from app.core.config import (ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM,
+                             REFRESH_TOKEN_EXPIRE_DAYS, SECRET_KEY)
 from app.core.security import create_access_token, verify_password
 from app.models.user import User
 
