@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_user
+from app.dependencies.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 def read_user_handler(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> UserResponse:
     return get_user_service(db, current_user)
 
 
@@ -39,7 +39,7 @@ def read_user_handler(
         409: {"description": "중복 에러"},
     },
 )
-def create_user_handler(user: UserCreate, db: Session = Depends(get_db)):
+def create_user_handler(user: UserCreate, db: Session = Depends(get_db)) -> UserResponse:
     return create_user_service(db, user)
 
 
@@ -58,5 +58,5 @@ def update_user_handler(
     user: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> UserResponse:
     return update_user_service(db, user, current_user)

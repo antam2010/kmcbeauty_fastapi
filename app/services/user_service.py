@@ -7,19 +7,15 @@ from sqlalchemy.orm import Session
 from app.core.security import hash_password
 from app.crud.user import create_user, get_user_by_id, update_user_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserUpdate, UserResponse
 
 
 # 내 정보 조회
-def get_user_service(db: Session, current_user: User) -> User:
-    user = get_user_by_id(db, current_user.id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return user
-
+def get_user_service(db: Session, current_user: User) -> UserResponse:
+    return current_user
 
 # 회원 생성
-def create_user_service(db: Session, user_create: UserCreate) -> User:
+def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
     user_data = user_create.model_dump()
     try:
         user_data["password"] = hash_password(user_create.password)
@@ -41,7 +37,7 @@ def create_user_service(db: Session, user_create: UserCreate) -> User:
 # 회원 수정
 def update_user_service(
     db: Session, user_update: UserUpdate, current_user: User
-) -> User:
+) -> UserResponse:
     try:
         # 현재 로그인한 유저 정보 조회
         user = get_user_service(db, current_user)
@@ -54,10 +50,7 @@ def update_user_service(
 
         return update_user_db(db, user, user_data)
     except IntegrityError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-        )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT)
+    except Exception as e:
+        logging.exception(f"Error updating user: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -27,14 +27,6 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
 def update_user_db(db: Session, user: User, user_data: dict) -> User:
     for key, value in user_data.items():
         setattr(user, key, value)
-
-    try:
-        db.commit()
-        db.refresh(user)
-        return user
-    except IntegrityError as e:
-        db.rollback()
-        raise e
-    except Exception as e:
-        db.rollback()
-        raise e
+    db.commit()
+    db.refresh(user)
+    return user

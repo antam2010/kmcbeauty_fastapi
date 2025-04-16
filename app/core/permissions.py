@@ -1,7 +1,7 @@
 # app/core/permission.py
 from fastapi import Depends, HTTPException, status
 
-from app.core.auth import get_current_user
+from app.dependencies.auth import get_current_user
 from app.models.user import User
 
 

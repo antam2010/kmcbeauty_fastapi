@@ -4,7 +4,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.crud.phonebook import (create_phonebook, get_phonebook_by_id,
+from app.crud.phonebook_crud import (create_phonebook, get_phonebook_by_id,
                                 get_phonebooks_by_user, update_phonebook)
 from app.models.phonebook import Phonebook
 from app.models.user import User

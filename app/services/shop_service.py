@@ -10,7 +10,7 @@ from app.models.user import User
 
 from app.schemas.shop import ShopCreate, ShopUpdate
 
-from app.utils.redis import get_selected_shop_redis, set_selected_shop_redis
+from app.utils.redis.shop import get_selected_shop_redis, set_selected_shop_redis
 
 # 샵 생성
 def create_shop_service(db: Session, user: User, shop_data: ShopCreate) -> Shop:
@@ -64,11 +64,11 @@ def get_selected_shop_service(db: Session, user: User) -> Shop:
     try:
         shop_id = get_selected_shop_redis(user.id)
         if not shop_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_SELECTED")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SHOP_NOT_SELECTED")
 
         shop = get_user_shop_by_id(db, user.id, shop_id)
         if not shop:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SHOP_NOT_FOUND")
         return shop
     except HTTPException:
         raise
