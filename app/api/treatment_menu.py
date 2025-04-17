@@ -2,20 +2,26 @@ from fastapi import APIRouter, Depends
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
-from app.dependencies.auth import get_current_user
 from app.database import get_db
+from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.schemas.treatment_menu import (TreatmentMenuCreate,
-                                        TreatmentMenuCreateResponse,
-                                        TreatmentMenuDetailCreate,
-                                        TreatmentMenuDetailResponse,
-                                        TreatmentMenuListRequest,
-                                        TreatmentMenuResponse)
+from app.schemas.treatment_menu import (
+    TreatmentMenuCreate,
+    TreatmentMenuCreateResponse,
+    TreatmentMenuDetailCreate,
+    TreatmentMenuDetailResponse,
+    TreatmentMenuListRequest,
+    TreatmentMenuResponse,
+)
 from app.services.treatment_menu_service import (
-    create_treatment_menu_detail_service, create_treatment_menu_service,
-    get_treatment_menu_detail_service, get_treatment_menus_service)
+    create_treatment_menu_detail_service,
+    create_treatment_menu_service,
+    get_treatment_menu_detail_service,
+    get_treatment_menus_service,
+)
 
 router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
+
 
 @router.get(
     "/",
@@ -33,6 +39,7 @@ def get_menus(
         current_user=current_user,
         params=params,
     )
+
 
 @router.post(
     "/",

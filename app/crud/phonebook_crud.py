@@ -1,15 +1,14 @@
 from sqlalchemy.orm import Session
 
 from app.models.phonebook import Phonebook
-from app.schemas.phonebook import (PhonebookCreate, PhonebookListRequest,
-                                   PhonebookUpdate)
+from app.schemas.phonebook import PhonebookCreate, PhonebookRequest, PhonebookUpdate
 
 
 # 전화번호부 리스트 조회
 def get_phonebooks_by_user(
-    db: Session, user_id: int, group_name: str | None = None
+    db: Session, shop_id: int, group_name: str | None = None
 ) -> list[Phonebook]:
-    query = db.query(Phonebook).filter(Phonebook.user_id == user_id)
+    query = db.query(Phonebook).filter(Phonebook.shop_id == shop_id)
 
     if group_name:
         query = query.filter(Phonebook.group_name == group_name)
@@ -19,19 +18,19 @@ def get_phonebooks_by_user(
 
 # 전화번호부 상세 조회
 def get_phonebook_by_id(
-    db: Session, phonebook_id: int, user_id: int
+    db: Session, phonebook_id: int, shop_id: int
 ) -> Phonebook | None:
     phonebook = (
         db.query(Phonebook)
-        .filter(Phonebook.id == phonebook_id, Phonebook.user_id == user_id)
+        .filter(Phonebook.id == phonebook_id, Phonebook.shop_id == shop_id)
         .first()
     )
     return phonebook
 
 
 # 전화번호부 생성
-def create_phonebook(db: Session, data: PhonebookCreate, user_id: int) -> Phonebook:
-    item = Phonebook(**data.model_dump(), user_id=user_id)
+def create_phonebook(db: Session, data: PhonebookCreate, shop_id: int) -> Phonebook:
+    item = Phonebook(**data.model_dump(), shop_id=shop_id)
     db.add(item)
     return item
 

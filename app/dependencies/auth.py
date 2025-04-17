@@ -1,17 +1,19 @@
 import logging
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import ALGORITHM, SECRET_KEY
-from app.utils.redis.user import get_user_redis, set_user_redis
 from app.database import get_db
 from app.models.user import User
+from app.utils.redis.user import get_user_redis, set_user_redis
+
+from app.exceptions import CustomException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+credentials_exception = CustomException(status_code=status.HTTP_401_UNAUTHORIZED, domain="AUTH")
 
 
 def get_current_user(

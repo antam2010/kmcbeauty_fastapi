@@ -6,8 +6,11 @@ from sqlalchemy.orm import Session
 from app.core.config import REFRESH_TOKEN_EXPIRE_DAYS
 from app.database import get_db
 from app.schemas.auth import LoginResponse
-from app.services.auth_service import (authenticate_user, generate_tokens,
-                                       refresh_access_token)
+from app.services.auth_service import (
+    authenticate_user,
+    generate_tokens,
+    refresh_access_token,
+)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -18,9 +21,6 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     description="이메일(username)과 비밀번호(password)를 입력하여 JWT 토큰을 발급받습니다.",
     response_model=LoginResponse,
     status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_401_UNAUTHORIZED: {"description": "로그인 실패 - 인증 정보 불일치"},
-    },
 )
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -55,7 +55,7 @@ def login(
     response_model=LoginResponse,
     status_code=status.HTTP_200_OK,
     responses={
-        401: {"description": "리프레시 토큰이 유효하지 않음"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "리프레시 토큰이 유효하지 않음"},
     },
 )
 def refresh_token_handler(

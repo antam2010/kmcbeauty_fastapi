@@ -33,7 +33,4 @@ class User(Base):
 
     # User → shop (1:N)
     # User는 여러 개의 shop을 가질 수 있다.
-    shops = relationship(
-        "Shop", back_populates="owner", cascade="all, delete-orphan"
-    )
-
+    shops = relationship("Shop", back_populates="owner", cascade="all, delete-orphan")

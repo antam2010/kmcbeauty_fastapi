@@ -1,15 +1,21 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.dependencies.auth import get_current_user
 from app.database import get_db
+from app.dependencies.auth import get_current_user
+from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
-from app.services.user_service import (create_user_service, get_user_service,
-                                       update_user_service)
+from app.services.user_service import (
+    create_user_service,
+    get_user_service,
+    update_user_service,
+)
 
 # 사용자 관련 API 그룹 지
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(
+    prefix="/users", tags=["Users"], dependencies=[Depends(get_current_user)]
+)
 
 
 @router.get(
@@ -19,7 +25,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
     description="현재 로그인한 사용자의 정보를 조회합니다.",
     status_code=status.HTTP_200_OK,
     responses={
-        404: {"description": "사용자를 찾을 수 없음"},
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND]
     },
 )
 def read_user_handler(
@@ -39,7 +45,9 @@ def read_user_handler(
         409: {"description": "중복 에러"},
     },
 )
-def create_user_handler(user: UserCreate, db: Session = Depends(get_db)) -> UserResponse:
+def create_user_handler(
+    user: UserCreate, db: Session = Depends(get_db)
+) -> UserResponse:
     return create_user_service(db, user)
 
 

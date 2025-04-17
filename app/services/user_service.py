@@ -3,16 +3,19 @@ import logging
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from app.exceptions import CustomException
 
 from app.core.security import hash_password
 from app.crud.user import create_user, get_user_by_id, update_user_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserResponse
+from app.schemas.user import UserCreate, UserResponse, UserUpdate
 
+DOMAIN = "USER"
 
 # 내 정보 조회
 def get_user_service(db: Session, current_user: User) -> UserResponse:
     return current_user
+
 
 # 회원 생성
 def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
@@ -23,14 +26,14 @@ def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
     except IntegrityError:
         db.rollback()
         logging.warning(f"User with email {user_create.email} already exists.")
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+        raise CustomException(
+            status_code=status.HTTP_409_CONFLICT, domain=DOMAIN
         )
     except Exception as e:
         db.rollback()
         logging.error(f"Error creating user: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
         )
 
 
@@ -50,7 +53,7 @@ def update_user_service(
 
         return update_user_db(db, user, user_data)
     except IntegrityError:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT)
+        raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
     except Exception as e:
         logging.exception(f"Error updating user: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise CustomException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN)

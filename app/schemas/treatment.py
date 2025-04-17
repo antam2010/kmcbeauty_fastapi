@@ -125,6 +125,7 @@ class TreatmentCreateResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
 class TreatmentRead(BaseModel):
     id: int
     phonebook_id: int

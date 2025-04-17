@@ -1,5 +1,4 @@
-from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String, func,
-                        text)
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func, text
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
@@ -10,7 +9,7 @@ class TreatmentMenu(Base):
     __table_args__ = {"comment": "시술 메뉴 대분류 테이블"}
 
     id = Column(Integer, primary_key=True, index=True, comment="시술 메뉴 대분류 ID")
-    
+
     shop_id = Column(
         Integer,
         ForeignKey("shop.id", ondelete="CASCADE"),
