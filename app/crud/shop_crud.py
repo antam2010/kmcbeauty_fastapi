@@ -19,7 +19,7 @@ def get_user_shops(db: Session, user_id: int) -> list[Shop]:
     return (
         db.query(Shop)
         .filter(Shop.user_id == user_id)
-        .order_by(Shop.created_at.desc())
+        .order_by(Shop.id.desc())
         .all()
     )
 

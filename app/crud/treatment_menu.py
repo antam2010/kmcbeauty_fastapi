@@ -39,7 +39,10 @@ def get_treatment_menus_by_user(
     query = (
         db.query(TreatmentMenu)
         .options(joinedload(TreatmentMenu.details))
-        .filter(TreatmentMenu.shop_id == shop_id)
+        .filter(
+            TreatmentMenu.shop_id == shop_id,
+            TreatmentMenu.deleted_at.is_(None),
+        )
     )
 
     if name:
@@ -53,16 +56,16 @@ def get_treatment_menus_by_user(
 def get_treatment_menu_details_by_user(
     db: Session,
     menu_id: int,
-    user_id: int,
+    shop_id: int,
 ) -> list[TreatmentMenuDetail]:
     return (
         db.query(TreatmentMenuDetail)
         .join(TreatmentMenu, TreatmentMenuDetail.menu_id == TreatmentMenu.id)
         .filter(
             TreatmentMenuDetail.menu_id == menu_id,
-            TreatmentMenu.user_id == user_id,
+            TreatmentMenu.shop_id == shop_id,
             TreatmentMenuDetail.deleted_at.is_(None),
         )
-        .order_by(TreatmentMenuDetail.created_at.desc())
+        .order_by(TreatmentMenuDetail.id.desc())
         .all()
     )

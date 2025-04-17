@@ -51,7 +51,7 @@ class TreatmentMenuListRequest(BaseModel):
 # 시술 메뉴 상세 응답 (하위 상세 리스트 포함)
 class TreatmentMenuResponse(BaseModel):
     id: int = Field(..., description="시술 메뉴 ID")
-    user_id: int = Field(..., description="사용자 ID")
+    shop_id: int = Field(..., description="시술 메뉴 가게 ID")
     name: str = Field(..., description="시술 메뉴 이름", max_length=255)
     created_at: datetime = Field(..., description="생성일")
     updated_at: datetime = Field(..., description="수정일")

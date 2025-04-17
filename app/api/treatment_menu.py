@@ -32,7 +32,7 @@ router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
     status_code=status.HTTP_200_OK,
 )
 def get_menus(
-    params: TreatmentMenuListRequest = Depends(),
+    filters: TreatmentMenuListRequest = Depends(),
     db: Session = Depends(get_db),
     current_shop=Depends(get_current_shop),
     
@@ -40,7 +40,7 @@ def get_menus(
     return get_treatment_menus_service(
         db=db,
         current_shop=current_shop,
-        params=params,
+        filters=filters,
     )
 
 
@@ -69,15 +69,16 @@ def create_menu(
     response_model=list[TreatmentMenuDetailResponse],
     summary="시술 메뉴 상세 조회",
     description="시술 메뉴 상세를 조회합니다.",
+    status_code=status.HTTP_200_OK,
 )
 def get_menu_detail(
     menu_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_shop=Depends(get_current_shop),
 ) -> list[TreatmentMenuDetailResponse]:
     return get_treatment_menu_detail_service(
         menu_id=menu_id,
-        user_id=current_user.id,
+        current_shop=current_shop,
         db=db,
     )
 
@@ -91,13 +92,13 @@ def get_menu_detail(
 )
 def create_menu_detail(
     menu_id: int,
-    params: TreatmentMenuDetailCreate,
+    filters: TreatmentMenuDetailCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_shop=Depends(get_current_shop),
 ):
     return create_treatment_menu_detail_service(
         menu_id=menu_id,
-        user_id=current_user.id,
-        params=params,
+        current_shop=current_shop,
+        filters=filters,
         db=db,
     )

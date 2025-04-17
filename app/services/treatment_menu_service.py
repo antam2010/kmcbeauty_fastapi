@@ -28,7 +28,7 @@ DOMAIN = "TREATMENT_MENU"
 def get_treatment_menus_service(
     db: Session,
     current_shop: Shop,
-    params: TreatmentMenuListRequest,
+    filters: TreatmentMenuListRequest,
 ) -> Page[TreatmentMenu]:
     """
     시술 메뉴 목록 조회 서비스
@@ -36,7 +36,7 @@ def get_treatment_menus_service(
     list = get_treatment_menus_by_user(
         db=db, 
         shop_id=current_shop.id,
-        name=params.name
+        name=filters.name
     )
     return list
 
@@ -68,13 +68,13 @@ def create_treatment_menu_service(
 # 시술 메뉴 상세 조회 서비스
 def get_treatment_menu_detail_service(
     menu_id: int,
-    user_id: int,
+    current_shop: Shop,
     db: Session,
 ) -> TreatmentMenuDetailResponse:
     result = get_treatment_menu_details_by_user(
         db=db,
         menu_id=menu_id,
-        user_id=user_id,
+        shop_id=current_shop.id,
     )
     return result
 
@@ -82,34 +82,25 @@ def get_treatment_menu_detail_service(
 # 시술 메뉴 상세 항목 생성 서비스
 def create_treatment_menu_detail_service(
     menu_id: int,
-    user_id: int,
-    params: TreatmentMenuDetailCreate,
+    current_shop: Shop,
+    filters: TreatmentMenuDetailCreate,
     db: Session,
 ) -> TreatmentMenuDetail:
 
     menu = db.query(TreatmentMenu).filter(TreatmentMenu.id == menu_id).first()
     if not menu:
-        raise CustomException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            domain=DOMAIN,
-        )
+        raise CustomException(status_code=status.HTTP_404_NOT_FOUND,domain=DOMAIN,)
 
-    if menu.user_id != user_id:
-        raise CustomException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            domain=DOMAIN,
-        )
+    if menu.shop_id != current_shop.id:
+        raise CustomException(status_code=status.HTTP_403_FORBIDDEN,domain=DOMAIN,)
 
     if menu.deleted_at:
-        raise CustomException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            domain=DOMAIN,
-        )
+        raise CustomException(status_code=status.HTTP_404_NOT_FOUND,domain=DOMAIN)
 
     return create_treatment_menu_detail(
         db=db,
         menu_id=menu_id,
-        name=params.name,
-        duration_min=params.duration_min,
-        base_price=params.base_price,
+        name=filters.name,
+        duration_min=filters.duration_min,
+        base_price=filters.base_price,
     )
