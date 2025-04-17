@@ -1,7 +1,7 @@
+from fastapi import status
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
-from fastapi import status
 
 from app.crud.treatment_menu import (
     create_treatment_menu,
@@ -9,6 +9,7 @@ from app.crud.treatment_menu import (
     get_treatment_menu_details_by_user,
     get_treatment_menus_by_user,
 )
+from app.exceptions import CustomException
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
 from app.models.user import User
@@ -19,7 +20,6 @@ from app.schemas.treatment_menu import (
     TreatmentMenuDetailResponse,
     TreatmentMenuListRequest,
 )
-from app.exceptions import CustomException
 
 DOMAIN = "TREATMENT_MENU"
 

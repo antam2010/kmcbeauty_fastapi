@@ -11,8 +11,8 @@ from app.core.config import (
     SECRET_KEY,
 )
 from app.core.security import create_access_token, verify_password
-from app.models.user import User
 from app.exceptions import CustomException
+from app.models.user import User
 
 DOMAIN = "AUTH"
 

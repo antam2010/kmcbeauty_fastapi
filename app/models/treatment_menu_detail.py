@@ -2,9 +2,11 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func, text
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
+from app.models.mixin.soft_delete import SoftDeleteMixin
+from app.models.mixin.timestamp import TimestampMixin
 
 
-class TreatmentMenuDetail(Base):
+class TreatmentMenuDetail(Base, SoftDeleteMixin, TimestampMixin):
     __tablename__ = "treatment_menu_detail"
     __table_args__ = {"comment": "시술 메뉴 상세 테이블"}
 
@@ -19,14 +21,6 @@ class TreatmentMenuDetail(Base):
     name = Column(String(255), nullable=False, comment="시술 항목명")
     duration_min = Column(Integer, nullable=False, comment="기본 시술 시간 (분)")
     base_price = Column(Integer, nullable=False, comment="기본 시술 가격 (원)")
-
-    created_at = Column(DateTime, server_default=func.now(), comment="생성일시")
-    updated_at = Column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
-        comment="수정일",
-    )
-    deleted_at = Column(DateTime, nullable=True, comment="삭제일시 (soft delete)")
 
     # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)
     # TreatmentItem.menu_detail 와 양방향 연결됨

@@ -1,21 +1,26 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.user import (
+    UserCreate,
+    UserEmailCheckResponse,
+    UserResponse,
+    UserUpdate,
+)
 from app.services.user_service import (
+    check_user_email_service,
     create_user_service,
     get_user_service,
     update_user_service,
 )
 
 # 사용자 관련 API 그룹 지
-router = APIRouter(
-    prefix="/users", tags=["Users"], dependencies=[Depends(get_current_user)]
-)
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get(
@@ -42,7 +47,7 @@ def read_user_handler(
     description="새로운 사용자를 생성합니다.",
     status_code=status.HTTP_201_CREATED,
     responses={
-        409: {"description": "중복 에러"},
+        status.HTTP_409_CONFLICT: COMMON_ERROR_RESPONSES[status.HTTP_409_CONFLICT],
     },
 )
 def create_user_handler(
@@ -56,10 +61,10 @@ def create_user_handler(
     response_model=UserResponse,
     summary="사용자 수정",
     description="사용자 정보를 수정합니다.",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     responses={
-        404: {"description": "사용자를 찾을 수 없음"},
-        409: {"description": "중복 에러"},
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+        status.HTTP_409_CONFLICT: COMMON_ERROR_RESPONSES[status.HTTP_409_CONFLICT],
     },
 )
 def update_user_handler(
@@ -68,3 +73,20 @@ def update_user_handler(
     current_user: User = Depends(get_current_user),
 ) -> UserResponse:
     return update_user_service(db, user, current_user)
+
+
+@router.get(
+    "/exists/email",
+    response_model=UserEmailCheckResponse,
+    summary="이메일 중복 체크",
+    description="이메일 중복 체크 API",
+    status_code=status.HTTP_200_OK,
+)
+def check_user_exsist(
+    email: EmailStr = Query(..., description="이메일 주소"),
+    db: Session = Depends(get_db),
+) -> UserEmailCheckResponse:
+    """
+    이메일 중복 체크
+    """
+    return check_user_email_service(db, email=email)

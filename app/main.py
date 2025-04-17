@@ -29,9 +29,9 @@ app = FastAPI(
         "- 상점이 선택되지 않은 경우, 다음과 같은 에러 응답이 반환됩니다:\n"
         "  ```json\n"
         "  {\n"
-        "    \"detail\": {\n"
-        "      \"code\": \"SHOP_NOT_SELECTED\",\n"
-        "      \"message\": \"상점이 선택되지 않았습니다.\"\n"
+        '    "detail": {\n'
+        '      "code": "SHOP_NOT_SELECTED",\n'
+        '      "message": "상점이 선택되지 않았습니다."\n'
         "    }\n"
         "  }\n\n"
         "- 각 API의 응답에는 도메인별 에러 코드가 포함되며, 코드 앞에는 도메인 이름(`{DOMAIN}`)이 붙습니다.\n"
@@ -44,7 +44,6 @@ app = FastAPI(
     debug=True,
     openapi_tags=tags_metadata,
 )
-
 
 
 # CORS 설정 (Cross-Origin Resource Sharing)

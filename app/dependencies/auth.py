@@ -7,13 +7,14 @@ from sqlalchemy.orm import Session
 
 from app.core.config import ALGORITHM, SECRET_KEY
 from app.database import get_db
+from app.exceptions import CustomException
 from app.models.user import User
 from app.utils.redis.user import get_user_redis, set_user_redis
 
-from app.exceptions import CustomException
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-credentials_exception = CustomException(status_code=status.HTTP_401_UNAUTHORIZED, domain="AUTH")
+credentials_exception = CustomException(
+    status_code=status.HTTP_401_UNAUTHORIZED, domain="AUTH"
+)
 
 
 def get_current_user(

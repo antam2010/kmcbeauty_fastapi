@@ -30,3 +30,10 @@ def update_user_db(db: Session, user: User, user_data: dict) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+
+def get_user_by_email(db: Session, email: str) -> User | None:
+    """
+    이메일 기준 사용자 단순 조회 (권한 체크 없음)
+    """
+    return db.query(User).filter(User.email == email).first()

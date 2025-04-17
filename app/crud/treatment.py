@@ -1,3 +1,5 @@
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
@@ -5,16 +7,15 @@ from app.models.phonebook import Phonebook
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
 from app.models.treatment_menu_detail import TreatmentMenuDetail
-from app.models.user import User
 from app.schemas.treatment import TreatmentCreateRequest, TreatmentFilterParams
 
 
 def create_treatment_with_items(
-    db: Session, data: TreatmentCreateRequest, user: User
+    db: Session, data: TreatmentCreateRequest, shop_id: int
 ) -> Treatment:
     try:
         treatment = Treatment(
-            user_id=user.id,
+            shop_id=shop_id,
             phonebook_id=data.phonebook_id,
             reserved_at=data.reserved_at,
             memo=data.memo,
@@ -51,17 +52,15 @@ def create_treatment_with_items(
 
 # 시술 예약 목록 조회
 def get_treatment_list(
-    db: Session, user: User, filters: TreatmentFilterParams
-) -> list[Treatment]:
-    offset = (filters.page - 1) * filters.page_size
-
+    db: Session, shop_id: int, filters: TreatmentFilterParams
+) -> Page[Treatment]:
     query = (
         db.query(Treatment)
         .options(
             joinedload(Treatment.items).joinedload(TreatmentItem.menu_detail),
             joinedload(Treatment.phonebook),
         )
-        .filter(Treatment.user_id == user.id)
+        .filter(Treatment.shop_id == shop_id)
     )
 
     # 날짜 필터
@@ -81,8 +80,7 @@ def get_treatment_list(
             query.join(Treatment.phonebook)
             .outerjoin(Treatment.items)
             .outerjoin(TreatmentItem.menu_detail)
-        )
-        query = query.filter(
+        ).filter(
             or_(
                 Phonebook.name.ilike(keyword),
                 Phonebook.phone_number.ilike(keyword),
@@ -90,8 +88,10 @@ def get_treatment_list(
         )
 
     # 정렬
-    sort_column = getattr(Treatment, filters.sort_by)
-    sort_expr = getattr(sort_column, filters.sort_order)()
-    query = query.order_by(sort_expr)
+    if filters.sort_by and hasattr(Treatment, filters.sort_by):
+        sort_column = getattr(Treatment, filters.sort_by)
+        sort_expr = getattr(sort_column, filters.sort_order, None)
+        if sort_expr:
+            query = query.order_by(sort_expr())
 
-    return query.offset(offset).limit(filters.page_size).all()
+    return paginate(query)

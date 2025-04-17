@@ -26,7 +26,7 @@ class CustomException(HTTPException):
         status_code: int,
         domain: str,
         code: str | None = None,
-        message: str | None = None,
+        message: str | None = "빼애애애애애애애애애애애애액 놉지비",
     ):
         # 기본 메시지 지정
         default_code, default_message = DEFAULT_MESSAGES.get(

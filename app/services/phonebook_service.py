@@ -2,7 +2,6 @@ import logging
 
 from fastapi import status
 from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -11,11 +10,11 @@ from app.crud.phonebook_crud import (
     get_phonebook_by_id,
     get_phonebooks_by_user,
     update_phonebook,
+    get_phonebook_by_phone_number
 )
 from app.exceptions import CustomException
 from app.models.phonebook import Phonebook
 from app.models.shop import Shop
-from app.models.user import User
 from app.schemas.phonebook import (
     PhonebookCreate,
     PhonebookRequest,
@@ -35,7 +34,7 @@ def get_phonebook_list_service(
     list = get_phonebooks_by_user(
         db=db, shop_id=current_shop.id, group_name=params.group_name
     )
-    return paginate(list)
+    return list
 
 
 # 전화번호부 상세 조회 서비스
@@ -56,12 +55,13 @@ def create_phonebook_service(
 ) -> PhonebookResponse:
 
     try:
+        # 전화번호부 중복 체크
+        existing = get_phonebook_by_phone_number(db, data.phone_number, current_shop.id)
+        if existing:
+            raise CustomException(status_code=status.HTTP_409_CONFLICT,domain=DOMAIN)
+        
         phonebook = create_phonebook(db, data, current_shop.id)
         db.commit()
-    except IntegrityError as e:
-        db.rollback()
-        logging.exception(f"IntegrityError: {e}")
-        raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
     except SQLAlchemyError as e:
         db.rollback()
         logging.exception(f"SQLAlchemyError: {e}")
@@ -80,8 +80,15 @@ def create_phonebook_service(
 
 # 전화번호부 수정
 def update_phonebook_service(
-    db: Session, phonebook_id: int, data: PhonebookUpdate, current_shop: Shop
+    db: Session, 
+    phonebook_id: int, 
+    data: PhonebookUpdate, 
+    current_shop: Shop
 ) -> Phonebook:
+    
+    existing = get_phonebook_by_phone_number(db, data.phone_number, current_shop.id)
+    if existing and existing.id != phonebook_id:
+        raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
 
     phonebook = get_phonebook_by_id(db, phonebook_id, current_shop.id)
     if not phonebook:
@@ -90,10 +97,6 @@ def update_phonebook_service(
     try:
         update_phonebook(db, phonebook, data)
         db.commit()
-    except IntegrityError as e:
-        db.rollback()
-        logging.exception(f"IntegrityError: {e}")
-        raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
     except SQLAlchemyError as e:
         db.rollback()
         logging.exception(f"SQLAlchemyError: {e}")
@@ -110,17 +113,27 @@ def update_phonebook_service(
     return phonebook
 
 
-def delete_phonebook_service(db: Session, phonebook_id: int, current_user: User):
-    phonebook = get_phonebook_by_id(db, phonebook_id, current_user.id)
+def delete_phonebook_service(db: Session, phonebook_id: int, current_shop: Shop):
+    phonebook = get_phonebook_by_id(db, phonebook_id, current_shop.id)
     if not phonebook:
-        raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
+        raise CustomException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            domain=DOMAIN,
+        )
     try:
-        db.delete(phonebook)
+        Phonebook.soft_delete(phonebook)
         db.commit()
     except SQLAlchemyError as e:
         db.rollback()
+        logging.exception(f"SQLAlchemyError occurred while deleting phonebook: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
         )
-    db.delete(phonebook)
-    db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception(f"Unexpected error occurred while deleting phonebook: {e}")
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+        )

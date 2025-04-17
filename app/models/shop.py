@@ -2,9 +2,11 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func, text
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
+from app.models.mixin.soft_delete import SoftDeleteMixin
+from app.models.mixin.timestamp import TimestampMixin
 
 
-class Shop(Base):
+class Shop(Base, SoftDeleteMixin, TimestampMixin):
     __tablename__ = "shop"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -13,13 +15,6 @@ class Shop(Base):
     address_detail = Column(String(255), comment="샵 상세 주소")
     phone = Column(String(20), comment="샵 전화번호")
     business_number = Column(String(20), comment="사업자 등록 번호")
-    created_at = Column(DateTime, server_default=func.now(), comment="생성일시")
-    updated_at = Column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
-        comment="수정일",
-    )
-    deleted_at = Column(DateTime, comment="삭제일시")
 
     # 관계 정의
 

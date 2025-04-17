@@ -5,9 +5,10 @@ from sqlalchemy.orm import relationship
 
 from app.enum.treatment_status import TreatmentStatus
 from app.models.base import Base
+from app.models.mixin.timestamp import TimestampMixin
 
 
-class Treatment(Base):
+class Treatment(Base, TimestampMixin):
     __tablename__ = "treatment"
     __table_args__ = {"comment": "시술 예약 테이블"}
 
@@ -32,12 +33,6 @@ class Treatment(Base):
         comment="예약 상태",
     )
 
-    created_at = Column(DateTime, server_default=func.now(), comment="생성일시")
-    updated_at = Column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
-        comment="수정일",
-    )
     finished_at = Column(DateTime, nullable=True, comment="시술 완료일시")
 
     # Relationships

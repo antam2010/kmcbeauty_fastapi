@@ -5,9 +5,11 @@ from sqlalchemy.orm import relationship
 
 from app.enum.role import UserRole
 from app.models.base import Base
+from app.models.mixin.soft_delete import SoftDeleteMixin
+from app.models.mixin.timestamp import TimestampMixin
 
 
-class User(Base):
+class User(Base, SoftDeleteMixin, TimestampMixin):
     __tablename__ = "users"
     __table_args__ = {"comment": "유저 테이블"}
 
@@ -22,13 +24,6 @@ class User(Base):
         nullable=False,
         server_default=UserRole.MASTER,
         comment="유저 권한",
-    )
-
-    created_at = Column(DateTime, server_default=func.now(), comment="생성일")
-    updated_at = Column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
-        comment="수정일",
     )
 
     # User → shop (1:N)

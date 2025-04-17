@@ -3,14 +3,20 @@ import logging
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from app.exceptions import CustomException
 
 from app.core.security import hash_password
-from app.crud.user import create_user, get_user_by_id, update_user_db
+from app.crud.user import create_user, get_user_by_email, update_user_db
+from app.exceptions import CustomException
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.user import (
+    UserCreate,
+    UserEmailCheckResponse,
+    UserResponse,
+    UserUpdate,
+)
 
 DOMAIN = "USER"
+
 
 # 내 정보 조회
 def get_user_service(db: Session, current_user: User) -> UserResponse:
@@ -26,9 +32,7 @@ def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
     except IntegrityError:
         db.rollback()
         logging.warning(f"User with email {user_create.email} already exists.")
-        raise CustomException(
-            status_code=status.HTTP_409_CONFLICT, domain=DOMAIN
-        )
+        raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
     except Exception as e:
         db.rollback()
         logging.error(f"Error creating user: {e}")
@@ -56,4 +60,22 @@ def update_user_service(
         raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
     except Exception as e:
         logging.exception(f"Error updating user: {e}")
-        raise CustomException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN)
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+        )
+
+
+def check_user_email_service(db: Session, email: str) -> UserEmailCheckResponse:
+    """
+    이메일 중복 체크 서비스
+    """
+    exists = None
+    message = None
+    user = get_user_by_email(db, email=email)
+    if user:
+        exists = True
+        message = "이미 존재하는 이메일입니다."
+    else:
+        exists = False
+        message = "사용 가능한 이메일입니다."
+    return UserEmailCheckResponse(exists=exists, message=message)
