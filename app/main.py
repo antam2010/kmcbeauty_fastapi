@@ -53,6 +53,7 @@ app.add_middleware(
         "http://kmc2.daeho2.shop",
         "http://localhost:5137",
         "http://localhost:8000",
+        "http://localhost:3000",
     ],  # 모든 도메인 허용 (보안 강화하려면 특정 도메인만 허용)
     allow_credentials=True,  # 쿠키 허용
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
