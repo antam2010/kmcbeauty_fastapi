@@ -10,11 +10,23 @@ from fastapi_pagination import add_pagination
 from app.api import auth, phonebook, shop, treatment, treatment_menu, user
 
 # config
-from app.core.config import APP_ENV
+from app.core.config import APP_ENV, SENTRY_DSN
 from app.core.logging import setup_logging
 
 # docs
 from app.docs.tags_metadata import tags_metadata
+
+# sentry
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
+
+
 
 # 로그 설정
 setup_logging(app_env=APP_ENV)
