@@ -1,14 +1,14 @@
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
 
 
-def create_treatment_menu(db: Session, name: str, user_id: int) -> TreatmentMenu:
-    menu = TreatmentMenu(name=name, user_id=user_id)
+def create_treatment_menu(db: Session, name: str, shop_id: int) -> TreatmentMenu:
+    menu = TreatmentMenu(name=name, shop_id=shop_id)
     db.add(menu)
-    db.commit()
-    db.refresh(menu)
     return menu
 
 
@@ -33,19 +33,21 @@ def create_treatment_menu_detail(
 
 def get_treatment_menus_by_user(
     db: Session,
-    user_id: int,
+    shop_id: int,
     name: str = None,
-) -> list[TreatmentMenu]:
+) -> Page[TreatmentMenu]:
     query = (
         db.query(TreatmentMenu)
         .options(joinedload(TreatmentMenu.details))
-        .filter(TreatmentMenu.user_id == user_id)
+        .filter(TreatmentMenu.shop_id == shop_id)
     )
 
     if name:
         query = query.filter(TreatmentMenu.name == name)
 
-    return query.order_by(TreatmentMenu.id.desc())
+    query.order_by(TreatmentMenu.id.desc())
+    
+    return paginate(query)
 
 
 def get_treatment_menu_details_by_user(

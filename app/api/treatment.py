@@ -3,7 +3,6 @@ from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user
 from app.dependencies.shop import get_current_shop
 from app.models.user import User
 from app.schemas.treatment import (

@@ -1,6 +1,6 @@
+import logging
 from fastapi import status
 from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
 
 from app.crud.treatment_menu import (
@@ -13,6 +13,7 @@ from app.exceptions import CustomException
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
 from app.models.user import User
+from app.models.shop import Shop
 from app.schemas.treatment_menu import (
     TreatmentMenuCreate,
     TreatmentMenuCreateResponse,
@@ -24,21 +25,44 @@ from app.schemas.treatment_menu import (
 DOMAIN = "TREATMENT_MENU"
 
 
-# 시술 메뉴 생성 서비스
-def create_treatment_menu_service(
-    params: TreatmentMenuCreate, user_id: int, db: Session
-) -> TreatmentMenuCreateResponse:
-    return create_treatment_menu(db=db, name=params.name, user_id=user_id)
-
-
-# 시술 메뉴 조회 서비스
 def get_treatment_menus_service(
     db: Session,
-    current_user: User,
+    current_shop: Shop,
     params: TreatmentMenuListRequest,
 ) -> Page[TreatmentMenu]:
-    list = get_treatment_menus_by_user(db, user_id=current_user.id, name=params.name)
-    return paginate(list)
+    """
+    시술 메뉴 목록 조회 서비스
+    """
+    list = get_treatment_menus_by_user(
+        db=db, 
+        shop_id=current_shop.id,
+        name=params.name
+    )
+    return list
+
+# 시술 메뉴 생성 서비스
+def create_treatment_menu_service(
+    db: Session,
+    current_shop: Shop,
+    params: TreatmentMenuCreate, 
+) -> TreatmentMenuCreateResponse:
+    try:
+        # 시술 메뉴 생성
+        menu = create_treatment_menu(
+            db=db, 
+            name=params.name, 
+            shop_id=current_shop.id
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception(f"SQLAlchemyError: {e}")
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+        )
+    db.refresh(menu)
+    return menu
 
 
 # 시술 메뉴 상세 조회 서비스
