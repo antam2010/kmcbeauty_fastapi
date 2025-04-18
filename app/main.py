@@ -9,27 +9,24 @@ from fastapi_pagination import add_pagination
 # 추가할 라우터
 from app.api import auth, phonebook, shop, treatment, treatment_menu, user
 
-# config
+# core
 from app.core.config import APP_ENV, SENTRY_DSN
 from app.core.logging import setup_logging
+from app.core.sentry import init_sentry
 
 # docs
 from app.docs.tags_metadata import tags_metadata
 
-# sentry
-import sentry_sdk
-
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    send_default_pii=True,
-)
-
-
-
 # 로그 설정
 setup_logging(app_env=APP_ENV)
+
+# Sentry 설정
+init_sentry(
+    dsn=SENTRY_DSN,
+    environment=APP_ENV,
+    traces_sample_rate=0.2,
+    profiles_sample_rate=0.0,
+)
 
 
 app = FastAPI(

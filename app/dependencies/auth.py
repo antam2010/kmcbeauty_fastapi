@@ -10,6 +10,7 @@ from app.database import get_db
 from app.exceptions import CustomException
 from app.models.user import User
 from app.utils.redis.user import get_user_redis, set_user_redis
+from sentry_sdk import set_user
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 credentials_exception = CustomException(
@@ -31,9 +32,12 @@ def get_current_user(
 
     user_id = int(user_id)
 
+
     # Redis에서 사용자 캐시 조회
     cached_user = get_user_redis(user_id)
     if cached_user:
+        # Sentry에 사용자 정보 설정
+        set_user({"id": user_id, "email": cached_user["email"]})
         return User(**cached_user)
 
     # Redis에 없으면 DB에서 조회
@@ -41,6 +45,9 @@ def get_current_user(
     if not user:
         logging.exception("User not found: %s", user_id)
         raise credentials_exception
+    
+    # Sentry에 사용자 정보 설정
+    set_user({"id": user.id, "email": user.email})
 
     # Redis에 캐싱
     set_user_redis(user)
