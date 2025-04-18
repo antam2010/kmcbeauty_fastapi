@@ -50,7 +50,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    debug=True,
+    debug=APP_ENV == "debug",
     openapi_tags=tags_metadata,
 )
 
