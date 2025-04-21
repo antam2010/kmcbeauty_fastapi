@@ -23,7 +23,6 @@ class Treatment(Base, TimestampMixin):
         Integer, ForeignKey("phonebook.id"), nullable=False, comment="시술 대상 고객 ID"
     )
 
-    total_price = Column(Integer, nullable=False, comment="총 실제 시술 가격")
     reserved_at = Column(DateTime, nullable=False, comment="예약 일시")
     memo = Column(Text, nullable=True, comment="메모")
     status = Column(
@@ -36,7 +35,7 @@ class Treatment(Base, TimestampMixin):
     finished_at = Column(DateTime, nullable=True, comment="시술 완료일시")
 
     # Relationships
-    items = relationship(
+    treatment_items = relationship(
         "TreatmentItem", back_populates="treatment", cascade="all, delete-orphan"
     )
 

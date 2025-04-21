@@ -17,7 +17,7 @@ from app.models.phonebook import Phonebook
 from app.models.shop import Shop
 from app.schemas.phonebook import (
     PhonebookCreate,
-    PhonebookRequest,
+    PhonebookFilter,
     PhonebookResponse,
     PhonebookUpdate,
 )
@@ -28,7 +28,7 @@ DOMAIN = "PHONEBOOK"
 # 전화번호부 목록 조회 서비스
 def get_phonebook_list_service(
     db: Session,
-    params: PhonebookRequest,
+    params: PhonebookFilter,
     current_shop: Shop,
 ) -> Page[PhonebookResponse]:
     list = get_phonebooks_by_user(

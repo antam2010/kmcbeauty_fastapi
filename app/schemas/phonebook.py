@@ -41,7 +41,7 @@ class PhonebookUpdate(BaseModel, PhoneNumberValidatorMixin):
 
 
 # 전화번호부 목록 요청 (필터링용)
-class PhonebookRequest(BaseModel):
+class PhonebookFilter(BaseModel):
     group_name: str | None = Field(
         default=None, max_length=100, description="그룹 이름"
     )

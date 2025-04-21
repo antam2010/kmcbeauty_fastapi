@@ -2,7 +2,7 @@ from app.core.redis_client import redis_client
 
 REDIS_SELECTED_SHOP_PREFIX = "user"
 REDIS_SELECTED_SHOP_SUFFIX = "selected_shop"
-REDIS_SELECTED_SHOP_TTL = 60 * 60 * 2  # 2시간
+REDIS_SELECTED_SHOP_TTL = 60 * 60 * 24 * 365  # 365일
 
 
 def _get_selected_shop_key(user_id: int) -> str:

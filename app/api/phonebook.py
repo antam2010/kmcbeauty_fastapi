@@ -8,7 +8,7 @@ from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.user import User
 from app.schemas.phonebook import (
     PhonebookCreate,
-    PhonebookRequest,
+    PhonebookFilter,
     PhonebookResponse,
     PhonebookUpdate,
 )
@@ -32,7 +32,7 @@ router = APIRouter(prefix="/phonebooks", tags=["Phonebook"])
     status_code=status.HTTP_200_OK,
 )
 def list_phonebook(
-    params: PhonebookRequest = Depends(),
+    params: PhonebookFilter = Depends(),
     db: Session = Depends(get_db),
     current_shop: User = Depends(get_current_shop),
 ) -> Page[PhonebookResponse]:

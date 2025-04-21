@@ -6,58 +6,30 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.phonebook import Phonebook
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
-from app.models.treatment_menu_detail import TreatmentMenuDetail
-from app.schemas.treatment import TreatmentCreateRequest, TreatmentFilterParams
+from app.schemas.treatment import TreatmentFilter
 
 
-def create_treatment_with_items(
-    db: Session, data: TreatmentCreateRequest, shop_id: int
-) -> Treatment:
-    try:
-        treatment = Treatment(
-            shop_id=shop_id,
-            phonebook_id=data.phonebook_id,
-            reserved_at=data.reserved_at,
-            memo=data.memo,
-            total_price=data.total_price,
-            status=data.status,
-        )
-        db.add(treatment)
-        db.flush()
+# 시술 예약 등록
+def create_treatment(db: Session, treatment: Treatment) -> Treatment:
+    db.add(treatment)
+    db.flush()
+    return treatment
 
-        for item in data.items:
-            menu_detail = (
-                db.query(TreatmentMenuDetail).filter_by(id=item.menu_detail_id).first()
-            )
-            if not menu_detail:
-                raise ValueError(f"시술 항목 ID {item.menu_detail_id}이 존재하지 않음")
-
-            db.add(
-                TreatmentItem(
-                    treatment_id=treatment.id,
-                    menu_detail_id=menu_detail.id,
-                    base_price=item.base_price,
-                    duration_min=item.duration_min,
-                )
-            )
-
-        db.commit()
-        db.refresh(treatment)
-        return treatment
-
-    except Exception as e:
-        db.rollback()
-        raise e
+# 시술 예약 항목 등록
+def create_treatment_item(db: Session, treatment_item: TreatmentItem) -> TreatmentItem:
+    db.add(treatment_item)
+    db.flush()
+    return treatment_item
 
 
 # 시술 예약 목록 조회
 def get_treatment_list(
-    db: Session, shop_id: int, filters: TreatmentFilterParams
+    db: Session, shop_id: int, filters: TreatmentFilter
 ) -> Page[Treatment]:
     query = (
         db.query(Treatment)
         .options(
-            joinedload(Treatment.items).joinedload(TreatmentItem.menu_detail),
+            joinedload(Treatment.treatment_items).joinedload(TreatmentItem.menu_detail),
             joinedload(Treatment.phonebook),
         )
         .filter(Treatment.shop_id == shop_id)
@@ -78,7 +50,7 @@ def get_treatment_list(
         keyword = f"%{filters.search}%"
         query = (
             query.join(Treatment.phonebook)
-            .outerjoin(Treatment.items)
+            .outerjoin(Treatment.treatment_items)
             .outerjoin(TreatmentItem.menu_detail)
         ).filter(
             or_(

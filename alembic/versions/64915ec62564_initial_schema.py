@@ -167,9 +167,6 @@ def upgrade() -> None:
         sa.Column(
             "phonebook_id", sa.Integer(), nullable=False, comment="시술 대상 고객 ID"
         ),
-        sa.Column(
-            "total_price", sa.Integer(), nullable=False, comment="총 실제 시술 가격"
-        ),
         sa.Column("reserved_at", sa.DateTime(), nullable=False, comment="예약 일시"),
         sa.Column("memo", sa.Text(), nullable=True, comment="메모"),
         sa.Column(

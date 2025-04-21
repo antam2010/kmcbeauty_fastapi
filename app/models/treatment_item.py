@@ -33,6 +33,6 @@ class TreatmentItem(Base, TimestampMixin):
 
     # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)
     # Treatment.items 와 양방향 연결됨
-    treatment = relationship("Treatment", back_populates="items")
+    treatment = relationship("Treatment", back_populates="treatment_items")
 
     menu_detail = relationship("TreatmentMenuDetail", back_populates="items")
