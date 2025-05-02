@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from starlette.responses import Response
+from starlette.middleware.base import RequestResponseEndpoint
+import logging
+
 
 # FastAPI의 라우터
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,6 +72,19 @@ app.add_middleware(
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
     allow_headers=["*"],  # 모든 헤더 허용
 )
+
+@app.middleware("http")
+async def error_logger(
+    request: Request,
+    call_next: RequestResponseEndpoint,
+) -> Response:                                 # ← Response 타입 명시
+    response: Response = await call_next(request)  # ← 여기도 명시 가능
+    if response.status_code >= 400:
+        logging.error(
+            f"{request.client.host} {request.method} {request.url.path} "
+            f"status={response.status_code} user_ip={request.client.host}"
+        )
+    return response
 
 
 # 헬스체크 엔드포인트 (서버 상태 확인)
