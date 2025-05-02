@@ -10,7 +10,10 @@ from app.services.auth_service import (
     authenticate_user,
     generate_tokens,
     refresh_access_token,
+    logout_user
 )
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -27,7 +30,9 @@ def login(
     db: Session = Depends(get_db),
 ):
     user = authenticate_user(db, form_data.username, form_data.password)
-    access_token, refresh_token = generate_tokens(user)
+    access_token, refresh_token = generate_tokens(db, user)
+    
+    max_age = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 초 단위
 
     # Swagger에서는 response_model 기준으로 문서화
     response_data = {
@@ -43,7 +48,7 @@ def login(
         httponly=True,
         secure=False,
         samesite="Lax",
-        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,  # 초 단위
+        max_age=max_age,
     )
     return response
 
@@ -67,3 +72,49 @@ def refresh_token_handler(
         "access_token": new_access_token,
         "token_type": "bearer",
     }
+
+
+@router.post(
+    "/logout",
+    summary="사용자 로그아웃",
+    description="로그아웃 시 엑세스 토큰과 리프레시 토큰을 모두 만료 처리합니다.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "로그아웃 성공",
+            "content": {
+                "application/json": {
+                    "example": {"message": "로그아웃 성공"}
+                }
+            },
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "서버 오류",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Internal Server Error"}
+                }
+            },
+        },
+    },
+)
+def logout(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # 1) 리프레시 토큰을 쿠키에서 꺼내서 DB에서 삭제
+    token = request.cookies.get("refresh_token")
+    if token:
+        logout_user(db, current_user.id, token)
+    
+    # 2) 쿠키에서 리프레시 토큰 삭제
+    response = JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "message": "로그아웃 성공"
+        }
+    )
+    response.delete_cookie("refresh_token", path="/")
+    return response
+

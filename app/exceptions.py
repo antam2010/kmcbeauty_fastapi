@@ -26,20 +26,27 @@ class CustomException(HTTPException):
         status_code: int,
         domain: str,
         code: str | None = None,
-        message: str | None = "빼애애애애애애애애애애애애액 놉지비",
+        detail: str | None = "빼애애애애액 놉지비 놉지비 놉놉 지비지비",
+        hint: str | None = "이대호님에게 문의",
     ):
-        # 기본 메시지 지정
-        default_code, default_message = DEFAULT_MESSAGES.get(
+        # 기본 메시지 및 코드 설정
+        default_code, default_detail = DEFAULT_MESSAGES.get(
             status_code, ("UNKNOWN_ERROR", "알 수 없는 오류입니다.")
         )
 
         final_code = f"{domain.upper()}_{code or default_code}"
-        final_message = message or default_message
+        final_detail = detail or default_detail
+
+        # 응답 구조 정의
+        error_response = {
+            "code": final_code,
+            "detail": final_detail,
+        }
+
+        if hint:
+            error_response["hint"] = hint
 
         super().__init__(
             status_code=status_code,
-            detail={
-                "code": final_code,
-                "message": final_message,
-            },
+            detail=error_response,
         )
