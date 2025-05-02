@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta, datetime, timezone
 from fastapi import Request, status
 from jose import JWTError, jwt
@@ -87,8 +88,7 @@ def refresh_access_token(request: Request, db: Session) -> str:
     # DB에서 해당 리프레시 토큰 존재하는지 검증
     token_row = db.query(RefreshToken).filter(
         RefreshToken.user_id == int(user_id),
-        RefreshToken.token == refresh_token,
-        RefreshToken.expired_at > datetime.now(timezone.utc),
+        RefreshToken.token == refresh_token
     ).first()
 
     if not token_row:
