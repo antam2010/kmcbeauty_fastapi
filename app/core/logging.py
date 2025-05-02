@@ -16,9 +16,9 @@ def setup_logging(app_env: str = "local"):
     sql_log_level = logging.INFO
 
     if app_env == "debug":
-        log_level     = logging.DEBUG
+        log_level     = logging.ERROR
         log_file      = "logs/debug.log"
-        sql_log_level = logging.DEBUG
+        sql_log_level = logging.ERROR
     elif app_env == "production":
         log_level     = logging.ERROR
         log_file      = "logs/prod.log"

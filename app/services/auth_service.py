@@ -86,29 +86,45 @@ def refresh_access_token(request: Request, db: Session) -> str:
         )
 
     # DB에서 해당 리프레시 토큰 존재하는지 검증
-    token_row = db.query(RefreshToken).filter(
-        RefreshToken.user_id == int(user_id),
-        RefreshToken.token == refresh_token,
-        RefreshToken.expired_at > datetime.now(timezone.utc),
-    ).first()
+    rows = (
+        db.query(RefreshToken)
+          .filter(
+              RefreshToken.user_id == int(user_id),
+              RefreshToken.expired_at > datetime.now(timezone.utc),
+          )
+          .all()
+    )
 
-    # if not token_row:
-    #     raise CustomException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         domain=DOMAIN,
-    #         detail="Refresh token is not recognized",
-    #         hint="리프레시 토큰이 DB에 존재하지 않아"
-    #     )
+    token_row = None
+    for row in rows:
+        try:
+            # 복호화한 후, raw 토큰과 비교
+            if decrypt_token(row.token) == refresh_token:
+                token_row = row
+                break
+        except InvalidToken:
+            continue
 
-    # # 유저 정보 조회
-    # user = db.query(User).filter(User.id == int(user_id)).first()
-    # if not user:
-    #     raise CustomException(
-    #         status_code=status.HTTP_404_NOT_FOUND,
-    #         domain=DOMAIN,
-    #         detail="User not found",
-    #         hint="유저 정보가 DB에 존재하지 않아"
-    #     )
+    if not token_row:
+        logging.error(f"DB에 일치하는 리프레시 토큰이 없음 (user_id={user_id})")
+        raise CustomException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            domain=DOMAIN,
+            code="REFRESH_NOT_FOUND",
+            detail="리프레시 토큰이 DB에 존재하지 않습니다.",
+            hint="다시 로그인하거나 지원팀에 문의하세요.",
+        )
+
+
+    # 유저 정보 조회
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        raise CustomException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            domain=DOMAIN,
+            detail="User not found",
+            hint="유저 정보가 DB에 존재하지 않아"
+        )
 
     # 새로운 액세스 토큰 발급
     new_access_token = create_access_token(
@@ -117,7 +133,8 @@ def refresh_access_token(request: Request, db: Session) -> str:
             "role": user.role,
             "email": user.email,
             "type": "access"
-        }
+        },
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     return new_access_token
 

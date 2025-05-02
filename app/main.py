@@ -77,12 +77,23 @@ app.add_middleware(
 async def error_logger(
     request: Request,
     call_next: RequestResponseEndpoint,
-) -> Response:                                 # ← Response 타입 명시
-    response: Response = await call_next(request)  # ← 여기도 명시 가능
+) -> Response:
+    try:
+        # call_next 의 반환값을 Response 타입으로 명시
+        response: Response = await call_next(request)
+    except Exception:
+        # 핸들되지 않은 예외(500) 일 때 스택트레이스 포함 로깅
+        logging.exception(
+            f"[UNHANDLED 500] {request.client.host} "
+            f"{request.method} {request.url.path}"
+        )
+        # FastAPI 기본 500 핸들러로 다시 예외 던지기
+        raise
+    # 4xx/5xx 응답일 때만 로깅
     if response.status_code >= 400:
         logging.error(
-            f"{request.client.host} {request.method} {request.url.path} "
-            f"status={response.status_code} user_ip={request.client.host}"
+            f"[HTTP {response.status_code}] {request.client.host} "
+            f"{request.method} {request.url.path}"
         )
     return response
 
