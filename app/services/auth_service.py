@@ -140,39 +140,50 @@ def refresh_access_token(request: Request, db: Session) -> str:
 
 
 def logout_user(db: Session, user_id: int, raw_token: str) -> bool:
-    """
-    해당 유저의 모든 리프레시 토큰 중
-    raw_token 과 일치하는 한 건만 삭제 후 커밋.
-    Returns:
-        True  — 삭제 성공
-        False — 매칭되는 토큰 없음
-    """
+    logging.debug(f"[LOGOUT] 시작 user_id={user_id} raw_token={raw_token!r}")
+    
+    # 1) 해당 유저의 토큰 전부 가져오기
     tokens = (
         db.query(RefreshToken)
           .filter(RefreshToken.user_id == user_id)
           .all()
     )
+    logging.debug(f"[LOGOUT] DB에서 조회된 토큰 개수: {len(tokens)}")
 
+    # 2) 복호화해서 매칭 토큰 찾기
     target = None
     for token_obj in tokens:
         try:
-            if decrypt_token(token_obj.token) == raw_token:
+            decrypted = decrypt_token(token_obj.token)
+            logging.debug(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 성공: {decrypted[:20]}...")  # 일부만 로그
+            if decrypted == raw_token:
                 target = token_obj
+                logging.debug(f"[LOGOUT] 매칭 토큰 발견 id={token_obj.id}")
                 break
         except InvalidToken:
-            # 복호화가 불가능한 토큰(유효하지 않은 암호문)이면 패스
-            continue
+            logging.warning(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 실패: InvalidToken")
+        except Exception as e:
+            logging.exception(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 중 예외")
 
     if not target:
-        return False  # 혹은 HTTPException(404) 로 던져도 좋습니다
+        logging.info(f"[LOGOUT] 매칭되는 토큰 없음 user_id={user_id}")
+        return False
 
+    # 3) 삭제 시도
     try:
         db.delete(target)
         db.commit()
+        logging.info(f"[LOGOUT] 토큰 삭제 성공 id={target.id}")
         return True
+
     except Exception as e:
         db.rollback()
+        logging.exception(f"[LOGOUT] 토큰 삭제 중 예외: {e}")
+        # 에러 상세를 CustomException에 담아서 클라이언트/로그로 모두 노출
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
+            code="LOGOUT_FAILED",
+            detail=f"토큰 삭제 중 서버 오류 발생: {e}",
+            hint="관리자에게 문의하세요."
         ) from e
