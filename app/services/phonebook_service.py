@@ -8,9 +8,9 @@ from sqlalchemy.orm import Session
 from app.crud.phonebook_crud import (
     create_phonebook,
     get_phonebook_by_id,
+    get_phonebook_by_phone_number,
     get_phonebooks_by_user,
     update_phonebook,
-    get_phonebook_by_phone_number
 )
 from app.exceptions import CustomException
 from app.models.phonebook import Phonebook
@@ -31,11 +31,7 @@ def get_phonebook_list_service(
     params: PhonebookFilter,
     current_shop: Shop,
 ) -> Page[PhonebookResponse]:
-    list = get_phonebooks_by_user(
-        db=db, 
-        shop_id=current_shop.id, 
-        search=params.search
-    )
+    list = get_phonebooks_by_user(db=db, shop_id=current_shop.id, search=params.search)
     return list
 
 
@@ -60,8 +56,8 @@ def create_phonebook_service(
         # 전화번호부 중복 체크
         existing = get_phonebook_by_phone_number(db, data.phone_number, current_shop.id)
         if existing:
-            raise CustomException(status_code=status.HTTP_409_CONFLICT,domain=DOMAIN)
-        
+            raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
+
         phonebook = create_phonebook(db, data, current_shop.id)
         db.commit()
     except SQLAlchemyError as e:
@@ -82,12 +78,9 @@ def create_phonebook_service(
 
 # 전화번호부 수정
 def update_phonebook_service(
-    db: Session, 
-    phonebook_id: int, 
-    data: PhonebookUpdate, 
-    current_shop: Shop
+    db: Session, phonebook_id: int, data: PhonebookUpdate, current_shop: Shop
 ) -> Phonebook:
-    
+
     existing = get_phonebook_by_phone_number(db, data.phone_number, current_shop.id)
     if existing and existing.id != phonebook_id:
         raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)

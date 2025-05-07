@@ -1,6 +1,8 @@
 import logging
-import sqlparse
 import os
+
+import sqlparse
+
 
 def setup_logging(app_env: str = "local"):
     """
@@ -12,21 +14,21 @@ def setup_logging(app_env: str = "local"):
 
     # 1) 기본 로깅 레벨 및 파일명 설정
     log_level = logging.INFO
-    log_file  = "logs/app.log"
+    log_file = "logs/app.log"
     sql_log_level = logging.INFO
 
     if app_env == "debug":
-        log_level     = logging.ERROR
-        log_file      = "logs/debug.log"
+        log_level = logging.ERROR
+        log_file = "logs/debug.log"
         sql_log_level = logging.ERROR
     elif app_env == "production":
-        log_level     = logging.ERROR
-        log_file      = "logs/prod.log"
+        log_level = logging.ERROR
+        log_file = "logs/prod.log"
         # production 에서는 SQL 로그를 ERROR 이상만 남김
         sql_log_level = logging.ERROR
     elif app_env == "local":
-        log_level     = logging.DEBUG
-        log_file      = "logs/local.log"
+        log_level = logging.DEBUG
+        log_file = "logs/local.log"
         sql_log_level = logging.DEBUG
 
     # 2) 로그 디렉토리 생성

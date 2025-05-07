@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import status
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
@@ -10,9 +11,9 @@ from app.crud.treatment_menu import (
     get_treatment_menus_by_user,
 )
 from app.exceptions import CustomException
+from app.models.shop import Shop
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
-from app.models.shop import Shop
 from app.schemas.treatment_menu import (
     TreatmentMenuCreate,
     TreatmentMenuCreateResponse,
@@ -33,25 +34,20 @@ def get_treatment_menus_service(
     시술 메뉴 목록 조회 서비스
     """
     list = get_treatment_menus_by_user(
-        db=db, 
-        shop_id=current_shop.id,
-        search=filters.search
+        db=db, shop_id=current_shop.id, search=filters.search
     )
     return list
+
 
 # 시술 메뉴 생성 서비스
 def create_treatment_menu_service(
     db: Session,
     current_shop: Shop,
-    params: TreatmentMenuCreate, 
+    params: TreatmentMenuCreate,
 ) -> TreatmentMenuCreateResponse:
     try:
         # 시술 메뉴 생성
-        menu = create_treatment_menu(
-            db=db, 
-            name=params.name, 
-            shop_id=current_shop.id
-        )
+        menu = create_treatment_menu(db=db, name=params.name, shop_id=current_shop.id)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -88,13 +84,19 @@ def create_treatment_menu_detail_service(
 
     menu = db.query(TreatmentMenu).filter(TreatmentMenu.id == menu_id).first()
     if not menu:
-        raise CustomException(status_code=status.HTTP_404_NOT_FOUND,domain=DOMAIN,)
+        raise CustomException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            domain=DOMAIN,
+        )
 
     if menu.shop_id != current_shop.id:
-        raise CustomException(status_code=status.HTTP_403_FORBIDDEN,domain=DOMAIN,)
+        raise CustomException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            domain=DOMAIN,
+        )
 
     if menu.deleted_at:
-        raise CustomException(status_code=status.HTTP_404_NOT_FOUND,domain=DOMAIN)
+        raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
 
     return create_treatment_menu_detail(
         db=db,

@@ -46,12 +46,10 @@ def get_treatment_menus_by_user(
     )
 
     if search:
-        query = query.filter(
-            TreatmentMenu.name.ilike(f"%{search}%")
-        )
+        query = query.filter(TreatmentMenu.name.ilike(f"%{search}%"))
 
     query.order_by(TreatmentMenu.id.desc())
-    
+
     return paginate(query)
 
 

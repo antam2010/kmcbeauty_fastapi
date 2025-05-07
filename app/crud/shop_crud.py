@@ -16,12 +16,7 @@ def get_user_shop_by_id(db: Session, user_id: int, shop_id: int) -> Shop | None:
 
 # 유저가 가진 모든 샵 조회
 def get_user_shops(db: Session, user_id: int) -> list[Shop]:
-    return (
-        db.query(Shop)
-        .filter(Shop.user_id == user_id)
-        .order_by(Shop.id.desc())
-        .all()
-    )
+    return db.query(Shop).filter(Shop.user_id == user_id).order_by(Shop.id.desc()).all()
 
 
 # 샵 생성

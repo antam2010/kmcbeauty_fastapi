@@ -1,10 +1,10 @@
 import logging
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timedelta, timezone
+
+from cryptography.fernet import InvalidToken
 from fastapi import Request, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-
-from cryptography.fernet import InvalidToken
 
 from app.core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -12,10 +12,16 @@ from app.core.config import (
     REFRESH_TOKEN_EXPIRE_DAYS,
     SECRET_KEY,
 )
-from app.core.security import create_access_token, verify_password, encrypt_token, decrypt_token, decode_jwt_token
+from app.core.security import (
+    create_access_token,
+    decode_jwt_token,
+    decrypt_token,
+    encrypt_token,
+    verify_password,
+)
 from app.exceptions import CustomException
-from app.models.user import User
 from app.models.refresh_token import RefreshToken
+from app.models.user import User
 
 DOMAIN = "AUTH"
 
@@ -30,10 +36,7 @@ def authenticate_user(db: Session, email: str, password: str) -> User:
     return user
 
 
-def generate_tokens(
-        db: Session,
-        user: User
-    ) -> tuple[str, str]:
+def generate_tokens(db: Session, user: User) -> tuple[str, str]:
     payload_base = {
         "sub": str(user.id),
         "role": user.role,
@@ -48,7 +51,7 @@ def generate_tokens(
         data={"sub": str(user.id), "type": "refresh"},
         expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
     )
-    
+
     # DB 저장
     encrypted = encrypt_token(refresh_token)
     expired_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
@@ -66,8 +69,7 @@ def refresh_access_token(request: Request, db: Session) -> str:
             status_code=status.HTTP_401_UNAUTHORIZED,
             domain=DOMAIN,
             detail="Refresh token not found",
-            hint="쿠키에 리프레시토큰이 없어"
-            
+            hint="쿠키에 리프레시토큰이 없어",
         )
 
     # JWT 디코딩 시도
@@ -83,17 +85,17 @@ def refresh_access_token(request: Request, db: Session) -> str:
             status_code=status.HTTP_401_UNAUTHORIZED,
             domain=DOMAIN,
             detail="Invalid refresh token",
-            hint="리프레시 토큰이 유효하지 않아"
+            hint="리프레시 토큰이 유효하지 않아",
         )
 
     # DB에서 해당 리프레시 토큰 존재하는지 검증
     rows = (
         db.query(RefreshToken)
-          .filter(
-              RefreshToken.user_id == int(user_id),
-              RefreshToken.expired_at > datetime.now(timezone.utc),
-          )
-          .all()
+        .filter(
+            RefreshToken.user_id == int(user_id),
+            RefreshToken.expired_at > datetime.now(timezone.utc),
+        )
+        .all()
     )
 
     token_row = None
@@ -116,7 +118,6 @@ def refresh_access_token(request: Request, db: Session) -> str:
             hint="다시 로그인하거나 지원팀에 문의하세요.",
         )
 
-
     # 유저 정보 조회
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
@@ -124,7 +125,7 @@ def refresh_access_token(request: Request, db: Session) -> str:
             status_code=status.HTTP_404_NOT_FOUND,
             domain=DOMAIN,
             detail="User not found",
-            hint="유저 정보가 DB에 존재하지 않아"
+            hint="유저 정보가 DB에 존재하지 않아",
         )
 
     # 새로운 액세스 토큰 발급
@@ -133,7 +134,7 @@ def refresh_access_token(request: Request, db: Session) -> str:
             "sub": str(user.id),
             "role": user.role,
             "email": user.email,
-            "type": "access"
+            "type": "access",
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
@@ -156,9 +157,13 @@ def logout_user(db: Session, raw_token: str) -> bool:
                     logging.debug(f"[LOGOUT] 매칭 토큰 발견 id={token_obj.id}")
                     break
             except InvalidToken:
-                logging.warning(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 실패: InvalidToken")
+                logging.warning(
+                    f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 실패: InvalidToken"
+                )
             except Exception as e:
-                logging.exception(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 중 예외: {repr(e)}")
+                logging.exception(
+                    f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 중 예외: {repr(e)}"
+                )
 
         if not target:
             logging.info(f"[LOGOUT] 매칭되는 토큰 없음 user_id={user_id}")

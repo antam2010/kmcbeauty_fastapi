@@ -35,7 +35,6 @@ def get_menus(
     filters: TreatmentMenuFilter = Depends(),
     db: Session = Depends(get_db),
     current_shop=Depends(get_current_shop),
-    
 ) -> Page[TreatmentMenuResponse]:
     return get_treatment_menus_service(
         db=db,
@@ -58,8 +57,8 @@ def create_menu(
 ) -> TreatmentMenuCreateResponse:
     return create_treatment_menu_service(
         db=db,
-        params=params, 
-        current_shop=current_shop, 
+        params=params,
+        current_shop=current_shop,
     )
 
 

@@ -1,13 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
+from cryptography.fernet import Fernet
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
-
 from passlib.context import CryptContext
 
-from app.core.config import ALGORITHM, SECRET_KEY, FERNET_KEY
-
-from cryptography.fernet import Fernet
+from app.core.config import ALGORITHM, FERNET_KEY, SECRET_KEY
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -37,6 +35,7 @@ def create_access_token(data: dict, expires_delta: timedelta) -> str:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 def decode_jwt_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -49,12 +48,9 @@ def decode_jwt_token(token: str) -> dict:
         return e
 
 
-
 def encrypt_token(token: str) -> str:
     return fernet.encrypt(token.encode()).decode()
 
+
 def decrypt_token(token: str) -> str:
     return fernet.decrypt(token.encode()).decode()
-
-
-

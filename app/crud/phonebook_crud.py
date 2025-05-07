@@ -1,7 +1,7 @@
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from sqlalchemy.orm import Session
 
 from app.models.phonebook import Phonebook
 from app.schemas.phonebook import PhonebookCreate, PhonebookFilter, PhonebookUpdate
@@ -62,6 +62,7 @@ def update_phonebook(
     for key, value in update_data.items():
         setattr(phonebook, key, value)
     return phonebook
+
 
 # 전화번호부 중복 체크
 def get_phonebook_by_phone_number(

@@ -42,7 +42,9 @@ class PhonebookUpdate(BaseModel, PhoneNumberValidatorMixin):
 
 # 전화번호부 목록 요청 (필터링용)
 class PhonebookFilter(BaseModel):
-    search: str | None = Field(default=None, description="검색어 (이름, 전화번호, 그룹명, 메모 등)")
+    search: str | None = Field(
+        default=None, description="검색어 (이름, 전화번호, 그룹명, 메모 등)"
+    )
 
 
 # 전화번호부 응답 스키마

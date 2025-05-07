@@ -5,15 +5,15 @@ from sqlalchemy.orm import Session
 
 from app.core.config import REFRESH_TOKEN_EXPIRE_DAYS
 from app.database import get_db
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.schemas.auth import LoginResponse
 from app.services.auth_service import (
     authenticate_user,
     generate_tokens,
+    logout_user,
     refresh_access_token,
-    logout_user
 )
-from app.dependencies.auth import get_current_user
-from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -31,7 +31,7 @@ def login(
 ):
     user = authenticate_user(db, form_data.username, form_data.password)
     access_token, refresh_token = generate_tokens(db, user)
-    
+
     max_age = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 초 단위
 
     # Swagger에서는 response_model 기준으로 문서화
@@ -82,39 +82,29 @@ def refresh_token_handler(
     responses={
         status.HTTP_200_OK: {
             "description": "로그아웃 성공",
-            "content": {
-                "application/json": {
-                    "example": {"message": "로그아웃 성공"}
-                }
-            },
+            "content": {"application/json": {"example": {"message": "로그아웃 성공"}}},
         },
         status.HTTP_500_INTERNAL_SERVER_ERROR: {
             "description": "서버 오류",
             "content": {
-                "application/json": {
-                    "example": {"detail": "Internal Server Error"}
-                }
+                "application/json": {"example": {"detail": "Internal Server Error"}}
             },
         },
     },
 )
-def logout(
-    request: Request,
-    db: Session = Depends(get_db)
-):
+def logout(request: Request, db: Session = Depends(get_db)):
     # 1) 리프레시 토큰을 쿠키에서 꺼내서 DB에서 삭제
     token = request.cookies.get("refresh_token")
     if token:
         logout_user(db, token)
-    
+
     # 2) 쿠키에서 리프레시 토큰 삭제
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
             "message": "로그아웃 성공",
             "token": token,
-        }
+        },
     )
     response.delete_cookie("refresh_token", path="/")
     return response
-

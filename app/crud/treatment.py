@@ -15,6 +15,7 @@ def create_treatment(db: Session, treatment: Treatment) -> Treatment:
     db.flush()
     return treatment
 
+
 # 시술 예약 항목 등록
 def create_treatment_item(db: Session, treatment_item: TreatmentItem) -> TreatmentItem:
     db.add(treatment_item)

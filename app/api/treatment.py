@@ -7,9 +7,9 @@ from app.dependencies.shop import get_current_shop
 from app.models.user import User
 from app.schemas.treatment import (
     TreatmentCreate,
-    TreatmentResponse,
-    TreatmentFilter,
     TreatmentDetail,
+    TreatmentFilter,
+    TreatmentResponse,
 )
 from app.services.treatment_service import (
     create_treatment_service,

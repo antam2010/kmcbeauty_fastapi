@@ -1,14 +1,14 @@
-from fastapi import FastAPI, Request
-from starlette.responses import Response
-from starlette.middleware.base import RequestResponseEndpoint
 import logging
 
+from fastapi import FastAPI, Request
 
 # FastAPI의 라우터
 from fastapi.middleware.cors import CORSMiddleware
 
 # 라이브러리
 from fastapi_pagination import add_pagination
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import Response
 
 # 추가할 라우터
 from app.api import auth, phonebook, shop, treatment, treatment_menu, user
@@ -72,6 +72,7 @@ app.add_middleware(
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
     allow_headers=["*"],  # 모든 헤더 허용
 )
+
 
 @app.middleware("http")
 async def error_logger(

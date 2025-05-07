@@ -2,6 +2,7 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+
 def before_send(event, hint, env):
     """
     Sentry에 전송하기 전에 이벤트를 수정하는 함수
@@ -43,19 +44,19 @@ def init_sentry(
 
     # Sentry에서 로깅도 연동할 수 있도록 설정
     sentry_logging = LoggingIntegration(
-        level="INFO",          # breadcrumb 수집 로그 레벨 (INFO 이상 수집)
-        event_level="ERROR",   # 이벤트로 전송할 최소 로그 레벨
+        level="INFO",  # breadcrumb 수집 로그 레벨 (INFO 이상 수집)
+        event_level="ERROR",  # 이벤트로 전송할 최소 로그 레벨
     )
 
     sentry_sdk.init(
         dsn=dsn,
         integrations=[
             FastApiIntegration(),  # FastAPI 프레임워크 연동
-            sentry_logging,        # Logging 연동
+            sentry_logging,  # Logging 연동
         ],
-        traces_sample_rate   = traces_sample_rate,   # 요청 성능 수집 비율
-        profiles_sample_rate = profiles_sample_rate, # CPU/메모리 프로파일링 비율
-        environment          = environment,          # 환경 구분(local, debug, prod)
-        send_default_pii     = True,                 # 개인정보 전송 허용
-        before_send          = before_send,          # 이벤트 전송 전 처리 함수
+        traces_sample_rate=traces_sample_rate,  # 요청 성능 수집 비율
+        profiles_sample_rate=profiles_sample_rate,  # CPU/메모리 프로파일링 비율
+        environment=environment,  # 환경 구분(local, debug, prod)
+        send_default_pii=True,  # 개인정보 전송 허용
+        before_send=before_send,  # 이벤트 전송 전 처리 함수
     )
