@@ -3,6 +3,7 @@ from datetime import timedelta, datetime, timezone
 from fastapi import Request, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+
 from cryptography.fernet import InvalidToken
 
 from app.core.config import (
@@ -11,7 +12,7 @@ from app.core.config import (
     REFRESH_TOKEN_EXPIRE_DAYS,
     SECRET_KEY,
 )
-from app.core.security import create_access_token, verify_password, encrypt_token, decrypt_token
+from app.core.security import create_access_token, verify_password, encrypt_token, decrypt_token, decode_jwt_token
 from app.exceptions import CustomException
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
@@ -139,51 +140,41 @@ def refresh_access_token(request: Request, db: Session) -> str:
     return new_access_token
 
 
-def logout_user(db: Session, user_id: int, raw_token: str) -> bool:
-    logging.debug(f"[LOGOUT] 시작 user_id={user_id} raw_token={raw_token!r}")
-    
-    # 1) 해당 유저의 토큰 전부 가져오기
-    tokens = (
-        db.query(RefreshToken)
-          .filter(RefreshToken.user_id == user_id)
-          .all()
-    )
-    logging.debug(f"[LOGOUT] DB에서 조회된 토큰 개수: {len(tokens)}")
-
-    # 2) 복호화해서 매칭 토큰 찾기
-    target = None
-    for token_obj in tokens:
-        try:
-            decrypted = decrypt_token(token_obj.token)
-            logging.debug(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 성공: {decrypted[:20]}...")  # 일부만 로그
-            if decrypted == raw_token:
-                target = token_obj
-                logging.debug(f"[LOGOUT] 매칭 토큰 발견 id={token_obj.id}")
-                break
-        except InvalidToken:
-            logging.warning(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 실패: InvalidToken")
-        except Exception as e:
-            logging.exception(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 중 예외")
-
-    if not target:
-        logging.info(f"[LOGOUT] 매칭되는 토큰 없음 user_id={user_id}")
-        return False
-
-    # 3) 삭제 시도
+def logout_user(db: Session, raw_token: str) -> bool:
     try:
+        payload = decode_jwt_token(raw_token)
+        user_id = int(payload.get("sub"))
+
+        tokens = db.query(RefreshToken).filter(RefreshToken.user_id == user_id).all()
+
+        target = None
+        for token_obj in tokens:
+            try:
+                decrypted = decrypt_token(token_obj.token)
+                if decrypted == raw_token:
+                    target = token_obj
+                    logging.debug(f"[LOGOUT] 매칭 토큰 발견 id={token_obj.id}")
+                    break
+            except InvalidToken:
+                logging.warning(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 실패: InvalidToken")
+            except Exception as e:
+                logging.exception(f"[LOGOUT] 토큰(id={token_obj.id}) 복호화 중 예외: {repr(e)}")
+
+        if not target:
+            logging.info(f"[LOGOUT] 매칭되는 토큰 없음 user_id={user_id}")
+            return False
+
         db.delete(target)
         db.commit()
-        logging.info(f"[LOGOUT] 토큰 삭제 성공 id={target.id}")
+        logging.info(f"[LOOUT] 토큰 삭제 성공 id={target.id}")
         return True
 
     except Exception as e:
         db.rollback()
-        logging.exception(f"[LOGOUT] 토큰 삭제 중 예외: {e}")
-        # 에러 상세를 CustomException에 담아서 클라이언트/로그로 모두 노출
+        logging.exception(f"[LOGOUT] 예외 발생: {repr(e)}")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-            code="LOGOUT_FAILED",
-            detail=f"토큰 삭제 중 서버 오류 발생: {e}",
-            hint="관리자에게 문의하세요."
+            detail=f"토큰 삭제 중 서버 오류 발생: {repr(e)}",
+            hint="백엔드 서버에 문의하세요.",
         ) from e

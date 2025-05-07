@@ -64,7 +64,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://kmc2.daeho2.shop",
-        "http://localhost:5137",
+        "http://localhost:5173",
         "http://localhost:8000",
         "http://localhost:3000",
     ],  # 모든 도메인 허용 (보안 강화하려면 특정 도메인만 허용)

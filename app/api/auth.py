@@ -26,6 +26,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     status_code=status.HTTP_200_OK,
 )
 def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
@@ -49,6 +50,8 @@ def login(
         secure=False,
         samesite="Lax",
         max_age=max_age,
+        domain=request.url.hostname,
+        path="/",
     )
     return response
 
@@ -100,19 +103,19 @@ def refresh_token_handler(
 )
 def logout(
     request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     # 1) 리프레시 토큰을 쿠키에서 꺼내서 DB에서 삭제
     token = request.cookies.get("refresh_token")
     if token:
-        logout_user(db, current_user.id, token)
+        logout_user(db, token)
     
     # 2) 쿠키에서 리프레시 토큰 삭제
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
-            "message": "로그아웃 성공"
+            "message": "로그아웃 성공",
+            "token": token,
         }
     )
     response.delete_cookie("refresh_token", path="/")
