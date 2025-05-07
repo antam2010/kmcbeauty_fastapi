@@ -26,7 +26,6 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     status_code=status.HTTP_200_OK,
 )
 def login(
-    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
@@ -46,11 +45,10 @@ def login(
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
-        httponly=False,
+        httponly=True,
         secure=False,
-        samesite="None",
+        samesite="Lax",
         max_age=max_age,
-        path="/",
     )
     return response
 
