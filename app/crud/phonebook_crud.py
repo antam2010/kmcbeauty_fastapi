@@ -16,7 +16,7 @@ def get_phonebooks_by_user(
     )
 
     if group_name:
-        query = query.filter(Phonebook.group_name == group_name)
+        query = query.filter(Phonebook.group_name.like(f"%{group_name}%"))
 
     query.order_by(Phonebook.id.desc())
 
