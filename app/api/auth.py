@@ -50,7 +50,6 @@ def login(
         secure=False,
         samesite="Lax",
         max_age=max_age,
-        domain=request.url.hostname,
         path="/",
     )
     return response
