@@ -1,6 +1,7 @@
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.models.phonebook import Phonebook
 from app.schemas.phonebook import PhonebookCreate, PhonebookFilter, PhonebookUpdate
@@ -8,16 +9,23 @@ from app.schemas.phonebook import PhonebookCreate, PhonebookFilter, PhonebookUpd
 
 # 전화번호부 리스트 조회
 def get_phonebooks_by_user(
-    db: Session, shop_id: int, group_name: str | None = None
+    db: Session, shop_id: int, search: str | None = None
 ) -> Page[Phonebook]:
     query = db.query(Phonebook).filter(
         Phonebook.shop_id == shop_id,
         Phonebook.deleted_at.is_(None),
     )
 
-    if group_name:
-        query = query.filter(Phonebook.group_name.like(f"%{group_name}%"))
-
+    if search:
+        keyword = f"%{search}%"
+        query = query.filter(
+            or_(
+                Phonebook.name.ilike(keyword),
+                Phonebook.phone_number.ilike(keyword),
+                Phonebook.group_name.ilike(keyword),
+                Phonebook.memo.ilike(keyword),
+            )
+        )
     query.order_by(Phonebook.id.desc())
 
     return paginate(query)

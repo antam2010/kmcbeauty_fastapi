@@ -34,7 +34,7 @@ def get_phonebook_list_service(
     list = get_phonebooks_by_user(
         db=db, 
         shop_id=current_shop.id, 
-        group_name=params.group_name
+        search=params.search
     )
     return list
 
