@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   api:
     build:
@@ -10,8 +12,8 @@ services:
     env_file:
       - .env
     networks:
-      - shared_network_prod
-      ipv4_address: 172.20.0.10
+      shared_network_prod:
+        ipv4_address: 172.20.0.10
 
   redis:
     image: redis:latest
@@ -20,10 +22,10 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - shared_network_prod
-      ipv4_address: 172.20.0.11
+      shared_network_prod:
+        ipv4_address: 172.20.0.11
 
 networks:
   shared_network_prod:
-    external:
-      name: shared_network_prod
+    external: true
+    name: shared_network_prod
