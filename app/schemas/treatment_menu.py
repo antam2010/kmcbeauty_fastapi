@@ -42,9 +42,10 @@ class TreatmentMenuCreateResponse(BaseModel):
 
 
 # 시술 메뉴 목록 필터 요청
-class TreatmentMenuListRequest(BaseModel):
-    name: str | None = Field(None, description="시술 메뉴 이름", max_length=255)
-
+class TreatmentMenuFilter(BaseModel):
+    search: str | None = Field(
+        default=None, description="검색어 (시술 메뉴 이름)"
+    )
     model_config = {"from_attributes": True}
 
 

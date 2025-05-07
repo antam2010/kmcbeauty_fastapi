@@ -11,7 +11,7 @@ from app.schemas.treatment_menu import (
     TreatmentMenuCreateResponse,
     TreatmentMenuDetailCreate,
     TreatmentMenuDetailResponse,
-    TreatmentMenuListRequest,
+    TreatmentMenuFilter,
     TreatmentMenuResponse,
 )
 from app.services.treatment_menu_service import (
@@ -32,7 +32,7 @@ router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
     status_code=status.HTTP_200_OK,
 )
 def get_menus(
-    filters: TreatmentMenuListRequest = Depends(),
+    filters: TreatmentMenuFilter = Depends(),
     db: Session = Depends(get_db),
     current_shop=Depends(get_current_shop),
     

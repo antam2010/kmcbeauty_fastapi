@@ -34,7 +34,7 @@ def create_treatment_menu_detail(
 def get_treatment_menus_by_user(
     db: Session,
     shop_id: int,
-    name: str = None,
+    search: str = None,
 ) -> Page[TreatmentMenu]:
     query = (
         db.query(TreatmentMenu)
@@ -45,8 +45,10 @@ def get_treatment_menus_by_user(
         )
     )
 
-    if name:
-        query = query.filter(TreatmentMenu.name == name)
+    if search:
+        query = query.filter(
+            TreatmentMenu.name.ilike(f"%{search}%")
+        )
 
     query.order_by(TreatmentMenu.id.desc())
     

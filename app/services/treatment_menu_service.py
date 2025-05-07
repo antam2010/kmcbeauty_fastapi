@@ -12,14 +12,13 @@ from app.crud.treatment_menu import (
 from app.exceptions import CustomException
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
-from app.models.user import User
 from app.models.shop import Shop
 from app.schemas.treatment_menu import (
     TreatmentMenuCreate,
     TreatmentMenuCreateResponse,
     TreatmentMenuDetailCreate,
     TreatmentMenuDetailResponse,
-    TreatmentMenuListRequest,
+    TreatmentMenuFilter,
 )
 
 DOMAIN = "TREATMENT_MENU"
@@ -28,7 +27,7 @@ DOMAIN = "TREATMENT_MENU"
 def get_treatment_menus_service(
     db: Session,
     current_shop: Shop,
-    filters: TreatmentMenuListRequest,
+    filters: TreatmentMenuFilter,
 ) -> Page[TreatmentMenu]:
     """
     시술 메뉴 목록 조회 서비스
@@ -36,7 +35,7 @@ def get_treatment_menus_service(
     list = get_treatment_menus_by_user(
         db=db, 
         shop_id=current_shop.id,
-        name=filters.name
+        search=filters.search
     )
     return list
 
