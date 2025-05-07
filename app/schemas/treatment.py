@@ -1,16 +1,18 @@
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from app.enum.treatment_status import TreatmentStatus
 from app.schemas.phonebook import PhonebookResponse
+
+from app.schemas.base import BaseResponseModel
 
 
 # =========================
 # 필터 요청 스키마
 # =========================
-class TreatmentFilter(BaseModel):
+class TreatmentFilter(BaseResponseModel):
     start_date: date | None = Field(None, description="예약 시작일 (YYYY-MM-DD)")
     end_date: date | None = Field(None, description="예약 종료일 (YYYY-MM-DD)")
     status: TreatmentStatus | None = Field(
@@ -26,13 +28,13 @@ class TreatmentFilter(BaseModel):
 # =========================
 # 시술 항목 관련 스키마
 # =========================
-class TreatmentItemCreate(BaseModel):
+class TreatmentItemCreate(BaseResponseModel):
     menu_detail_id: int = Field(..., description="시술 항목 ID")
     duration_min: Annotated[int, Field(ge=0, description="시술 소요 시간 (분)")]
     base_price: Annotated[int, Field(ge=0, description="시술 기본 가격")]
 
 
-class TreatmentItemResponse(BaseModel):
+class TreatmentItemResponse(BaseResponseModel):
     id: int = Field(..., description="시술 항목 ID")
     base_price: Annotated[int, Field(ge=0, description="실제 적용 기본 가격")]
     duration_min: Annotated[int, Field(ge=0, description="실제 적용 소요 시간 (분)")]
@@ -43,7 +45,7 @@ class TreatmentItemResponse(BaseModel):
 # =========================
 # 📝 예약 등록 요청 및 응답
 # =========================
-class TreatmentCreate(BaseModel):
+class TreatmentCreate(BaseResponseModel):
     phonebook_id: int = Field(..., description="예약자 전화번호부 ID")
     reserved_at: datetime = Field(..., description="예약 일시")
     status: TreatmentStatus = Field(..., description="예약 상태")
@@ -56,7 +58,7 @@ class TreatmentCreate(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class TreatmentResponse(BaseModel):
+class TreatmentResponse(BaseResponseModel):
     id: int = Field(..., description="예약 ID")
     phonebook_id: int = Field(..., description="예약자 전화번호부 ID")
     reserved_at: datetime = Field(..., description="예약 일시")
@@ -73,7 +75,7 @@ class TreatmentResponse(BaseModel):
 # =========================
 # 📄 단일 조회 / 목록 응답
 # =========================
-class TreatmentDetail(BaseModel):
+class TreatmentDetail(BaseResponseModel):
     id: int = Field(..., description="예약 ID")
     phonebook_id: int = Field(..., description="예약자 전화번호부 ID")
     reserved_at: datetime = Field(..., description="예약 일시")

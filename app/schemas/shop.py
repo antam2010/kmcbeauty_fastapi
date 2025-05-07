@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
 
 from app.utils.phone import is_valid_korean_phone_number, normalize_korean_phone_number
+
+from app.schemas.base import BaseResponseModel
 
 
 # 전화번호 유효성 검사 및 포맷 정리 Mixin
@@ -17,7 +19,7 @@ class ShopPhoneValidatorMixin:
 
 
 # 샵 공통 필드 정의
-class ShopBase(BaseModel):
+class ShopBase(BaseResponseModel):
     name: str = Field(..., description="샵 이름", min_length=2, max_length=255)
     address: str = Field(..., description="주소", min_length=2, max_length=255)
     address_detail: str | None = Field(None, description="상세 주소", max_length=255)

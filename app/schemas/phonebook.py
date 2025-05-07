@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
 
 from app.utils.phone import is_valid_korean_phone_number, normalize_korean_phone_number
+
+from app.schemas.base import BaseResponseModel
 
 
 # 전화번호 유효성 검사 + 포맷 통일 Mixin
@@ -19,7 +21,7 @@ class PhoneNumberValidatorMixin:
 
 
 # 전화번호부 생성 요청 스키마
-class PhonebookCreate(BaseModel, PhoneNumberValidatorMixin):
+class PhonebookCreate(BaseResponseModel, PhoneNumberValidatorMixin):
     group_name: str | None = Field(
         default=None, max_length=100, description="그룹 이름"
     )
@@ -29,7 +31,7 @@ class PhonebookCreate(BaseModel, PhoneNumberValidatorMixin):
 
 
 # 전화번호부 수정 요청 스키마
-class PhonebookUpdate(BaseModel, PhoneNumberValidatorMixin):
+class PhonebookUpdate(BaseResponseModel, PhoneNumberValidatorMixin):
     group_name: str | None = Field(
         default=None, max_length=100, description="그룹 이름"
     )
@@ -41,14 +43,14 @@ class PhonebookUpdate(BaseModel, PhoneNumberValidatorMixin):
 
 
 # 전화번호부 목록 요청 (필터링용)
-class PhonebookFilter(BaseModel):
+class PhonebookFilter(BaseResponseModel):
     search: str | None = Field(
         default=None, description="검색어 (이름, 전화번호, 그룹명, 메모 등)"
     )
 
 
 # 전화번호부 응답 스키마
-class PhonebookResponse(BaseModel):
+class PhonebookResponse(BaseResponseModel):
     id: int = Field(..., description="전화번호부 ID")
     shop_id: int = Field(..., description="상점 ID")
     group_name: str | None = Field(None, max_length=100, description="그룹 이름")
