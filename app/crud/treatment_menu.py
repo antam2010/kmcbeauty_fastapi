@@ -12,6 +12,7 @@ def create_treatment_menu(db: Session, name: str, shop_id: int) -> TreatmentMenu
         shop_id=shop_id,
     )
 
+
 def create_treatment_menu_detail(
     db: Session,
     menu_id: int,
@@ -69,3 +70,19 @@ def get_treatment_menu_details_by_user(
         .order_by(TreatmentMenuDetail.id.desc())
         .all()
     )
+
+
+def get_menu_by_id(
+    db: Session,
+    menu_id: int,
+    shop_id: int,
+    exclude_deleted: bool = True,
+) -> TreatmentMenu | None:
+    query = db.query(TreatmentMenu).filter(
+        TreatmentMenu.id == menu_id,
+        TreatmentMenu.shop_id == shop_id,
+    )
+    if exclude_deleted:
+        query = query.filter(TreatmentMenu.deleted_at.is_(None))
+
+    return query.first()

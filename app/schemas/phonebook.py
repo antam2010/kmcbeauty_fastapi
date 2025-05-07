@@ -3,9 +3,8 @@ from typing import Annotated
 
 from pydantic import Field, field_validator
 
-from app.utils.phone import is_valid_korean_phone_number, normalize_korean_phone_number
-
 from app.schemas.base import BaseResponseModel
+from app.utils.phone import is_valid_korean_phone_number, normalize_korean_phone_number
 
 
 # 전화번호 유효성 검사 + 포맷 통일 Mixin

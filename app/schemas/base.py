@@ -1,5 +1,7 @@
-from pydantic import BaseModel, field_validator
 from datetime import datetime, timezone
+
+from pydantic import BaseModel, field_validator
+
 
 class BaseResponseModel(BaseModel):
     @field_validator("*", mode="before")

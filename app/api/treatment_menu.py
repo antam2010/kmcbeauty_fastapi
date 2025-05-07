@@ -3,7 +3,6 @@ from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user
 from app.dependencies.shop import get_current_shop
 from app.models.user import User
 from app.schemas.treatment_menu import (
@@ -17,11 +16,14 @@ from app.schemas.treatment_menu import (
 from app.services.treatment_menu_service import (
     create_treatment_menu_detail_service,
     create_treatment_menu_service,
+    delete_treatment_menu_service,
     get_treatment_menu_detail_service,
     get_treatment_menus_service,
+    restore_treatment_menu_service,
 )
 
 router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
+
 
 # 시술 메뉴 조회
 @router.get(
@@ -42,6 +44,7 @@ def get_menus(
         filters=filters,
     )
 
+
 # 시술 메뉴 생성
 @router.post(
     "/",
@@ -60,6 +63,7 @@ def create_menu(
         params=params,
         current_shop=current_shop,
     )
+
 
 # 시술 메뉴 수정
 @router.put(
@@ -82,6 +86,41 @@ def update_menu(
         menu_id=menu_id,
     )
 
+
+# 시술 메뉴 삭제
+@router.delete(
+    "/{menu_id}",
+    response_model=None,
+    summary="시술 메뉴 삭제",
+    description="시술 메뉴를 삭제합니다.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_menu(
+    menu_id: int,
+    db: Session = Depends(get_db),
+    current_shop=Depends(get_current_shop),
+) -> None:
+    return delete_treatment_menu_service(
+        db=db, current_shop=current_shop, menu_id=menu_id
+    )
+
+
+# 시술 메뉴 복구
+@router.post(
+    "/{menu_id}/restore",
+    response_model=None,
+    summary="시술 메뉴 복구",
+    description="시술 메뉴를 복구합니다.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def restore_menu(
+    menu_id: int,
+    db: Session = Depends(get_db),
+    current_shop=Depends(get_current_shop),
+) -> None:
+    return restore_treatment_menu_service(
+        db=db, current_shop=current_shop, menu_id=menu_id
+    )
 
 
 # 시술 메뉴 상세 조회

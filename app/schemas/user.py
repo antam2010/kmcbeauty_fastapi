@@ -1,7 +1,6 @@
 from pydantic import EmailStr, Field
 
 from app.enum.role import UserRole
-
 from app.schemas.base import BaseResponseModel
 
 

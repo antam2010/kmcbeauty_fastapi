@@ -4,9 +4,8 @@ from typing import Annotated
 from pydantic import Field
 
 from app.enum.treatment_status import TreatmentStatus
-from app.schemas.phonebook import PhonebookResponse
-
 from app.schemas.base import BaseResponseModel
+from app.schemas.phonebook import PhonebookResponse
 
 
 # =========================
