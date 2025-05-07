@@ -7,10 +7,10 @@ from app.models.treatment_menu_detail import TreatmentMenuDetail
 
 
 def create_treatment_menu(db: Session, name: str, shop_id: int) -> TreatmentMenu:
-    menu = TreatmentMenu(name=name, shop_id=shop_id)
-    db.add(menu)
-    return menu
-
+    return TreatmentMenu(
+        name=name,
+        shop_id=shop_id,
+    )
 
 def create_treatment_menu_detail(
     db: Session,

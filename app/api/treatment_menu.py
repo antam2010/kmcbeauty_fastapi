@@ -23,7 +23,7 @@ from app.services.treatment_menu_service import (
 
 router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
 
-
+# 시술 메뉴 조회
 @router.get(
     "/",
     response_model=Page[TreatmentMenuResponse],
@@ -42,7 +42,7 @@ def get_menus(
         filters=filters,
     )
 
-
+# 시술 메뉴 생성
 @router.post(
     "/",
     response_model=TreatmentMenuCreateResponse,
@@ -60,6 +60,28 @@ def create_menu(
         params=params,
         current_shop=current_shop,
     )
+
+# 시술 메뉴 수정
+@router.put(
+    "/{menu_id}",
+    response_model=TreatmentMenuCreateResponse,
+    summary="시술 메뉴 수정",
+    description="시술 메뉴를 수정합니다.",
+    status_code=status.HTTP_200_OK,
+)
+def update_menu(
+    menu_id: int,
+    params: TreatmentMenuCreate,
+    db: Session = Depends(get_db),
+    current_shop=Depends(get_current_shop),
+) -> TreatmentMenuCreateResponse:
+    return create_treatment_menu_service(
+        db=db,
+        params=params,
+        current_shop=current_shop,
+        menu_id=menu_id,
+    )
+
 
 
 # 시술 메뉴 상세 조회

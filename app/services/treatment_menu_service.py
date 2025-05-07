@@ -22,6 +22,8 @@ from app.schemas.treatment_menu import (
     TreatmentMenuFilter,
 )
 
+from datetime import datetime, timezone
+
 DOMAIN = "TREATMENT_MENU"
 
 
@@ -44,11 +46,42 @@ def create_treatment_menu_service(
     db: Session,
     current_shop: Shop,
     params: TreatmentMenuCreate,
+    menu_id: int | None = None,
 ) -> TreatmentMenuCreateResponse:
     try:
-        # 시술 메뉴 생성
-        menu = create_treatment_menu(db=db, name=params.name, shop_id=current_shop.id)
+        
+        if menu_id :
+            # 시술 메뉴 수정
+            menu = db.query(TreatmentMenu).filter(TreatmentMenu.id == menu_id).first()
+            if not menu:
+                raise CustomException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    domain=DOMAIN,
+                    hint="시술 메뉴를 찾을 수 없습니다.",
+                )
+
+            if menu.shop_id != current_shop.id:
+                raise CustomException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    domain=DOMAIN,
+                    hint="다른 가게의 시술 메뉴입니다.",
+                )
+
+            if menu.deleted_at:
+                raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN, hint="삭제된 시술 메뉴입니다.")
+        
+            # 시술 메뉴 수정 메인 로직
+            menu.name = params.name 
+            menu.updated_at = datetime.now(timezone.utc)
+
+        else:
+            # 시술 메뉴 생성
+            menu = create_treatment_menu(db=db, name=params.name, shop_id=current_shop.id)
+            db.add(menu)
+        
         db.commit()
+        db.refresh(menu)
+
     except Exception as e:
         db.rollback()
         logging.exception(f"SQLAlchemyError: {e}")
