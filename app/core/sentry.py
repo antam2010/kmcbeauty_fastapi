@@ -3,27 +3,19 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 
-def before_send(event, hint, env):
-    """
-    Sentry에 전송하기 전에 이벤트를 수정하는 함수
+def before_send(event, hint):
+    import os
 
-    Args:
-        event (dict): Sentry에 전송할 이벤트
-        hint (dict): 예외 정보
-        env (str): 실행 환경 (예: local, debug, production)
+    env = os.getenv("APP_ENV", "local")
 
-    Returns:
-        dict: 수정된 이벤트
-    """
-    # 로컬 환경에서는 Sentry에 이벤트를 전송하지 않음
-    # local or debug
     if env in ["local", "debug"]:
         print("Sentry event:", event)
         print("Sentry hint:", hint)
-        return None
+        # return event  # 개발 중에도 전송 확인하려면 유지
+        return None  # 완전히 차단하고 싶으면 이렇게
 
-    # 프로덕션 환경에서는 이벤트를 그대로 반환하여 Sentry에 전송
     return event
+
 
 
 def init_sentry(

@@ -18,6 +18,9 @@ from app.core.config import APP_ENV, SENTRY_DSN
 from app.core.logging import setup_logging
 from app.core.sentry import init_sentry
 
+# Sentry
+from sentry_sdk import capture_exception
+
 # docs
 from app.docs.tags_metadata import tags_metadata
 
@@ -82,20 +85,15 @@ async def error_logger(
     try:
         # call_next 의 반환값을 Response 타입으로 명시
         response: Response = await call_next(request)
-    except Exception:
+    except Exception as e:
         # 핸들되지 않은 예외(500) 일 때 스택트레이스 포함 로깅
         logging.exception(
             f"[UNHANDLED 500] {request.client.host} "
             f"{request.method} {request.url.path}"
         )
-        # FastAPI 기본 500 핸들러로 다시 예외 던지기
+        # Sentry 전송
+        capture_exception(e)
         raise
-    # 4xx/5xx 응답일 때만 로깅
-    if response.status_code >= 400:
-        logging.error(
-            f"[HTTP {response.status_code}] {request.client.host} "
-            f"{request.method} {request.url.path}"
-        )
     return response
 
 

@@ -5,7 +5,7 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.shop import Shop
 from app.models.user import User
-from app.schemas.shop import ShopCreate, ShopResponse, ShopUpdate
+from app.schemas.shop import ShopCreate, ShopResponse, ShopUpdate, ShopSelect
 from app.services.shop_service import (
     create_shop_service,
     get_my_shops_service,
@@ -63,7 +63,8 @@ def update_shop(
         db=db, user=current_user, shop_id=shop_id, shop_data=shop_data
     )
 
-
+## 선택한 샵 등록 ##
+## version 1.0.0 ##
 @router.post(
     "/selected",
     summary="선택한 샵 설정",
@@ -71,11 +72,11 @@ def update_shop(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 def select_shop(
-    shop_id: int,
+    params: ShopSelect,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
-    return set_selected_shop_service(db=db, user=current_user, shop_id=shop_id)
+    return set_selected_shop_service(db=db, user=current_user, shop_id=params.shop_id)
 
 
 @router.get(

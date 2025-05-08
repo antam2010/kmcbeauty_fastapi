@@ -4,7 +4,7 @@ import os
 import sqlparse
 
 
-def setup_logging(app_env: str = "local"):
+def setup_logging(app_env: str):
     """
     로깅 설정 함수
 
@@ -18,13 +18,16 @@ def setup_logging(app_env: str = "local"):
     sql_log_level = logging.INFO
 
     if app_env == "debug":
-        log_level = logging.ERROR
+        log_level = logging.DEBUG
         log_file = "logs/debug.log"
         sql_log_level = logging.ERROR
+    elif app_env == "stage":
+        log_level = logging.INFO
+        log_file = "logs/stage.log"
+        sql_log_level = logging.ERROR
     elif app_env == "production":
-        log_level = logging.ERROR
+        log_level = logging.info
         log_file = "logs/prod.log"
-        # production 에서는 SQL 로그를 ERROR 이상만 남김
         sql_log_level = logging.ERROR
     elif app_env == "local":
         log_level = logging.DEBUG

@@ -67,16 +67,13 @@ def set_selected_shop_service(db: Session, user: User, shop_id: int) -> None:
         shop = get_user_shop_by_id(db, user.id, shop_id)
         if not shop:
             raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
-
+        
         set_selected_shop_redis(user.id, shop.id)
 
     except CustomException:
         raise
     except Exception as e:
-        logging.exception(f"선택 샵 설정 중 오류 발생: {e}")
-        raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
-        )
+        raise e
 
 
 # 샵 선택 조회
