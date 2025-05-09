@@ -13,6 +13,7 @@ from app.services.shop_service import (
     get_selected_shop_service,
     set_selected_shop_service,
     update_shop_service,
+    delete_selected_shop_service,
 )
 
 from app.docs.common_responses import COMMON_ERROR_RESPONSES
@@ -73,6 +74,9 @@ def update_shop(
     summary="선택한 샵 설정",
     description="현재 선택한 샵을 설정합니다.",
     status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
 )
 def select_shop(
     params: ShopSelect,
@@ -97,3 +101,19 @@ def get_selected_shop(
     current_user: User = Depends(get_current_user),
 ) -> Shop:
     return get_selected_shop_service(db=db, user=current_user)
+
+
+@router.delete(
+    "/selected",
+    summary="선택한 샵 삭제",
+    description="현재 선택된 샵을 삭제합니다.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def delete_selected_shop(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    return delete_selected_shop_service(user=current_user)

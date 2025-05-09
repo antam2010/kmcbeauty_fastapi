@@ -27,7 +27,7 @@ class CustomException(HTTPException):
         domain: str,
         code: str | None = None,
         detail: str | None = "빼애애애애액 놉지비 놉지비 놉놉 지비지비",
-        hint: str | None = "이대호님에게 문의",
+        hint: str | None = "힌트 없음",
     ):
         # 기본 메시지 및 코드 설정
         default_code, default_detail = DEFAULT_MESSAGES.get(

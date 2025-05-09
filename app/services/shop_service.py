@@ -14,7 +14,7 @@ from app.exceptions import CustomException
 from app.models.shop import Shop
 from app.models.user import User
 from app.schemas.shop import ShopCreate, ShopUpdate
-from app.utils.redis.shop import get_selected_shop_redis, set_selected_shop_redis
+from app.utils.redis.shop import get_selected_shop_redis, set_selected_shop_redis, clear_selected_shop_redis
 
 DOMAIN = "SHOP"
 
@@ -76,6 +76,26 @@ def set_selected_shop_service(db: Session, user: User, shop_id: int) -> None:
     except Exception as e:
         raise e
 
+# 샵 선택 삭제
+def delete_selected_shop_service(user: User) -> None:
+    try:
+        shop_id = get_selected_shop_redis(user.id)
+        if not shop_id:
+            raise CustomException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                domain=DOMAIN,
+                code="SHOP_NOT_SELECTED",
+            )
+
+        clear_selected_shop_redis(user.id)
+
+    except CustomException:
+        raise
+    except Exception as e:
+        logging.exception(f"선택 샵 삭제 중 오류 발생: {e}")
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+        )
 
 # 샵 선택 조회
 def get_selected_shop_service(db: Session, user: User) -> Shop:
