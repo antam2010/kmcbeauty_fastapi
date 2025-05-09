@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
+from fastapi_pagination import Page
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
@@ -14,12 +15,14 @@ from app.services.shop_service import (
     update_shop_service,
 )
 
+from app.docs.common_responses import COMMON_ERROR_RESPONSES
+
 router = APIRouter(prefix="/shops", tags=["Shop"])
 
 
 @router.get(
     "/",
-    response_model=list[ShopResponse],
+    response_model=Page[ShopResponse],
     summary="내 샵 목록 조회",
     description="로그인한 유저의 샵 목록을 조회합니다.",
     status_code=status.HTTP_200_OK,
@@ -27,7 +30,7 @@ router = APIRouter(prefix="/shops", tags=["Shop"])
 def get_my_shops(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> Page[ShopResponse]:
     return get_my_shops_service(db=db, user=current_user)
 
 
@@ -85,6 +88,9 @@ def select_shop(
     summary="선택한 샵 조회",
     description="현재 선택된 샵을 조회합니다.",
     status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
 )
 def get_selected_shop(
     db: Session = Depends(get_db),

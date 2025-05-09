@@ -2,6 +2,7 @@ import logging
 
 from fastapi import status
 from sqlalchemy.orm import Session
+from fastapi_pagination import Page
 
 from app.crud.shop_crud import (
     create_shop,
@@ -51,7 +52,7 @@ def update_shop_service(
 
 
 # 샵 목록 조회
-def get_my_shops_service(db: Session, user: User) -> list[Shop]:
+def get_my_shops_service(db: Session, user: User) -> Page[Shop]:
     try:
         return get_user_shops(db, user.id)
     except Exception as e:
