@@ -1,10 +1,6 @@
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
-
 
 def create_user(db: Session, user_data: dict) -> User:
     """
@@ -26,7 +22,8 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
 
 def update_user_db(db: Session, user: User, user_data: dict) -> User:
     for key, value in user_data.items():
-        setattr(user, key, value)
+        if hasattr(user, key):
+            setattr(user, key, value)
     db.commit()
     db.refresh(user)
     return user

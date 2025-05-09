@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
-from app.crud.user import create_user, get_user_by_email, update_user_db
+from app.crud.user import get_user_by_id, create_user, get_user_by_email, update_user_db
 from app.exceptions import CustomException
 from app.models.user import User
 from app.schemas.user import (
@@ -15,13 +15,22 @@ from app.schemas.user import (
     UserUpdate,
 )
 
+from app.utils.redis.user import clear_user_redis
+
 DOMAIN = "USER"
 
+ROLE_NAME_MAP = {
+    "ADMIN"  : "관리자",
+    "MASTER" : "원장",
+    "MANAGER": "매니저",
+}
 
 # 내 정보 조회
 def get_user_service(db: Session, current_user: User) -> UserResponse:
-    return current_user
 
+    user_response = UserResponse.model_validate(current_user)
+    user_response.role_name = ROLE_NAME_MAP.get(current_user.role, "Unknown")
+    return user_response
 
 # 회원 생성
 def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
@@ -46,8 +55,12 @@ def update_user_service(
     db: Session, user_update: UserUpdate, current_user: User
 ) -> UserResponse:
     try:
-        # 현재 로그인한 유저 정보 조회
-        user = get_user_service(db, current_user)
+        user = get_user_by_id(db, current_user.id)
+        if not user:
+            raise CustomException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                domain=DOMAIN
+            )
 
         user_data = user_update.model_dump(exclude_unset=True)
 
@@ -55,9 +68,21 @@ def update_user_service(
         if user_data.get("password"):
             user_data["password"] = hash_password(user_data["password"])
 
-        return update_user_db(db, user, user_data)
+        # 레디스 캐시 삭제
+        clear_user_redis(user.id)
+
+        # 사용자 정보 업데이트
+        updated_user = update_user_db(db, user, user_data)
+        user_response = UserResponse.model_validate(updated_user)
+        user_response.role_name = ROLE_NAME_MAP.get(updated_user.role, "Unknown")
+        return user_response
+
+        return result
+    
     except IntegrityError:
         raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
+    except CustomException as e:
+        raise e
     except Exception as e:
         logging.exception(f"Error updating user: {e}")
         raise CustomException(

@@ -9,9 +9,6 @@ def before_send(event, hint):
     env = os.getenv("APP_ENV", "local")
 
     if env in ["local", "debug"]:
-        print("Sentry event:", event)
-        print("Sentry hint:", hint)
-        # return event  # 개발 중에도 전송 확인하려면 유지
         return None  # 완전히 차단하고 싶으면 이렇게
 
     return event

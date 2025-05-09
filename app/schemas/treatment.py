@@ -7,6 +7,9 @@ from app.enum.treatment_status import TreatmentStatus
 from app.schemas.base import BaseResponseModel
 from app.schemas.phonebook import PhonebookResponse
 
+# 참조
+from .treatment_menu import TreatmentMenuDetailResponse
+
 
 # =========================
 # 필터 요청 스키마
