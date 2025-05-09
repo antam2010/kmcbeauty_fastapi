@@ -76,8 +76,6 @@ def update_user_service(
         user_response = UserResponse.model_validate(updated_user)
         user_response.role_name = ROLE_NAME_MAP.get(updated_user.role, "Unknown")
         return user_response
-
-        return result
     
     except IntegrityError:
         raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
