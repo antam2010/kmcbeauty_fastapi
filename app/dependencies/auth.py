@@ -13,9 +13,6 @@ from app.models.user import User
 from app.utils.redis.user import get_user_redis, set_user_redis
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-credentials_exception = CustomException(
-    status_code=status.HTTP_401_UNAUTHORIZED, domain="AUTH"
-)
 
 
 def get_current_user(
@@ -25,10 +22,27 @@ def get_current_user(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
         if user_id is None:
-            raise credentials_exception
+            raise CustomException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                domain="AUTH",
+                hint="토큰 정보에 사용자 ID가 없습니다.",
+            )
+
     except JWTError as e:
         logging.exception("JWTError: %s", e)
-        raise credentials_exception
+        raise CustomException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            domain="AUTH",
+            hint="토큰 정보가 유효하지 않습니다.",
+        )
+
+    except Exception as e:
+        logging.exception("Exception: %s", e)
+        CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain="AUTH",
+            hint="서버 오류입니다.",
+        )
 
     user_id = int(user_id)
 
@@ -43,7 +57,11 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         logging.exception("User not found: %s", user_id)
-        raise credentials_exception
+        raise CustomException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            domain="AUTH",
+            hint="사용자를 찾을 수 없습니다.",
+        )
 
     # Sentry에 사용자 정보 설정
     set_user({"id": user.id, "email": user.email})

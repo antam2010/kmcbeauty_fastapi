@@ -47,8 +47,7 @@ class ShopResponse(ShopBase):
     model_config = {"from_attributes": True}
 
 
-
-# 샵 선택 요청 파라미터 
+# 샵 선택 요청 파라미터
 # version: 1.0
 class ShopSelect(BaseResponseModel):
     shop_id: int = Field(..., description="샵 ID")

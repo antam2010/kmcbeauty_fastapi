@@ -1,22 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
 from fastapi_pagination import Page
+from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
+from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.shop import Shop
 from app.models.user import User
-from app.schemas.shop import ShopCreate, ShopResponse, ShopUpdate, ShopSelect
+from app.schemas.shop import ShopCreate, ShopResponse, ShopSelect, ShopUpdate
 from app.services.shop_service import (
     create_shop_service,
+    delete_selected_shop_service,
     get_my_shops_service,
     get_selected_shop_service,
     set_selected_shop_service,
     update_shop_service,
-    delete_selected_shop_service,
 )
-
-from app.docs.common_responses import COMMON_ERROR_RESPONSES
 
 router = APIRouter(prefix="/shops", tags=["Shop"])
 
@@ -66,6 +65,7 @@ def update_shop(
     return update_shop_service(
         db=db, user=current_user, shop_id=shop_id, shop_data=shop_data
     )
+
 
 ## 선택한 샵 등록 ##
 ## version 1.0.0 ##

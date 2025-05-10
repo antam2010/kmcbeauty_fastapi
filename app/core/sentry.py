@@ -14,7 +14,6 @@ def before_send(event, hint):
     return event
 
 
-
 def init_sentry(
     dsn: str,
     environment: str,

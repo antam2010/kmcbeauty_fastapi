@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 
+
 def create_user(db: Session, user_data: dict) -> User:
     """
     사용자 생성

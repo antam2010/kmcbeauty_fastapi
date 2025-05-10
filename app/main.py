@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # 라이브러리
 from fastapi_pagination import add_pagination
+
+# Sentry
+from sentry_sdk import capture_exception
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
@@ -17,9 +20,6 @@ from app.api import auth, phonebook, shop, treatment, treatment_menu, user
 from app.core.config import APP_ENV, SENTRY_DSN
 from app.core.logging import setup_logging
 from app.core.sentry import init_sentry
-
-# Sentry
-from sentry_sdk import capture_exception
 
 # docs
 from app.docs.tags_metadata import tags_metadata

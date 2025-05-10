@@ -1,7 +1,6 @@
-from sqlalchemy.orm import Session
-
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy.orm import Session
 
 from app.models.shop import Shop
 from app.schemas.shop import ShopCreate, ShopUpdate
@@ -15,7 +14,6 @@ def get_shop_by_id(db: Session, shop_id: int) -> Shop | None:
 # 유저가 가진 특정 샵 조회
 def get_user_shop_by_id(db: Session, user_id: int, shop_id: int) -> Shop | None:
     return db.query(Shop).filter(Shop.id == shop_id, Shop.user_id == user_id).first()
-    
 
 
 # 유저가 가진 모든 샵 조회

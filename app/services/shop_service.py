@@ -1,8 +1,8 @@
 import logging
 
 from fastapi import status
-from sqlalchemy.orm import Session
 from fastapi_pagination import Page
+from sqlalchemy.orm import Session
 
 from app.crud.shop_crud import (
     create_shop,
@@ -14,7 +14,11 @@ from app.exceptions import CustomException
 from app.models.shop import Shop
 from app.models.user import User
 from app.schemas.shop import ShopCreate, ShopUpdate
-from app.utils.redis.shop import get_selected_shop_redis, set_selected_shop_redis, clear_selected_shop_redis
+from app.utils.redis.shop import (
+    clear_selected_shop_redis,
+    get_selected_shop_redis,
+    set_selected_shop_redis,
+)
 
 DOMAIN = "SHOP"
 
@@ -68,13 +72,14 @@ def set_selected_shop_service(db: Session, user: User, shop_id: int) -> None:
         shop = get_user_shop_by_id(db, user.id, shop_id)
         if not shop:
             raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
-        
+
         set_selected_shop_redis(user.id, shop.id)
 
     except CustomException:
         raise
     except Exception as e:
         raise e
+
 
 # 샵 선택 삭제
 def delete_selected_shop_service(user: User) -> None:
@@ -96,6 +101,7 @@ def delete_selected_shop_service(user: User) -> None:
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
         )
+
 
 # 샵 선택 조회
 def get_selected_shop_service(db: Session, user: User) -> Shop:
