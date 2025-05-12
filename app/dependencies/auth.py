@@ -20,7 +20,8 @@ def get_current_user(
 ) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = str | None = payload.get("sub")
+        
+        user_id: str | None = payload.get("sub")
         if not user_id:
             raise CustomException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
