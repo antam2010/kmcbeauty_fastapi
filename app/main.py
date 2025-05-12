@@ -15,6 +15,7 @@ from starlette.responses import Response
 
 # 추가할 라우터
 from app.api import auth, phonebook, shop, treatment, treatment_menu, user
+from app.docs import api_change
 
 # core
 from app.core.config import APP_ENV, SENTRY_DSN
@@ -110,6 +111,7 @@ app.include_router(phonebook.router)
 app.include_router(treatment.router)
 app.include_router(treatment_menu.router)
 app.include_router(shop.router)
+app.include_router(api_change.router)
 
 # FastAPI Pagination 설정
 add_pagination(app)
