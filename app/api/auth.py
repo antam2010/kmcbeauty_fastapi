@@ -1,12 +1,10 @@
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, status, Header
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.config import REFRESH_TOKEN_EXPIRE_DAYS
 from app.database import get_db
-from app.dependencies.auth import get_current_user
-from app.models.user import User
 from app.schemas.auth import LoginResponse
 from app.services.auth_service import (
     authenticate_user,
@@ -36,8 +34,9 @@ def login(
 
     # Swagger에서는 response_model 기준으로 문서화
     response_data = {
-        "access_token": access_token,
-        "token_type": "bearer",
+        "access_token" : access_token,
+        "refresh_token": refresh_token,
+        "token_type"   : "bearer",
     }
 
     # 실제 응답은 쿠키 포함하여 JSONResponse로 설정
@@ -65,6 +64,7 @@ def login(
 )
 def refresh_token_handler(
     request: Request,
+    header_token: str | None = Header(default=None, alias="X-Refresh-Token"),
     db: Session = Depends(get_db),
 ):
     new_access_token = refresh_access_token(request, db)

@@ -61,9 +61,13 @@ def generate_tokens(db: Session, user: User) -> tuple[str, str]:
     return access_token, refresh_token
 
 
-def refresh_access_token(request: Request, db: Session) -> str:
+def refresh_access_token(
+        request: Request, 
+        db: Session
+        ) -> str:
+    
     # 쿠키에서 리프레시 토큰 꺼냄
-    refresh_token = request.cookies.get("refresh_token")
+    refresh_token = request.headers.get("X-Refresh-Token") or request.cookies.get("refresh_token")
     if not refresh_token:
         raise CustomException(
             status_code=status.HTTP_401_UNAUTHORIZED,
