@@ -26,21 +26,20 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-):
+) -> JSONResponse:
     user = authenticate_user(db, form_data.username, form_data.password)
     access_token, refresh_token = generate_tokens(db, user)
 
     max_age = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 초 단위
 
     # Swagger에서는 response_model 기준으로 문서화
-    response_data = {
-        "access_token" : access_token,
-        "refresh_token": refresh_token,
-        "token_type"   : "bearer",
-    }
+    response_data = LoginResponse(
+        access_token  = access_token,
+        refresh_token = refresh_token,
+    )
 
     # 실제 응답은 쿠키 포함하여 JSONResponse로 설정
-    response = JSONResponse(content=response_data)
+    response = JSONResponse(content=response_data.model_dump())
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -66,12 +65,13 @@ def refresh_token_handler(
     request: Request,
     header_token: str | None = Header(default=None, alias="X-Refresh-Token"),
     db: Session = Depends(get_db),
-):
-    new_access_token = refresh_access_token(request, db)
-    return {
-        "access_token": new_access_token,
-        "token_type": "bearer",
-    }
+) -> LoginResponse:
+    new_access_token, refresh_token = refresh_access_token(request, db)
+
+    return LoginResponse(
+        access_token  = new_access_token,
+        refresh_token = refresh_token,
+    )
 
 
 @router.post(

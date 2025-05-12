@@ -64,7 +64,7 @@ def generate_tokens(db: Session, user: User) -> tuple[str, str]:
 def refresh_access_token(
         request: Request, 
         db: Session
-        ) -> str:
+        ) -> tuple[str, str]:
     
     # 쿠키에서 리프레시 토큰 꺼냄
     refresh_token = request.headers.get("X-Refresh-Token") or request.cookies.get("refresh_token")
@@ -142,7 +142,7 @@ def refresh_access_token(
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    return new_access_token
+    return new_access_token, refresh_token
 
 
 def logout_user(db: Session, raw_token: str) -> bool:
