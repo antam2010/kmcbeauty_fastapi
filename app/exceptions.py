@@ -1,3 +1,4 @@
+from sentry_sdk import capture_exception
 from fastapi import HTTPException
 from starlette import status
 
@@ -45,6 +46,10 @@ class CustomException(HTTPException):
 
         if hint:
             error_response["hint"] = hint
+        
+        if status_code >= 500:
+            capture_exception(Exception(f"{final_code}: {final_detail} ({hint})"))
+
 
         super().__init__(
             status_code=status_code,
