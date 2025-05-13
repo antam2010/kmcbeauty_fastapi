@@ -45,7 +45,7 @@ def login(
         value=refresh_token,
         httponly=True,
         secure=False,
-        samesite="None",
+        samesite="Lux",
         max_age=max_age,
     )
     return response
