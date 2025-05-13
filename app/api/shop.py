@@ -21,7 +21,7 @@ router = APIRouter(prefix="/shops", tags=["Shop"])
 
 
 @router.get(
-    "/",
+    "",
     response_model=Page[ShopResponse],
     summary="내 샵 목록 조회",
     description="로그인한 유저의 샵 목록을 조회합니다.",
@@ -35,7 +35,7 @@ def get_my_shops(
 
 
 @router.post(
-    "/",
+    "",
     response_model=ShopResponse,
     summary="샵 생성",
     description="새로운 샵을 생성합니다.",

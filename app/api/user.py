@@ -41,7 +41,7 @@ def read_user_handler(
 
 
 @router.post(
-    "/",
+    "",
     response_model=UserResponse,
     summary="사용자 생성",
     description="새로운 사용자를 생성합니다.",

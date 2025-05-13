@@ -25,7 +25,7 @@ router = APIRouter(prefix="/phonebooks", tags=["Phonebook"])
 
 # 전화번호부 목록 조회
 @router.get(
-    "/",
+    "",
     response_model=Page[PhonebookResponse],
     summary="전화번호부 목록 조회",
     description="전화번호부 목록을 조회합니다.",
@@ -64,7 +64,7 @@ def read_phonebook_handler(
 
 # 전화번호부 생성
 @router.post(
-    "/",
+    "",
     response_model=PhonebookResponse,
     summary="전화번호부 생성",
     description="새로운 전화번호부 항목을 생성합니다.",

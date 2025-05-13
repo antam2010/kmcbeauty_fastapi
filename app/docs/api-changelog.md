@@ -9,15 +9,28 @@
 
 ### 🛠 수정 (Changed)
 
-- [x] `POST /auth/refresh`  
+- [o] `POST /auth/refresh`  
   - **수정 내용 1**: `X-Refresh-Token` 헤더를 통해 리프레시 토큰 전달을 지원하도록 수정  
   - **수정 내용 2**: 응답에 `refresh_token` 필드 추가  
   - **프론트 영향**: 있음 → 리프레시 토큰을 `X-Refresh-Token` 헤더에 담아 요청해주세요.
 
-- [x] `POST /auth/login`  
+- [o] `POST /auth/login`  
   - **수정 내용**: 기존 `access_token` 외에 `refresh_token`도 응답에 포함되도록 수정  
   - **프론트 영향**: 있음 → 로그인 응답에서 `refresh_token`을 함께 받아 저장 또는 쿠키 처리해주세요.
 ---
+
+## 🔄 2025-05-13
+
+### 🛠 변경 사항 (Changed)
+
+- **[모든 API]**
+  - **수정 내용**: 모든 API endpoint의 마지막 `/`를 제거했습니다.  
+    예시: `/phonebook/` → `/phonebook`
+  - **프론트엔드 영향**: **있음**  
+    - 프론트에서 사용하는 모든 API 요청 경로를 변경된 endpoint에 맞게 수정해주세요.  
+    - 변경하지 않으면, **도메인이 다른 경우 `307 Temporary Redirect`가 발생**하며 브라우저에서 요청이 실패할 수 있습니다.
+---
+
 
 ## 🧾 예시 복붙용 템플릿 (아래 내용만 복사해서 위에 붙여 사용)
 

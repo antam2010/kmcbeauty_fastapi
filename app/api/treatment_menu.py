@@ -27,7 +27,7 @@ router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
 
 # 시술 메뉴 조회
 @router.get(
-    "/",
+    "",
     response_model=Page[TreatmentMenuResponse],
     summary="시술 메뉴 목록 조회",
     description="시술 메뉴 목록을 조회합니다.",
@@ -47,7 +47,7 @@ def get_menus(
 
 # 시술 메뉴 생성
 @router.post(
-    "/",
+    "",
     response_model=TreatmentMenuCreateResponse,
     summary="시술 메뉴 생성",
     description="시술 메뉴를 생성합니다.",
