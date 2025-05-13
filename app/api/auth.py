@@ -43,9 +43,9 @@ def login(
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
-        httponly=False,
+        httponly=True,
         secure=False,
-        samesite="None",
+        samesite="Lax",
         max_age=max_age,
     )
     return response
