@@ -68,6 +68,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://kmc2.daeho2.shop",
+        "https://kmc2.daeho2.shop",
         "http://localhost:5173",
         "http://localhost:8000",
         "http://localhost:3000",
