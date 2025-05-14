@@ -31,6 +31,17 @@
     - 변경하지 않으면, **도메인이 다른 경우 `307 Temporary Redirect`가 발생**하며 브라우저에서 요청이 실패할 수 있습니다.
 ---
 
+## 🔄 2025-05-14
+
+### 🛠 변경 사항 (Changed)
+
+### ✨ 추가 (Added)
+- [o] `GET /phonebooks/groups`
+  - 설명: 전화번호부에서 `group_name` 기준으로 그룹화된 리스트를 반환하는 API 추가
+  - 파라미터: `with_items`
+  - 파라미터 설명: `with_items=true`일 경우 각 그룹별 전화번호 목록도 함께 반환되어 문자 발송 등 기능에 활용 가능
+  - 프론트 영향: 있음 → 문자 전송 등 그룹별 고객 리스트 활용 시 연동 필요
+---
 
 ## 🧾 예시 복붙용 템플릿 (아래 내용만 복사해서 위에 붙여 사용)
 
@@ -38,17 +49,17 @@
 ## 🔄 2025-05-09
 
 ### ✨ 추가 (Added)
-- [x] `GET /user/search`
+- [o] `GET /user/search`
   - 설명: 사용자 검색 API 추가
   - 파라미터: `keyword`, `page`, `size`
   - 프론트 영향: 있음 → 리스트 화면 연동 필요
 
 ### 🛠 수정 (Changed)
-- [x] `POST /auth/login`
+- [o] `POST /auth/login`
   - 수정 내용: 응답에 `user_type` 필드 추가됨
   - 프론트 영향: 있음 → 로그인 후 홈 리디렉션 분기 처리 필요
 
 ### ❌ 삭제 예정 (Deprecated)
-- [x] `GET /user/check`
+- [o] `GET /user/check`
   - 이유: 중복 API 존재 → `/user/exists`로 통합됨
   - 제거 예정일: 2025-05-31
