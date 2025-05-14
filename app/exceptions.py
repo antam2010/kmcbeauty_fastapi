@@ -1,5 +1,5 @@
-from sentry_sdk import capture_exception
 from fastapi import HTTPException
+from sentry_sdk import capture_exception
 from starlette import status
 
 # 기본 메시지 매핑
@@ -29,6 +29,7 @@ class CustomException(HTTPException):
         code: str | None = None,
         detail: str | None = "빼애애애애액 놉지비 놉지비 놉놉 지비지비",
         hint: str | None = "힌트 없음",
+        exception: Exception | None = None,
     ):
         # 기본 메시지 및 코드 설정
         default_code, default_detail = DEFAULT_MESSAGES.get(
@@ -46,10 +47,14 @@ class CustomException(HTTPException):
 
         if hint:
             error_response["hint"] = hint
-        
-        if status_code >= 500:
-            capture_exception(Exception(f"{final_code}: {final_detail} ({hint})"))
 
+        if exception:
+            error_response["exception"] = str(exception)
+
+        if status_code >= 500:
+            capture_exception(
+                exception or Exception(f"{final_code}: {final_detail} ({hint})")
+            )
 
         super().__init__(
             status_code=status_code,

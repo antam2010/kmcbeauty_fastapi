@@ -15,12 +15,12 @@ from starlette.responses import Response
 
 # 추가할 라우터
 from app.api import auth, phonebook, shop, treatment, treatment_menu, user
-from app.docs import api_change
 
 # core
 from app.core.config import APP_ENV, SENTRY_DSN
 from app.core.logging import setup_logging
 from app.core.sentry import init_sentry
+from app.docs import api_change
 
 # docs
 from app.docs.tags_metadata import tags_metadata

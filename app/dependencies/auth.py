@@ -2,11 +2,10 @@ import logging
 
 from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
 from sentry_sdk import set_user
 from sqlalchemy.orm import Session
 
-from app.core.config import ALGORITHM, SECRET_KEY
+from app.core.security import TokenDecodeError, decode_jwt_token
 from app.database import get_db
 from app.exceptions import CustomException
 from app.models.user import User
@@ -15,35 +14,24 @@ from app.utils.redis.user import get_user_redis, set_user_redis
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        
-        user_id: str | None = payload.get("sub")
-        if not user_id:
-            raise CustomException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                domain="AUTH",
-                hint="토큰 정보에 사용자 ID가 없습니다.",
-            )
-        
-    except JWTError as e:
-        logging.exception("JWTError: %s", e)
+        payload = decode_jwt_token(token)
+    except TokenDecodeError as e:
         raise CustomException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             domain="AUTH",
-            hint="토큰 정보가 유효하지 않습니다.",
+            hint=str(e),
         )
 
-    except Exception as e:
-        logging.exception("Exception: %s", e)
+    user_id: str | None = payload.get("sub")
+    if not user_id:
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             domain="AUTH",
-            hint="서버 오류입니다.",
+            hint="토큰 정보에 사용자 ID가 없습니다.",
         )
 
     user_id = int(user_id)

@@ -1,9 +1,11 @@
-from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
-import markdown
 import os
 
+import markdown
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
+
 router = APIRouter()
+
 
 @router.get("/changelog", response_class=HTMLResponse)
 def get_api_changelog():

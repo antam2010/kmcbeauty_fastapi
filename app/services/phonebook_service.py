@@ -56,21 +56,29 @@ def create_phonebook_service(
         # 전화번호부 중복 체크
         existing = get_phonebook_by_phone_number(db, data.phone_number, current_shop.id)
         if existing:
-            raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
-
+            raise CustomException(
+                status_code=status.HTTP_409_CONFLICT,
+                domain=DOMAIN,
+                hint="전화번호 중복 확인하쇼.",
+            )
         phonebook = create_phonebook(db, data, current_shop.id)
         db.commit()
+    except CustomException:
+        db.rollback()
+        raise
     except SQLAlchemyError as e:
         db.rollback()
-        logging.exception(f"SQLAlchemyError: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+            exception=e,
         )
     except Exception as e:
         db.rollback()
-        logging.exception(f"Unexpected error: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+            exception=e,
         )
     db.refresh(phonebook)
     return phonebook

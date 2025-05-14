@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, status, Header
+from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -34,8 +34,8 @@ def login(
 
     # Swagger에서는 response_model 기준으로 문서화
     response_data = LoginResponse(
-        access_token  = access_token,
-        refresh_token = refresh_token,
+        access_token=access_token,
+        refresh_token=refresh_token,
     )
 
     # 실제 응답은 쿠키 포함하여 JSONResponse로 설정
@@ -69,8 +69,8 @@ def refresh_token_handler(
     new_access_token, refresh_token = refresh_access_token(request, db)
 
     return LoginResponse(
-        access_token  = new_access_token,
-        refresh_token = refresh_token,
+        access_token=new_access_token,
+        refresh_token=refresh_token,
     )
 
 
