@@ -5,12 +5,16 @@ from fastapi_pagination import Page
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from collections import defaultdict
+
 from app.crud.phonebook_crud import (
     create_phonebook,
     get_phonebook_by_id,
     get_phonebook_by_phone_number,
     get_phonebooks_by_user,
     update_phonebook,
+    get_group_counts_by_groupname,
+    get_all_phonebooks_by_shop
 )
 from app.exceptions import CustomException
 from app.models.phonebook import Phonebook
@@ -20,6 +24,7 @@ from app.schemas.phonebook import (
     PhonebookFilter,
     PhonebookResponse,
     PhonebookUpdate,
+    PhonebookGroupedByGroupnameResponse,
 )
 
 DOMAIN = "PHONEBOOK"
@@ -140,3 +145,37 @@ def delete_phonebook_service(db: Session, phonebook_id: int, current_shop: Shop)
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
         )
+
+def get_grouped_by_groupname_service(
+    db: Session, current_shop: Shop, with_items: bool
+) -> list[PhonebookGroupedByGroupnameResponse]:
+    
+    # 그룹별 count만 조회
+    group_data = get_group_counts_by_groupname(db, current_shop.id)
+
+    group_map: dict[str | None, list[PhonebookResponse]] = defaultdict(list)
+
+    if with_items:
+        # 한 번에 전체 phonebook 가져옴 (deleted 제외)
+        all_items = get_all_phonebooks_by_shop(db, current_shop.id)
+
+        for item in all_items:
+            key = item.group_name
+            group_map[key].append(PhonebookResponse.model_validate(item))
+
+    result = []
+    for group_name, count in group_data:
+        items = group_map[group_name] if with_items else []
+
+        result.append(
+            PhonebookGroupedByGroupnameResponse(
+                group_name=group_name,
+                count=count,
+                items=items,
+            )
+        )
+
+    return result
+
+
+

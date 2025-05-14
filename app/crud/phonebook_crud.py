@@ -1,7 +1,8 @@
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import or_
+from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from app.models.phonebook import Phonebook
 from app.schemas.phonebook import PhonebookCreate, PhonebookFilter, PhonebookUpdate
@@ -18,14 +19,21 @@ def get_phonebooks_by_user(
 
     if search:
         keyword = f"%{search}%"
+        search_filter = or_(
+            Phonebook.name.ilike(keyword),
+            Phonebook.phone_number.ilike(keyword),
+            Phonebook.group_name.ilike(keyword),
+            Phonebook.memo.ilike(keyword),
+        )
         query = query.filter(
-            or_(
-                Phonebook.name.ilike(keyword),
-                Phonebook.phone_number.ilike(keyword),
-                Phonebook.group_name.ilike(keyword),
-                Phonebook.memo.ilike(keyword),
+            and_(
+                search_filter,
+                Phonebook.deleted_at.is_(None)
             )
         )
+    else:
+        query = query.filter(Phonebook.deleted_at.is_(None))
+
     query.order_by(Phonebook.id.desc())
 
     return paginate(query)
@@ -78,3 +86,36 @@ def get_phonebook_by_phone_number(
         .first()
     )
     return phonebook
+
+# 전화번호부 삭제
+def delete_phonebook(
+    db: Session, phonebook: Phonebook, shop_id: int
+) -> Phonebook:
+    phonebook.deleted_at = datetime.now(timezone.utc)
+    phonebook.shop_id = shop_id
+    return phonebook
+
+
+# 전화번호부 그룹별 개수 조회
+def get_group_counts_by_groupname(db: Session, shop_id: int) -> dict[str, int]:
+    return (
+        db.query(Phonebook.group_name, func.count(Phonebook.id))
+        .filter(
+            Phonebook.shop_id == shop_id,
+            Phonebook.deleted_at.is_(None),
+        )
+        .group_by(Phonebook.group_name)
+        .all()
+    )
+
+# 전화번호부 가게별 전체 조회
+def get_all_phonebooks_by_shop(db: Session, shop_id: int) -> list[Phonebook]:
+    return (
+        db.query(Phonebook)
+        .filter(
+            Phonebook.shop_id == shop_id,
+            Phonebook.deleted_at.is_(None),
+        )
+        .all()
+    )
+

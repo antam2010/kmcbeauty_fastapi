@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,7 @@ from app.schemas.phonebook import (
     PhonebookFilter,
     PhonebookResponse,
     PhonebookUpdate,
+    PhonebookGroupedByGroupnameResponse,
 )
 from app.services.phonebook_service import (
     create_phonebook_service,
@@ -18,6 +19,7 @@ from app.services.phonebook_service import (
     get_phonebook_list_service,
     get_phonebook_service,
     update_phonebook_service,
+    get_grouped_by_groupname_service
 )
 
 router = APIRouter(prefix="/phonebooks", tags=["Phonebook"])
@@ -39,6 +41,26 @@ def list_phonebook(
     return get_phonebook_list_service(
         db,
         params=params,
+        current_shop=current_shop,
+    )
+
+
+# 전화번호부 그룹 목록
+@router.get(
+    "/groups",
+    response_model=list[PhonebookGroupedByGroupnameResponse],
+    summary="전화번호부 그룹 목록 조회",
+    description="전화번호부 그룹 목록을 조회합니다.",
+    status_code=status.HTTP_200_OK,
+)
+def list_groups_by_group_name(
+    db: Session = Depends(get_db),
+    current_shop: User = Depends(get_current_shop),
+    with_items: bool = Query(False, description="전화번호부 항목 포함 여부"),
+) -> list[PhonebookGroupedByGroupnameResponse]:
+    return get_grouped_by_groupname_service(
+        db,
+        with_items=with_items,
         current_shop=current_shop,
     )
 

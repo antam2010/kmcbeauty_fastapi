@@ -1,4 +1,12 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Index,
+    UniqueConstraint
+)
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
@@ -9,7 +17,8 @@ from app.models.mixin.timestamp import TimestampMixin
 class Phonebook(Base, SoftDeleteMixin, TimestampMixin):
     __tablename__ = "phonebook"
 
-    id = Column(Integer, primary_key=True, index=True, comment="전화번호 ID")
+    id = Column(Integer, primary_key=True, comment="전화번호 ID")
+
     shop_id = Column(
         Integer,
         ForeignKey("shop.id", ondelete="CASCADE"),
@@ -27,3 +36,14 @@ class Phonebook(Base, SoftDeleteMixin, TimestampMixin):
     treatments = relationship(
         "Treatment", back_populates="phonebook", cascade="all, delete-orphan"
     )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "shop_id", "phone_number", "deleted_at",
+            name="uq_shop_phone_deleted"
+        ),
+        Index("idx_shop_deleted_group", "shop_id", "deleted_at", "group_name"),
+        Index("idx_shop_deleted_name", "shop_id", "deleted_at", "name"),
+        Index("idx_shop_deleted_phone", "shop_id", "deleted_at", "phone_number"),
+    )
+

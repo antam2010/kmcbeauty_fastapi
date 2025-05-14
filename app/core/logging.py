@@ -13,14 +13,10 @@ def setup_logging(app_env: str):
     """
 
     # 1) 기본 로깅 레벨 및 파일명 설정
-    log_level = logging.INFO
-    log_file = "logs/app.log"
-    sql_log_level = logging.INFO
-
     if app_env == "debug":
-        log_level = logging.DEBUG
+        log_level = logging.INFO
         log_file = "logs/debug.log"
-        sql_log_level = logging.ERROR
+        sql_log_level = logging.INFO
     elif app_env == "stage":
         log_level = logging.INFO
         log_file = "logs/stage.log"
@@ -30,10 +26,11 @@ def setup_logging(app_env: str):
         log_file = "logs/prod.log"
         sql_log_level = logging.ERROR
     elif app_env == "local":
-        log_level = logging.DEBUG
+        log_level = logging.INFO
         log_file = "logs/local.log"
-        sql_log_level = logging.DEBUG
-
+        sql_log_level = logging.INFO
+    else:
+        raise ValueError("Invalid app_env. Choose from: local, debug, stage, production.")
     # 2) 로그 디렉토리 생성
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
