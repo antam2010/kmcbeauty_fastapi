@@ -1,6 +1,7 @@
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 
 from app.models.treatment_menu import TreatmentMenu
 from app.models.treatment_menu_detail import TreatmentMenuDetail
@@ -47,7 +48,12 @@ def get_treatment_menus_by_user(
     )
 
     if search:
-        query = query.filter(TreatmentMenu.name.ilike(f"%{search}%"))
+        query = query.filter(or_(
+            TreatmentMenu.name.ilike(f"%{search}%"),
+            TreatmentMenu.details.any(
+                TreatmentMenuDetail.name.ilike(f"%{search}%")
+            ),
+        ))
 
     query.order_by(TreatmentMenu.id.desc())
 
