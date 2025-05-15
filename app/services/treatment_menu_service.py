@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from fastapi import status
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.crud.treatment_menu import (
     create_treatment_menu,
@@ -79,6 +80,14 @@ def create_treatment_menu_service(
         db.commit()
         db.refresh(menu)
 
+    except IntegrityError as e:
+        db.rollback()
+        raise CustomException(
+            status_code=status.HTTP_409_CONFLICT,
+            domain=DOMAIN,
+            hint="이미 존재하는 시술 메뉴입니다.",
+            exception=e,
+        )
     except CustomException as e:
         db.rollback()
         raise e
@@ -89,6 +98,7 @@ def create_treatment_menu_service(
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
+            exception=e,
         )
 
     return TreatmentMenuCreateResponse.model_validate(menu)

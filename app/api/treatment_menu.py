@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, status
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
+from app.docs.common_responses import COMMON_ERROR_RESPONSES
+
 from app.database import get_db
 from app.dependencies.shop import get_current_shop
 from app.models.user import User
@@ -52,6 +54,10 @@ def get_menus(
     summary="시술 메뉴 생성",
     description="시술 메뉴를 생성합니다.",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+        status.HTTP_409_CONFLICT: COMMON_ERROR_RESPONSES[status.HTTP_409_CONFLICT],
+    },
 )
 def create_menu(
     params: TreatmentMenuCreate,
