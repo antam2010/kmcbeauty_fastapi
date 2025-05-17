@@ -68,6 +68,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://kmc2.daeho2.shop",
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "http://localhost:3000",
         "https://bueafit.vercel.app",
     ],  # 모든 도메인 허용 (보안 강화하려면 특정 도메인만 허용)
     allow_credentials=True,  # 쿠키 허용
