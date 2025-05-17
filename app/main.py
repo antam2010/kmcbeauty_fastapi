@@ -99,6 +99,23 @@ async def error_logger(
     return response
 
 
+@app.middleware("http")
+async def log_request_info(request: Request, call_next):
+    client_ip = request.client.host
+    host_header = request.headers.get("host")
+    user_agent = request.headers.get("user-agent")
+
+    logging.info(
+        f"[REQUEST] {client_ip} "
+        f"{request.method} {request.url.path} "
+        f"Host: {host_header} "
+        f"User-Agent: {user_agent}"
+    )
+
+    response = await call_next(request)
+    return response
+
+
 # 헬스체크 엔드포인트 (서버 상태 확인)
 @app.get("/health", tags=["System"])
 async def health_check():
