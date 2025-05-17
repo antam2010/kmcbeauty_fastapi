@@ -101,15 +101,16 @@ async def error_logger(
 
 @app.middleware("http")
 async def log_request_info(request: Request, call_next):
+    forwarded_for = request.headers.get("x-forwarded-for", "")
+    real_ip = request.headers.get("x-real-ip", "")
     client_ip = request.client.host
-    host_header = request.headers.get("host")
-    user_agent = request.headers.get("user-agent")
+    host = request.headers.get("host", "")
+    ua = request.headers.get("user-agent", "")
+    path = request.url.path
 
     logging.info(
-        f"[REQUEST] {client_ip} "
-        f"{request.method} {request.url.path} "
-        f"Host: {host_header} "
-        f"User-Agent: {user_agent}"
+        f"[REQUEST] {forwarded_for} {real_ip} {client_ip} "
+        f"{request.method} {path} {host} {ua}"
     )
 
     response = await call_next(request)
