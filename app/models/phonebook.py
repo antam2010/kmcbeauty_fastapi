@@ -38,10 +38,6 @@ class Phonebook(Base, SoftDeleteMixin, TimestampMixin):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "shop_id", "phone_number", "deleted_at",
-            name="uq_shop_phone_deleted"
-        ),
         Index("idx_shop_deleted_group", "shop_id", "deleted_at", "group_name"),
         Index("idx_shop_deleted_name", "shop_id", "deleted_at", "name"),
         Index("idx_shop_deleted_phone", "shop_id", "deleted_at", "phone_number"),
