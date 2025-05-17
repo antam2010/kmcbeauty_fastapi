@@ -111,7 +111,7 @@ def get_selected_shop_service(db: Session, user: User) -> Shop:
             raise CustomException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 domain=DOMAIN,
-                code="SHOP_NOT_SELECTED",
+                code="NOT_SELECTED",
             )
 
         shop = get_user_shop_by_id(db, user.id, shop_id)
@@ -119,7 +119,6 @@ def get_selected_shop_service(db: Session, user: User) -> Shop:
             raise CustomException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 domain=DOMAIN,
-                code="SHOP_NOT_FOUND",
             )
         return shop
     except CustomException:
