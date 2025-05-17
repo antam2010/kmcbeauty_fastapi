@@ -44,8 +44,8 @@ def login(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,
-        samesite="Lax",
+        secure=True,
+        samesite="None", # Lax, Strict, None
         max_age=max_age,
     )
     return response
