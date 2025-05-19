@@ -155,6 +155,7 @@ def get_menu_detail(
     response_model=TreatmentMenuDetailResponse,
     summary="시술 메뉴 상세 생성",
     description="시술 메뉴 상세를 생성합니다.",
+    status_code=status.HTTP_201_CREATED,
 )
 def create_menu_detail(
     menu_id: int,
