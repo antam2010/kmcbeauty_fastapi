@@ -12,6 +12,7 @@ from app.crud.treatment_menu import (
     get_menu_by_id,
     get_treatment_menu_details_by_user,
     get_treatment_menus_by_user,
+    get_menu_detail_by_id
 )
 from app.exceptions import CustomException
 from app.models.shop import Shop
@@ -208,28 +209,91 @@ def create_treatment_menu_detail_service(
     current_shop: Shop,
     filters: TreatmentMenuDetailCreate,
     db: Session,
+    detail_id: int | None = None,
 ) -> TreatmentMenuDetail:
+    
+    try:
+        if detail_id:
+            # 시술 메뉴 상세 수정
+            menu_detail = get_menu_detail_by_id(
+                db=db,
+                menu_id=menu_id,
+                detail_id=detail_id,
+                shop_id=current_shop.id,
+            )
+            if not menu_detail:
+                raise CustomException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    domain=DOMAIN,
+                    hint="시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴이거나 삭제된 메뉴입니다.",
+                )
 
-    menu = db.query(TreatmentMenu).filter(TreatmentMenu.id == menu_id).first()
-    if not menu:
+            menu_detail.name         = filters.name
+            menu_detail.duration_min = filters.duration_min
+            menu_detail.base_price   = filters.base_price
+        else:
+            # 시술 메뉴 상세 생성
+            menu_detail = create_treatment_menu_detail(
+                db=db,
+                menu_id=menu_id,
+                name=filters.name,
+                duration_min=filters.duration_min,
+                base_price=filters.base_price,
+            )
+            db.add(menu_detail)
+
+        db.commit()
+        db.refresh(menu_detail)
+    
+    except CustomException as e:
+        db.rollback()
+        raise e
+    except Exception as e:
+        db.rollback()
+        logging.exception(f"SQLAlchemyError: {e}")
         raise CustomException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
+            exception=e,
+        )
+    return TreatmentMenuDetailResponse.model_validate(menu_detail)
+
+# 시술 메뉴 상세 항목 삭제 서비스
+def delete_treatment_menu_detail_service(
+    db: Session,
+    current_shop: Shop,
+    menu_id: int,
+    detail_id: int,
+) -> None:
+    """
+    시술 메뉴 상세 삭제 서비스
+    """
+    try:
+        menu_detail = get_menu_detail_by_id(
+            db=db,
+            menu_id=menu_id,
+            detail_id=detail_id,
+            shop_id=current_shop.id,
         )
 
-    if menu.shop_id != current_shop.id:
+        if not menu_detail:
+            raise CustomException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                domain=DOMAIN,
+                hint="삭제할 시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴 이거나 삭제된 메뉴입니다.",
+            )
+
+        menu_detail.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+
+    except CustomException as e:
+        db.rollback()
+        raise e
+
+    except Exception as e:
+        db.rollback()
+        logging.exception(f"Treatment menu 상세 삭제 중 오류: {e}")
         raise CustomException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
         )
-
-    if menu.deleted_at:
-        raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
-
-    return create_treatment_menu_detail(
-        db=db,
-        menu_id=menu_id,
-        name=filters.name,
-        duration_min=filters.duration_min,
-        base_price=filters.base_price,
-    )

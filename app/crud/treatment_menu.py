@@ -92,3 +92,20 @@ def get_menu_by_id(
         query = query.filter(TreatmentMenu.deleted_at.is_(None))
 
     return query.first()
+
+
+def get_menu_detail_by_id(
+    db: Session,
+    menu_id: int,
+    detail_id: int,
+    shop_id: int,
+) -> TreatmentMenuDetail | None:
+    return (
+        db.query(TreatmentMenuDetail)
+        .filter(
+            TreatmentMenuDetail.id == detail_id,
+            TreatmentMenuDetail.menu_id == menu_id,
+            TreatmentMenuDetail.deleted_at.is_(None),
+        )
+        .first()
+)
