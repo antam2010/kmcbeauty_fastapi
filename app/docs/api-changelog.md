@@ -70,7 +70,7 @@
   - 파라미터: `menu_id`, `detail_id`
   - 프론트 영향: 있음 → 수정 기능 연동 필요
 
-### ❌ 삭제 (Deleted)
+### ✨ 추가 (Added)
 - [o] `DELETE /treatment-menus/{menu_id}/details/{detail_id}`
   - 설명: 시술 메뉴 상세 삭제 API 추가
   - 파라미터: `menu_id`, `detail_id`
