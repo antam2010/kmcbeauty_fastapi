@@ -8,7 +8,6 @@ from app.schemas.base import BaseResponseModel
 from app.schemas.phonebook import PhonebookResponse
 
 # 참조
-from .treatment_menu import TreatmentMenuDetailResponse
 
 
 # =========================
@@ -18,10 +17,10 @@ class TreatmentFilter(BaseResponseModel):
     start_date: date | None = Field(None, description="예약 시작일 (YYYY-MM-DD)")
     end_date: date | None = Field(None, description="예약 종료일 (YYYY-MM-DD)")
     status: TreatmentStatus | None = Field(
-        None, description="예약 상태 (예약, 대기, 완료, 취소)"
+        None, description="예약 상태 (예약, 대기, 완료, 취소)",
     )
     search: str | None = Field(
-        None, description="예약자 이름, 전화번호, 시술 항목 검색어"
+        None, description="예약자 이름, 전화번호, 시술 항목 검색어",
     )
     sort_by: str = Field(default="reserved_at", description="정렬 기준 필드명")
     sort_order: str = Field(default="desc", description="정렬 순서 (asc, desc)")
@@ -54,7 +53,7 @@ class TreatmentCreate(BaseResponseModel):
     finished_at: datetime | None = Field(None, description="시술 완료 일시")
     memo: str | None = Field(None, description="예약 메모")
     treatment_items: list[TreatmentItemCreate] = Field(
-        ..., description="시술 항목 리스트"
+        ..., description="시술 항목 리스트",
     )
 
     model_config = {"from_attributes": True}
@@ -68,7 +67,7 @@ class TreatmentResponse(BaseResponseModel):
     finished_at: datetime | None = Field(None, description="시술 완료 일시")
     memo: str | None = Field(None, description="예약 메모")
     treatment_items: list[TreatmentItemResponse] = Field(
-        ..., description="시술 항목 리스트"
+        ..., description="시술 항목 리스트",
     )
 
     model_config = {"from_attributes": True}
@@ -85,7 +84,7 @@ class TreatmentDetail(BaseResponseModel):
     status: TreatmentStatus = Field(..., description="예약 상태")
     finished_at: datetime | None = Field(None, description="시술 완료 일시")
     treatment_items: list[TreatmentItemResponse] = Field(
-        ..., description="시술 항목 리스트"
+        ..., description="시술 항목 리스트",
     )
     phonebook: PhonebookResponse = Field(..., description="예약자 정보")
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, func
+from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
@@ -24,11 +24,11 @@ class TreatmentItem(Base, TimestampMixin):
     )
 
     base_price = Column(
-        Integer, nullable=False, server_default="0", comment="기본 가격"
+        Integer, nullable=False, server_default="0", comment="기본 가격",
     )
 
     duration_min = Column(
-        Integer, nullable=False, server_default="0", comment="소요 시간 (분)"
+        Integer, nullable=False, server_default="0", comment="소요 시간 (분)",
     )
 
     # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)

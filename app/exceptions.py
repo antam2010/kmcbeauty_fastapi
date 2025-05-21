@@ -33,7 +33,7 @@ class CustomException(HTTPException):
     ):
         # 기본 메시지 및 코드 설정
         default_code, default_detail = DEFAULT_MESSAGES.get(
-            status_code, ("UNKNOWN_ERROR", "알 수 없는 오류입니다.")
+            status_code, ("UNKNOWN_ERROR", "알 수 없는 오류입니다."),
         )
 
         final_code = f"{domain.upper()}_{code or default_code}"
@@ -53,7 +53,7 @@ class CustomException(HTTPException):
 
         if status_code >= 500:
             capture_exception(
-                exception or Exception(f"{final_code}: {final_detail} ({hint})")
+                exception or Exception(f"{final_code}: {final_detail} ({hint})"),
             )
 
         super().__init__(

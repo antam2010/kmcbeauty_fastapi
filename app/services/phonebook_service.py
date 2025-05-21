@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from fastapi import status
 from fastapi_pagination import Page
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.crud.phonebook_crud import (
@@ -41,7 +41,7 @@ def get_phonebook_list_service(
 
 # 전화번호부 상세 조회 서비스
 def get_phonebook_service(
-    db: Session, current_shop: Shop, phonebook_id: int
+    db: Session, current_shop: Shop, phonebook_id: int,
 ) -> PhonebookResponse:
     phonebook = get_phonebook_by_id(db, phonebook_id, current_shop.id)
     if not phonebook:
@@ -90,7 +90,7 @@ def create_phonebook_service(
 
 # 전화번호부 수정
 def update_phonebook_service(
-    db: Session, phonebook_id: int, data: PhonebookUpdate, current_shop: Shop
+    db: Session, phonebook_id: int, data: PhonebookUpdate, current_shop: Shop,
 ) -> Phonebook:
 
     existing = get_phonebook_by_phone_number(db, data.phone_number, current_shop.id)
@@ -108,13 +108,13 @@ def update_phonebook_service(
         db.rollback()
         logging.exception(f"SQLAlchemyError: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
     except Exception as e:
         db.rollback()
         logging.exception(f"Unexpected error: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
     db.refresh(phonebook)
     return phonebook
@@ -147,7 +147,7 @@ def delete_phonebook_service(db: Session, phonebook_id: int, current_shop: Shop)
 
 
 def get_grouped_by_groupname_service(
-    db: Session, current_shop: Shop, with_items: bool
+    db: Session, current_shop: Shop, with_items: bool,
 ) -> list[PhonebookGroupedByGroupnameResponse]:
 
     # 그룹별 count만 조회
@@ -172,7 +172,7 @@ def get_grouped_by_groupname_service(
                 group_name=group_name,
                 count=count,
                 items=items,
-            )
+            ),
         )
 
     return result

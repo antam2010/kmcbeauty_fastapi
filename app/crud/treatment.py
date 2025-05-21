@@ -1,6 +1,6 @@
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import func, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.phonebook import Phonebook
@@ -25,7 +25,7 @@ def create_treatment_item(db: Session, treatment_item: TreatmentItem) -> Treatme
 
 # 시술 예약 목록 조회
 def get_treatment_list(
-    db: Session, shop_id: int, filters: TreatmentFilter
+    db: Session, shop_id: int, filters: TreatmentFilter,
 ) -> Page[Treatment]:
     query = (
         db.query(Treatment)
@@ -57,7 +57,7 @@ def get_treatment_list(
             or_(
                 Phonebook.name.ilike(keyword),
                 Phonebook.phone_number.ilike(keyword),
-            )
+            ),
         )
 
     # 정렬

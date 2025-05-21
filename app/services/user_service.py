@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import HTTPException, status
+from fastapi import status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -50,15 +50,15 @@ def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
         raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
     except Exception as e:
         db.rollback()
-        logging.error(f"Error creating user: {e}")
+        logging.exception(f"Error creating user: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
 
 
 # 회원 수정
 def update_user_service(
-    db: Session, user_update: UserUpdate, current_user: User
+    db: Session, user_update: UserUpdate, current_user: User,
 ) -> UserResponse:
     try:
         user = get_user_by_id(db, current_user.id)
@@ -87,13 +87,12 @@ def update_user_service(
     except Exception as e:
         logging.exception(f"Error updating user: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
 
 
 def check_user_email_service(db: Session, email: str) -> UserEmailCheckResponse:
-    """
-    이메일 중복 체크 서비스
+    """이메일 중복 체크 서비스
     """
     exists = None
     message = None

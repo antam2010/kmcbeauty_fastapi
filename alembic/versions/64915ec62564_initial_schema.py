@@ -6,7 +6,7 @@ Create Date: 2025-04-16 10:51:05.395831
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 
@@ -14,9 +14,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "64915ec62564"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("email", sa.String(length=50), nullable=False, comment="유저 이메일"),
         sa.Column("name", sa.String(length=50), nullable=False, comment="유저 이름"),
         sa.Column(
-            "password", sa.String(length=255), nullable=False, comment="비밀번호"
+            "password", sa.String(length=255), nullable=False, comment="비밀번호",
         ),
         sa.Column("token", sa.String(length=255), nullable=True, comment="유저 토큰"),
         sa.Column(
@@ -102,11 +102,11 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False, comment="전화번호 ID"),
         sa.Column("shop_id", sa.Integer(), nullable=False, comment="샵 ID"),
         sa.Column(
-            "group_name", sa.String(length=100), nullable=True, comment="그룹명 (선택)"
+            "group_name", sa.String(length=100), nullable=True, comment="그룹명 (선택)",
         ),
         sa.Column("name", sa.String(length=100), nullable=False, comment="이름"),
         sa.Column(
-            "phone_number", sa.String(length=20), nullable=False, comment="전화번호"
+            "phone_number", sa.String(length=20), nullable=False, comment="전화번호",
         ),
         sa.Column("memo", sa.Text(), nullable=True, comment="메모"),
         sa.Column(
@@ -134,7 +134,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False, comment="시술 메뉴 대분류 ID"),
         sa.Column("shop_id", sa.Integer(), nullable=False, comment="샵 ID"),
         sa.Column(
-            "name", sa.String(length=255), nullable=False, comment="시술 대분류명"
+            "name", sa.String(length=255), nullable=False, comment="시술 대분류명",
         ),
         sa.Column(
             "created_at",
@@ -151,28 +151,28 @@ def upgrade() -> None:
             comment="수정일시",
         ),
         sa.Column(
-            "deleted_at", sa.DateTime(), nullable=True, comment="삭제일시 (soft delete)"
+            "deleted_at", sa.DateTime(), nullable=True, comment="삭제일시 (soft delete)",
         ),
         sa.ForeignKeyConstraint(["shop_id"], ["shop.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         comment="시술 메뉴 대분류 테이블",
     )
     op.create_index(
-        op.f("ix_treatment_menu_id"), "treatment_menu", ["id"], unique=False
+        op.f("ix_treatment_menu_id"), "treatment_menu", ["id"], unique=False,
     )
     op.create_table(
         "treatment",
         sa.Column("id", sa.Integer(), nullable=False, comment="시술 예약 ID"),
         sa.Column("shop_id", sa.Integer(), nullable=False, comment="샵 ID"),
         sa.Column(
-            "phonebook_id", sa.Integer(), nullable=False, comment="시술 대상 고객 ID"
+            "phonebook_id", sa.Integer(), nullable=False, comment="시술 대상 고객 ID",
         ),
         sa.Column("reserved_at", sa.DateTime(), nullable=False, comment="예약 일시"),
         sa.Column("memo", sa.Text(), nullable=True, comment="메모"),
         sa.Column(
             "status",
             sa.Enum(
-                "RESERVED", "VISITED", "CANCELLED", "NO_SHOW", name="treatment_status"
+                "RESERVED", "VISITED", "CANCELLED", "NO_SHOW", name="treatment_status",
             ),
             nullable=False,
             comment="예약 상태",
@@ -205,14 +205,14 @@ def upgrade() -> None:
         "treatment_menu_detail",
         sa.Column("id", sa.Integer(), nullable=False, comment="시술 상세 ID"),
         sa.Column(
-            "menu_id", sa.Integer(), nullable=False, comment="시술 메뉴 대분류 ID"
+            "menu_id", sa.Integer(), nullable=False, comment="시술 메뉴 대분류 ID",
         ),
         sa.Column("name", sa.String(length=255), nullable=False, comment="시술 항목명"),
         sa.Column(
-            "duration_min", sa.Integer(), nullable=False, comment="기본 시술 시간 (분)"
+            "duration_min", sa.Integer(), nullable=False, comment="기본 시술 시간 (분)",
         ),
         sa.Column(
-            "base_price", sa.Integer(), nullable=False, comment="기본 시술 가격 (원)"
+            "base_price", sa.Integer(), nullable=False, comment="기본 시술 가격 (원)",
         ),
         sa.Column(
             "created_at",
@@ -229,7 +229,7 @@ def upgrade() -> None:
             comment="수정일시",
         ),
         sa.Column(
-            "deleted_at", sa.DateTime(), nullable=True, comment="삭제일시 (soft delete)"
+            "deleted_at", sa.DateTime(), nullable=True, comment="삭제일시 (soft delete)",
         ),
         sa.ForeignKeyConstraint(["menu_id"], ["treatment_menu.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
@@ -246,7 +246,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False, comment="시술 항목 ID"),
         sa.Column("treatment_id", sa.Integer(), nullable=False, comment="시술 예약 ID"),
         sa.Column(
-            "menu_detail_id", sa.Integer(), nullable=True, comment="시술 상세 ID"
+            "menu_detail_id", sa.Integer(), nullable=True, comment="시술 상세 ID",
         ),
         sa.Column(
             "base_price",
@@ -270,14 +270,14 @@ def upgrade() -> None:
             comment="생성일시",
         ),
         sa.ForeignKeyConstraint(
-            ["menu_detail_id"], ["treatment_menu_detail.id"], ondelete="SET NULL"
+            ["menu_detail_id"], ["treatment_menu_detail.id"], ondelete="SET NULL",
         ),
         sa.ForeignKeyConstraint(["treatment_id"], ["treatment.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         comment="시술 항목 테이블",
     )
     op.create_index(
-        op.f("ix_treatment_item_id"), "treatment_item", ["id"], unique=False
+        op.f("ix_treatment_item_id"), "treatment_item", ["id"], unique=False,
     )
     # ### end Alembic commands ###
 
@@ -288,7 +288,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_treatment_item_id"), table_name="treatment_item")
     op.drop_table("treatment_item")
     op.drop_index(
-        op.f("ix_treatment_menu_detail_id"), table_name="treatment_menu_detail"
+        op.f("ix_treatment_menu_detail_id"), table_name="treatment_menu_detail",
     )
     op.drop_table("treatment_menu_detail")
     op.drop_index(op.f("ix_treatment_id"), table_name="treatment")

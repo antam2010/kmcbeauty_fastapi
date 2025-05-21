@@ -1,5 +1,4 @@
 from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint
-from sqlalchemy.orm import relationship
 
 from app.models.base import Base
 
@@ -25,5 +24,5 @@ class ShopUser(Base):
         comment="유저 ID",
     )
     is_primary_owner = Column(
-        Integer, nullable=False, default=0, comment="대표 원장 여부 (1=대표, 0=아님)"
+        Integer, nullable=False, default=0, comment="대표 원장 여부 (1=대표, 0=아님)",
     )

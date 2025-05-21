@@ -9,9 +9,9 @@ COMMON_ERROR_RESPONSES = {
                     "detail": {
                         "code": "{DOMAIN}_BAD_REQUEST",
                         "message": "요청이 잘못되었습니다.",
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     },
     status.HTTP_401_UNAUTHORIZED: {
@@ -22,9 +22,9 @@ COMMON_ERROR_RESPONSES = {
                     "detail": {
                         "code": "{DOMAIN}_UNAUTHORIZED",
                         "message": "인증이 필요합니다.",
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     },
     status.HTTP_403_FORBIDDEN: {
@@ -35,9 +35,9 @@ COMMON_ERROR_RESPONSES = {
                     "detail": {
                         "code": "{DOMAIN}_FORBIDDEN",
                         "message": "허용되지 않은 작업입니다.",
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     },
     status.HTTP_404_NOT_FOUND: {
@@ -48,9 +48,9 @@ COMMON_ERROR_RESPONSES = {
                     "detail": {
                         "code": "{DOMAIN}_NOT_FOUND",
                         "message": "요청한 리소스를 찾을 수 없습니다.",
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     },
     status.HTTP_409_CONFLICT: {
@@ -61,9 +61,9 @@ COMMON_ERROR_RESPONSES = {
                     "detail": {
                         "code": "{DOMAIN}_DUPLICATE",
                         "message": "이미 존재하는 리소스입니다.",
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     },
     status.HTTP_422_UNPROCESSABLE_ENTITY: {
@@ -74,9 +74,9 @@ COMMON_ERROR_RESPONSES = {
                     "detail": {
                         "code": "{DOMAIN}_VALIDATION_ERROR",
                         "message": "요청 데이터의 유효성 검사를 통과하지 못했습니다.",
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     },
     status.HTTP_500_INTERNAL_SERVER_ERROR: {
@@ -87,9 +87,9 @@ COMMON_ERROR_RESPONSES = {
                     "detail": {
                         "code": "{DOMAIN}_INTERNAL_ERROR",
                         "message": "서버 내부 오류가 발생했습니다.",
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     },
 }

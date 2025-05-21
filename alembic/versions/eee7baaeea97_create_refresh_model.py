@@ -6,7 +6,7 @@ Create Date: 2025-05-02 15:18:26.356925
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 
@@ -14,9 +14,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "eee7baaeea97"
-down_revision: Union[str, None] = "26c3cb6bca80"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "26c3cb6bca80"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -44,7 +44,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        op.f("ix_refresh_tokens_id"), "refresh_tokens", ["id"], unique=False
+        op.f("ix_refresh_tokens_id"), "refresh_tokens", ["id"], unique=False,
     )
 
 

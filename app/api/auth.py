@@ -96,7 +96,7 @@ def logout(request: Request) -> JSONResponse:
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
-            "message": "로그아웃 성공", 
+            "message": "로그아웃 성공",
             "token": token,
             "result": result,
         },

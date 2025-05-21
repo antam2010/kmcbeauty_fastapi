@@ -5,7 +5,6 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -34,7 +33,7 @@ class Phonebook(Base, SoftDeleteMixin, TimestampMixin):
     # 관계 정의
     shop = relationship("Shop", back_populates="phonebook_list")
     treatments = relationship(
-        "Treatment", back_populates="phonebook", cascade="all, delete-orphan"
+        "Treatment", back_populates="phonebook", cascade="all, delete-orphan",
     )
 
     __table_args__ = (

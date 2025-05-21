@@ -133,4 +133,3 @@ def delete_phonebook_handler(
     current_shop: User = Depends(get_current_shop),
 ):
     delete_phonebook_service(db, phonebook_id, current_shop)
-    return

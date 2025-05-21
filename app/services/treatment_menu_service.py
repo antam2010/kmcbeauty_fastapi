@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import status
 from fastapi_pagination import Page
@@ -34,11 +34,10 @@ def get_treatment_menus_service(
     current_shop: Shop,
     filters: TreatmentMenuFilter,
 ) -> Page[TreatmentMenu]:
-    """
-    시술 메뉴 목록 조회 서비스
+    """시술 메뉴 목록 조회 서비스
     """
     list = get_treatment_menus_by_user(
-        db=db, shop_id=current_shop.id, search=filters.search
+        db=db, shop_id=current_shop.id, search=filters.search,
     )
     return list
 
@@ -67,7 +66,7 @@ def create_treatment_menu_service(
                 )
 
             menu.name = params.name
-            menu.updated_at = datetime.now(timezone.utc)
+            menu.updated_at = datetime.now(UTC)
 
         else:
             # 시술 메뉴 생성
@@ -113,8 +112,7 @@ def delete_treatment_menu_service(
     current_shop: Shop,
     menu_id: int,
 ) -> None:
-    """
-    시술 메뉴 삭제 서비스
+    """시술 메뉴 삭제 서비스
     """
     try:
         menu = get_menu_by_id(
@@ -131,7 +129,7 @@ def delete_treatment_menu_service(
                 hint="삭제할 시술 메뉴를 찾을 수 없거나 다른 상점의 메뉴입니다.",
             )
 
-        menu.deleted_at = datetime.now(timezone.utc)
+        menu.deleted_at = datetime.now(UTC)
 
         db.commit()
 
@@ -154,8 +152,7 @@ def restore_treatment_menu_service(
     current_shop: Shop,
     menu_id: int,
 ) -> None:
-    """
-    시술 메뉴 복구 서비스
+    """시술 메뉴 복구 서비스
     """
     try:
         menu = get_menu_by_id(
@@ -266,8 +263,7 @@ def delete_treatment_menu_detail_service(
     menu_id: int,
     detail_id: int,
 ) -> None:
-    """
-    시술 메뉴 상세 삭제 서비스
+    """시술 메뉴 상세 삭제 서비스
     """
     try:
         menu_detail = get_menu_detail_by_id(
@@ -284,7 +280,7 @@ def delete_treatment_menu_detail_service(
                 hint="삭제할 시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴 이거나 삭제된 메뉴입니다.",
             )
 
-        menu_detail.deleted_at = datetime.now(timezone.utc)
+        menu_detail.deleted_at = datetime.now(UTC)
         db.commit()
 
     except CustomException as e:

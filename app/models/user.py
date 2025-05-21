@@ -1,6 +1,5 @@
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, Integer, String
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import Integer, String, func, text
 from sqlalchemy.orm import relationship
 
 from app.enum.role import UserRole

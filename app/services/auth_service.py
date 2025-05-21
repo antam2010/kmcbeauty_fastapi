@@ -54,7 +54,7 @@ def generate_tokens(user: User) -> LoginResponse:
 
 def refresh_access_token(db, request: Request) -> tuple[str, str]:
     raw_token = request.headers.get("X-Refresh-Token") or request.cookies.get(
-        "refresh_token"
+        "refresh_token",
     )
     if not raw_token:
         raise CustomException(
@@ -76,7 +76,7 @@ def refresh_access_token(db, request: Request) -> tuple[str, str]:
             hint="리프레시 토큰이 유효하지 않쇼",
             exception=e,
         )
-    
+
     # Redis에서 리프레시 토큰 확인
     saved_token = redis_client.get(f"auth:refresh:{user_id}")
     if not saved_token or saved_token != raw_token:
@@ -86,7 +86,7 @@ def refresh_access_token(db, request: Request) -> tuple[str, str]:
             detail="Refresh token is invalid or expired.",
             hint="리프레시 토큰이 레디스에 없거나 만료되었으니 로그인으로 보내도록",
         )
-    
+
     # 유저 정보 조회
     user = get_user_by_id(db, user_id)
     if not user:
@@ -95,7 +95,7 @@ def refresh_access_token(db, request: Request) -> tuple[str, str]:
             domain=DOMAIN,
             detail="User not found",
         )
-    
+
     # 엑세스 토큰, 리프레시 토큰 재발급
     new_access_token, new_refresh_token = generate_tokens(user)
     return new_access_token, new_refresh_token

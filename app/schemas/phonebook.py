@@ -22,7 +22,7 @@ class PhoneNumberValidatorMixin:
 # 전화번호부 생성 요청 스키마
 class PhonebookCreate(BaseResponseModel, PhoneNumberValidatorMixin):
     group_name: str | None = Field(
-        default=None, max_length=100, description="그룹 이름"
+        default=None, max_length=100, description="그룹 이름",
     )
     memo: str | None = Field(default=None, description="메모")
     name: str = Field(..., max_length=100, description="이름")
@@ -32,19 +32,19 @@ class PhonebookCreate(BaseResponseModel, PhoneNumberValidatorMixin):
 # 전화번호부 수정 요청 스키마
 class PhonebookUpdate(BaseResponseModel, PhoneNumberValidatorMixin):
     group_name: str | None = Field(
-        default=None, max_length=100, description="그룹 이름"
+        default=None, max_length=100, description="그룹 이름",
     )
     memo: str | None = Field(default=None, description="메모")
     name: str | None = Field(default=None, max_length=100, description="이름")
     phone_number: str | None = Field(
-        default=None, max_length=20, description="전화번호"
+        default=None, max_length=20, description="전화번호",
     )
 
 
 # 전화번호부 목록 요청 (필터링용)
 class PhonebookFilter(BaseResponseModel):
     search: str | None = Field(
-        default=None, description="검색어 (이름, 전화번호, 그룹명, 메모 등)"
+        default=None, description="검색어 (이름, 전화번호, 그룹명, 메모 등)",
     )
 
 

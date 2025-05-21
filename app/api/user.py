@@ -30,7 +30,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
     description="현재 로그인한 사용자의 정보를 조회합니다.",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND]
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
     },
 )
 def read_user_handler(
@@ -51,7 +51,7 @@ def read_user_handler(
     },
 )
 def create_user_handler(
-    user: UserCreate, db: Session = Depends(get_db)
+    user: UserCreate, db: Session = Depends(get_db),
 ) -> UserResponse:
     return create_user_service(db, user)
 
@@ -86,7 +86,6 @@ def check_user_exsist(
     email: EmailStr = Query(..., description="이메일 주소"),
     db: Session = Depends(get_db),
 ) -> UserEmailCheckResponse:
-    """
-    이메일 중복 체크
+    """이메일 중복 체크
     """
     return check_user_email_service(db, email=email)

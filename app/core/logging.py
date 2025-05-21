@@ -5,13 +5,12 @@ import sqlparse
 
 
 def setup_logging(app_env: str):
-    """
-    로깅 설정 함수
+    """로깅 설정 함수
 
     Args:
         app_env (str): 실행 환경 (local, debug, production)
-    """
 
+    """
     # 1) 기본 로깅 레벨 및 파일명 설정
     if app_env == "debug":
         log_level = logging.INFO
@@ -31,7 +30,7 @@ def setup_logging(app_env: str):
         sql_log_level = logging.INFO
     else:
         raise ValueError(
-            "Invalid app_env. Choose from: local, debug, stage, production."
+            "Invalid app_env. Choose from: local, debug, stage, production.",
         )
     # 2) 로그 디렉토리 생성
     os.makedirs(os.path.dirname(log_file), exist_ok=True)

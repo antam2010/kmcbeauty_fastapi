@@ -58,7 +58,7 @@ class TreatmentMenuResponse(BaseResponseModel):
     created_at: datetime = Field(..., description="생성일")
     updated_at: datetime = Field(..., description="수정일")
     details: list[TreatmentMenuDetailResponse] = Field(
-        [], description="시술 메뉴 상세 목록"
+        [], description="시술 메뉴 상세 목록",
     )
 
     model_config = {"from_attributes": True}

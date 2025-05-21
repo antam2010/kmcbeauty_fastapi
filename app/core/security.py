@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from cryptography.fernet import Fernet
 from jose import jwt
@@ -15,7 +15,6 @@ fernet = Fernet(FERNET_KEY.encode())
 class TokenDecodeError(Exception):
     """JWT 디코딩 실패 시 커스텀 예외"""
 
-    pass
 
 
 def hash_password(password: str) -> str:
@@ -28,7 +27,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_jwt_token(data: dict, expires_delta: timedelta) -> str:
     to_encode = data.copy()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + expires_delta
 
     to_encode.update(
@@ -36,7 +35,7 @@ def create_jwt_token(data: dict, expires_delta: timedelta) -> str:
             "exp": expire,  # 만료 시각
             "iat": now,  # 발급 시각
             "nbf": now,  # 이 시점부터 유효 (optional)
-        }
+        },
     )
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

@@ -9,7 +9,7 @@ from app.models.treatment_menu_detail import TreatmentMenuDetail
 
 def create_treatment_menu(db: Session, name: str, shop_id: int) -> TreatmentMenu:
     return TreatmentMenu(
-        name=name,
+name=name,
         shop_id=shop_id,
     )
 
@@ -52,9 +52,9 @@ def get_treatment_menus_by_user(
             or_(
                 TreatmentMenu.name.ilike(f"%{search}%"),
                 TreatmentMenu.details.any(
-                    TreatmentMenuDetail.name.ilike(f"%{search}%")
+                    TreatmentMenuDetail.name.ilike(f"%{search}%"),
                 ),
-            )
+            ),
         )
 
     query.order_by(TreatmentMenu.id.desc())

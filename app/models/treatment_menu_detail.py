@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func, text
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
@@ -25,7 +25,7 @@ class TreatmentMenuDetail(Base, SoftDeleteMixin, TimestampMixin):
     # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)
     # TreatmentItem.menu_detail 와 양방향 연결됨
     items = relationship(
-        "TreatmentItem", back_populates="menu_detail", cascade="all, delete-orphan"
+        "TreatmentItem", back_populates="menu_detail", cascade="all, delete-orphan",
     )
 
     menu = relationship(

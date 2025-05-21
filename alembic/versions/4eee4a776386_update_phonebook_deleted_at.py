@@ -6,7 +6,7 @@ Create Date: 2025-04-17 15:03:43.569421
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
@@ -15,9 +15,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "4eee4a776386"
-down_revision: Union[str, None] = "55b0f3aef89c"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "55b0f3aef89c"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -167,7 +167,7 @@ def upgrade() -> None:
         comment="수정일시",
         existing_comment="수정일",
         existing_server_default=sa.text(
-            "current_timestamp() ON UPDATE current_timestamp()"
+            "current_timestamp() ON UPDATE current_timestamp()",
         ),
     )
     # ### end Alembic commands ###
@@ -184,7 +184,7 @@ def downgrade() -> None:
         comment="수정일",
         existing_comment="수정일시",
         existing_server_default=sa.text(
-            "current_timestamp() ON UPDATE current_timestamp()"
+            "current_timestamp() ON UPDATE current_timestamp()",
         ),
     )
     op.alter_column(

@@ -30,13 +30,13 @@ def create_shop_service(db: Session, user: User, shop_data: ShopCreate) -> Shop:
     except Exception as e:
         logging.exception(f"샵 생성 중 오류 발생: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
 
 
 # 샵 수정
 def update_shop_service(
-    db: Session, user: User, shop_id: int, shop_data: ShopUpdate
+    db: Session, user: User, shop_id: int, shop_data: ShopUpdate,
 ) -> Shop:
     try:
         shop = get_user_shop_by_id(db, user.id, shop_id)
@@ -51,7 +51,7 @@ def update_shop_service(
         db.rollback()
         logging.exception(f"샵 수정 중 오류 발생: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
 
 
@@ -62,7 +62,7 @@ def get_my_shops_service(db: Session, user: User) -> Page[Shop]:
     except Exception as e:
         logging.exception(f"샵 목록 조회 중 오류 발생: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
 
 
@@ -99,7 +99,7 @@ def delete_selected_shop_service(user: User) -> None:
     except Exception as e:
         logging.exception(f"선택 샵 삭제 중 오류 발생: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
 
 
@@ -126,5 +126,5 @@ def get_selected_shop_service(db: Session, user: User) -> Shop:
     except Exception as e:
         logging.exception(f"선택 샵 조회 중 오류 발생: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )

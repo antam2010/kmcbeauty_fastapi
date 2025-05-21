@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, status
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
@@ -63,7 +63,7 @@ def update_shop(
     current_user: User = Depends(get_current_user),
 ):
     return update_shop_service(
-        db=db, user=current_user, shop_id=shop_id, shop_data=shop_data
+        db=db, user=current_user, shop_id=shop_id, shop_data=shop_data,
     )
 
 

@@ -1,6 +1,5 @@
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import ForeignKey, Integer, Text, func, text
 from sqlalchemy.orm import relationship
 
 from app.enum.treatment_status import TreatmentStatus
@@ -20,7 +19,7 @@ class Treatment(Base, TimestampMixin):
         comment="샵 ID",
     )
     phonebook_id = Column(
-        Integer, ForeignKey("phonebook.id"), nullable=False, comment="시술 대상 고객 ID"
+        Integer, ForeignKey("phonebook.id"), nullable=False, comment="시술 대상 고객 ID",
     )
 
     reserved_at = Column(DateTime, nullable=False, comment="예약 일시")
@@ -36,7 +35,7 @@ class Treatment(Base, TimestampMixin):
 
     # Relationships
     treatment_items = relationship(
-        "TreatmentItem", back_populates="treatment", cascade="all, delete-orphan"
+        "TreatmentItem", back_populates="treatment", cascade="all, delete-orphan",
     )
 
     phonebook = relationship(

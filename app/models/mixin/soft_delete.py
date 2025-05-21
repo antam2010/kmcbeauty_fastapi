@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Column, DateTime
 from sqlalchemy.orm import declared_attr
@@ -12,7 +12,7 @@ class SoftDeleteMixin:
         return {"eager_defaults": True}
 
     def soft_delete(self):
-        self.deleted_at = datetime.now(timezone.utc)
+        self.deleted_at = datetime.now(UTC)
 
     def is_deleted(self) -> bool:
         return self.deleted_at is not None

@@ -91,7 +91,7 @@ async def error_logger(
         # 핸들되지 않은 예외(500) 일 때 스택트레이스 포함 로깅
         logging.exception(
             f"[UNHANDLED 500] {request.client.host} "
-            f"{request.method} {request.url.path}"
+            f"{request.method} {request.url.path}",
         )
         # Sentry 전송
         capture_exception(e)
@@ -110,7 +110,7 @@ async def log_request_info(request: Request, call_next):
 
     logging.info(
         f"[REQUEST] {forwarded_for} {real_ip} {client_ip} "
-        f"{request.method} {path} {host} {ua}"
+        f"{request.method} {path} {host} {ua}",
     )
 
     response = await call_next(request)

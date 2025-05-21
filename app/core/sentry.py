@@ -20,16 +20,15 @@ def init_sentry(
     traces_sample_rate: float = 0.2,
     profiles_sample_rate: float = 0.0,
 ):
-    """
-    Sentry SDK 초기화 함수
+    """Sentry SDK 초기화 함수
 
     Args:
         dsn (str): Sentry DSN URL
         environment (str): 실행 환경 (예: local, debug, production)
         traces_sample_rate (float): 성능 추적 샘플 비율 (0.0 ~ 1.0)
         profiles_sample_rate (float): CPU 프로파일링 샘플 비율 (0.0 ~ 1.0)
-    """
 
+    """
     # Sentry에서 로깅도 연동할 수 있도록 설정
     sentry_logging = LoggingIntegration(
         level="INFO",  # breadcrumb 수집 로그 레벨 (INFO 이상 수집)

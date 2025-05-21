@@ -19,7 +19,6 @@ env_path = base_dir / f".env.{env}"
 load_dotenv(dotenv_path=env_path, override=True)
 
 # 모델 import: 자동 생성에 필요함
-from app import models
 
 # 2. DB 연결 정보 설정
 from app.database import DATABASE_URL

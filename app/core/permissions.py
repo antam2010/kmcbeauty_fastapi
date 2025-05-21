@@ -9,7 +9,7 @@ from app.models.user import User
 def admin_required(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != "ADMIN":
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="관리자 권한이 필요합니다."
+            status_code=status.HTTP_403_FORBIDDEN, detail="관리자 권한이 필요합니다.",
         )
     return current_user
 
@@ -19,7 +19,7 @@ def is_owner_or_admin(target_user_id: int):
     def dependency(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role != "ADMIN" and current_user.id != target_user_id:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="접근 권한이 없습니다."
+                status_code=status.HTTP_403_FORBIDDEN, detail="접근 권한이 없습니다.",
             )
         return current_user
 

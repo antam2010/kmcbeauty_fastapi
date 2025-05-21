@@ -26,7 +26,7 @@ DOMAIN = "TREATMENT"
 
 # 시술 예약 생성 서비스
 def create_treatment_service(
-    data: TreatmentCreate, db: Session, current_shop: Shop
+    data: TreatmentCreate, db: Session, current_shop: Shop,
 ) -> TreatmentResponse:
 
     try:
@@ -67,18 +67,18 @@ def create_treatment_service(
         db.rollback()
         logging.exception(f"Unexpected error: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )
 
 
 # 시술 예약 목록 조회 서비스
 def get_treatment_list_service(
-    db: Session, current_shop: Shop, filters: TreatmentFilter
+    db: Session, current_shop: Shop, filters: TreatmentFilter,
 ) -> Page[TreatmentDetail]:
     try:
         return get_treatment_list(db=db, shop_id=current_shop.id, filters=filters)
     except Exception as e:
         logging.exception(f"Unexpected error: {e}")
         raise CustomException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, domain=DOMAIN,
         )

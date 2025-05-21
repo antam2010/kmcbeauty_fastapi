@@ -13,8 +13,7 @@ def _get_user_key(user_id: int) -> str:
 
 
 def get_user_redis(user_id: int) -> dict[str, Any] | None:
-    """
-    Redis에서 캐시된 사용자 정보 조회
+    """Redis에서 캐시된 사용자 정보 조회
     """
     key = _get_user_key(user_id)
     data = redis_client.get(key)
@@ -24,8 +23,7 @@ def get_user_redis(user_id: int) -> dict[str, Any] | None:
 
 
 def set_user_redis(user: User) -> None:
-    """
-    사용자 정보를 Redis에 캐시 저장
+    """사용자 정보를 Redis에 캐시 저장
     """
     key = _get_user_key(user.id)
 
@@ -45,8 +43,7 @@ def set_user_redis(user: User) -> None:
 
 
 def clear_user_redis(user_id: int) -> None:
-    """
-    Redis에서 캐시된 사용자 정보 삭제
+    """Redis에서 캐시된 사용자 정보 삭제
     """
     key = _get_user_key(user_id)
     redis_client.delete(key)

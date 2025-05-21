@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/changelog", response_class=HTMLResponse)
 def get_api_changelog():
     changelog_path = os.path.join("app/docs", "api-changelog.md")
-    with open(changelog_path, "r", encoding="utf-8") as f:
+    with open(changelog_path, encoding="utf-8") as f:
         md_content = f.read()
     html_content = markdown.markdown(md_content, extensions=["tables", "fenced_code"])
     return f"""

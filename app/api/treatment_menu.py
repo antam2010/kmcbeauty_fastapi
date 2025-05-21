@@ -106,7 +106,7 @@ def delete_menu(
     current_shop=Depends(get_current_shop),
 ) -> None:
     return delete_treatment_menu_service(
-        db=db, current_shop=current_shop, menu_id=menu_id
+        db=db, current_shop=current_shop, menu_id=menu_id,
     )
 
 
@@ -124,7 +124,7 @@ def restore_menu(
     current_shop=Depends(get_current_shop),
 ) -> None:
     return restore_treatment_menu_service(
-        db=db, current_shop=current_shop, menu_id=menu_id
+        db=db, current_shop=current_shop, menu_id=menu_id,
     )
 
 

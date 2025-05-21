@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Annotated
 
 from pydantic import Field, field_validator
 
@@ -24,7 +23,7 @@ class ShopBase(BaseResponseModel):
     address_detail: str | None = Field(None, description="상세 주소", max_length=255)
     phone: str | None = Field(None, description="전화번호", max_length=20)
     business_number: str | None = Field(
-        None, description="사업자 등록번호", max_length=20
+        None, description="사업자 등록번호", max_length=20,
     )
 
 
