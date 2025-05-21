@@ -1,11 +1,11 @@
 from sqlalchemy import (
     Column,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
-    Index,
-    UniqueConstraint
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -42,4 +42,3 @@ class Phonebook(Base, SoftDeleteMixin, TimestampMixin):
         Index("idx_shop_deleted_name", "shop_id", "deleted_at", "name"),
         Index("idx_shop_deleted_phone", "shop_id", "deleted_at", "phone_number"),
     )
-

@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app.core.config import REFRESH_TOKEN_EXPIRE_DAYS
+from app.core.config import REFRESH_TOKEN_EXPIRE_SECONDS
 from app.database import get_db
+from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.schemas.auth import LoginResponse
 from app.services.auth_service import (
-    authenticate_user,
+    authenticate_user_service,
     generate_tokens,
     logout_user,
     refresh_access_token,
@@ -22,31 +23,31 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     description="이메일(username)과 비밀번호(password)를 입력하여 JWT 토큰을 발급받습니다.",
     response_model=LoginResponse,
     status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: COMMON_ERROR_RESPONSES[
+            status.HTTP_401_UNAUTHORIZED
+        ],
+    },
 )
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
-    user = authenticate_user(db, form_data.username, form_data.password)
-    access_token, refresh_token = generate_tokens(db, user)
+    user = authenticate_user_service(db, form_data.username, form_data.password)
+    access_token, refresh_token = generate_tokens(user)
 
-    max_age = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 초 단위
-
-    # Swagger에서는 response_model 기준으로 문서화
     response_data = LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
     )
-
-    # 실제 응답은 쿠키 포함하여 JSONResponse로 설정
     response = JSONResponse(content=response_data.model_dump())
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
         secure=True,
-        samesite="None", # Lax, Strict, None
-        max_age=max_age,
+        samesite="None",  # Lax, Strict, None
+        max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
     )
     return response
 
@@ -63,47 +64,41 @@ def login(
 )
 def refresh_token_handler(
     request: Request,
-    header_token: str | None = Header(default=None, alias="X-Refresh-Token"),
     db: Session = Depends(get_db),
 ) -> LoginResponse:
-    new_access_token, refresh_token = refresh_access_token(request, db)
+    new_access_token, new_refresh_token = refresh_access_token(db, request)
 
-    return LoginResponse(
+    response_data = LoginResponse(
         access_token=new_access_token,
-        refresh_token=refresh_token,
+        refresh_token=new_refresh_token,
     )
+    response = JSONResponse(content=response_data.model_dump())
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="None",  # Lax, Strict, None
+        max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
+    )
+    return response
 
 
 @router.post(
     "/logout",
     summary="사용자 로그아웃",
-    description="로그아웃 시 엑세스 토큰과 리프레시 토큰을 모두 만료 처리합니다.",
+    description="로그아웃 시 쿠키 제거 및 레디스에서 리프레시 토큰 삭제, result 에서 삭제 여부 확인",
     status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {
-            "description": "로그아웃 성공",
-            "content": {"application/json": {"example": {"message": "로그아웃 성공"}}},
-        },
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {
-            "description": "서버 오류",
-            "content": {
-                "application/json": {"example": {"detail": "Internal Server Error"}}
-            },
-        },
-    },
 )
-def logout(request: Request, db: Session = Depends(get_db)):
-    # 1) 리프레시 토큰을 쿠키에서 꺼내서 DB에서 삭제
+def logout(request: Request) -> JSONResponse:
     token = request.cookies.get("refresh_token")
-    if token:
-        logout_user(db, token)
-
-    # 2) 쿠키에서 리프레시 토큰 삭제
+    result = logout_user(token)
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
-            "message": "로그아웃 성공",
+            "message": "로그아웃 성공", 
             "token": token,
+            "result": result,
         },
     )
     response.delete_cookie("refresh_token", path="/")

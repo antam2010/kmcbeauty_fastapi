@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
-from app.docs.common_responses import COMMON_ERROR_RESPONSES
-
 from app.database import get_db
 from app.dependencies.shop import get_current_shop
+from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.schemas.treatment_menu import (
     TreatmentMenuCreate,
     TreatmentMenuCreateResponse,
@@ -13,16 +12,15 @@ from app.schemas.treatment_menu import (
     TreatmentMenuDetailResponse,
     TreatmentMenuFilter,
     TreatmentMenuResponse,
-    
 )
 from app.services.treatment_menu_service import (
     create_treatment_menu_detail_service,
     create_treatment_menu_service,
+    delete_treatment_menu_detail_service,
     delete_treatment_menu_service,
     get_treatment_menu_detail_service,
     get_treatment_menus_service,
     restore_treatment_menu_service,
-    delete_treatment_menu_detail_service,
 )
 
 router = APIRouter(prefix="/treatment-menus", tags=["시술 메뉴"])
@@ -175,6 +173,7 @@ def create_menu_detail(
         db=db,
     )
 
+
 # 시술 메뉴 상세 수정
 @router.put(
     "/{menu_id}/details/{detail_id}",
@@ -201,6 +200,7 @@ def update_menu_detail(
         db=db,
         detail_id=detail_id,
     )
+
 
 # 시술 메뉴 상세 삭제
 @router.delete(

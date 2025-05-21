@@ -30,7 +30,9 @@ def setup_logging(app_env: str):
         log_file = "logs/local.log"
         sql_log_level = logging.INFO
     else:
-        raise ValueError("Invalid app_env. Choose from: local, debug, stage, production.")
+        raise ValueError(
+            "Invalid app_env. Choose from: local, debug, stage, production."
+        )
     # 2) 로그 디렉토리 생성
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 

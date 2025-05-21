@@ -52,11 +52,8 @@ class PhonebookFilter(BaseResponseModel):
 class PhonebookGroupedByGroupnameResponse(BaseResponseModel):
     group_name: str = Field(..., description="그룹 이름")
     count: int = Field(..., description="전화번호부 개수")
-    items: list["PhonebookResponse"] = Field(
-        default=[], description="전화번호부 목록"
-    )
+    items: list["PhonebookResponse"] = Field(default=[], description="전화번호부 목록")
     model_config = {"from_attributes": True}
-    
 
 
 # 전화번호부 응답 스키마

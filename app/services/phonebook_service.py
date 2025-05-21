@@ -1,20 +1,19 @@
 import logging
+from collections import defaultdict
 
 from fastapi import status
 from fastapi_pagination import Page
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from collections import defaultdict
-
 from app.crud.phonebook_crud import (
     create_phonebook,
+    get_all_phonebooks_by_shop,
+    get_group_counts_by_groupname,
     get_phonebook_by_id,
     get_phonebook_by_phone_number,
     get_phonebooks_by_user,
     update_phonebook,
-    get_group_counts_by_groupname,
-    get_all_phonebooks_by_shop
 )
 from app.exceptions import CustomException
 from app.models.phonebook import Phonebook
@@ -22,9 +21,9 @@ from app.models.shop import Shop
 from app.schemas.phonebook import (
     PhonebookCreate,
     PhonebookFilter,
+    PhonebookGroupedByGroupnameResponse,
     PhonebookResponse,
     PhonebookUpdate,
-    PhonebookGroupedByGroupnameResponse,
 )
 
 DOMAIN = "PHONEBOOK"
@@ -146,10 +145,11 @@ def delete_phonebook_service(db: Session, phonebook_id: int, current_shop: Shop)
             domain=DOMAIN,
         )
 
+
 def get_grouped_by_groupname_service(
     db: Session, current_shop: Shop, with_items: bool
 ) -> list[PhonebookGroupedByGroupnameResponse]:
-    
+
     # 그룹별 count만 조회
     group_data = get_group_counts_by_groupname(db, current_shop.id)
 
@@ -176,6 +176,3 @@ def get_grouped_by_groupname_service(
         )
 
     return result
-
-
-

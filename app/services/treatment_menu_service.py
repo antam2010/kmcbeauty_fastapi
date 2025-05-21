@@ -3,16 +3,16 @@ from datetime import datetime, timezone
 
 from fastapi import status
 from fastapi_pagination import Page
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.crud.treatment_menu import (
     create_treatment_menu,
     create_treatment_menu_detail,
     get_menu_by_id,
+    get_menu_detail_by_id,
     get_treatment_menu_details_by_user,
     get_treatment_menus_by_user,
-    get_menu_detail_by_id
 )
 from app.exceptions import CustomException
 from app.models.shop import Shop
@@ -211,7 +211,7 @@ def create_treatment_menu_detail_service(
     db: Session,
     detail_id: int | None = None,
 ) -> TreatmentMenuDetail:
-    
+
     try:
         if detail_id:
             # 시술 메뉴 상세 수정
@@ -228,9 +228,9 @@ def create_treatment_menu_detail_service(
                     hint="시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴이거나 삭제된 메뉴입니다.",
                 )
 
-            menu_detail.name         = filters.name
+            menu_detail.name = filters.name
             menu_detail.duration_min = filters.duration_min
-            menu_detail.base_price   = filters.base_price
+            menu_detail.base_price = filters.base_price
         else:
             # 시술 메뉴 상세 생성
             menu_detail = create_treatment_menu_detail(
@@ -244,7 +244,7 @@ def create_treatment_menu_detail_service(
 
         db.commit()
         db.refresh(menu_detail)
-    
+
     except CustomException as e:
         db.rollback()
         raise e
@@ -257,6 +257,7 @@ def create_treatment_menu_detail_service(
             exception=e,
         )
     return TreatmentMenuDetailResponse.model_validate(menu_detail)
+
 
 # 시술 메뉴 상세 항목 삭제 서비스
 def delete_treatment_menu_detail_service(

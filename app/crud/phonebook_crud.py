@@ -1,8 +1,9 @@
+from datetime import datetime, timezone
+
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import or_, and_, func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone
 
 from app.models.phonebook import Phonebook
 from app.schemas.phonebook import PhonebookCreate, PhonebookFilter, PhonebookUpdate
@@ -25,12 +26,7 @@ def get_phonebooks_by_user(
             Phonebook.group_name.ilike(keyword),
             Phonebook.memo.ilike(keyword),
         )
-        query = query.filter(
-            and_(
-                search_filter,
-                Phonebook.deleted_at.is_(None)
-            )
-        )
+        query = query.filter(and_(search_filter, Phonebook.deleted_at.is_(None)))
     else:
         query = query.filter(Phonebook.deleted_at.is_(None))
 
@@ -87,10 +83,9 @@ def get_phonebook_by_phone_number(
     )
     return phonebook
 
+
 # 전화번호부 삭제
-def delete_phonebook(
-    db: Session, phonebook: Phonebook, shop_id: int
-) -> Phonebook:
+def delete_phonebook(db: Session, phonebook: Phonebook, shop_id: int) -> Phonebook:
     phonebook.deleted_at = datetime.now(timezone.utc)
     phonebook.shop_id = shop_id
     return phonebook
@@ -108,6 +103,7 @@ def get_group_counts_by_groupname(db: Session, shop_id: int) -> dict[str, int]:
         .all()
     )
 
+
 # 전화번호부 가게별 전체 조회
 def get_all_phonebooks_by_shop(db: Session, shop_id: int) -> list[Phonebook]:
     return (
@@ -118,4 +114,3 @@ def get_all_phonebooks_by_shop(db: Session, shop_id: int) -> list[Phonebook]:
         )
         .all()
     )
-

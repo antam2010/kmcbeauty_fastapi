@@ -5,7 +5,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
-from app.crud.user import create_user, get_user_by_email, get_user_by_id, update_user_db
+from app.crud.user_crud import (
+    create_user,
+    get_user_by_email,
+    get_user_by_id,
+    update_user_db,
+)
 from app.exceptions import CustomException
 from app.models.user import User
 from app.schemas.user import (

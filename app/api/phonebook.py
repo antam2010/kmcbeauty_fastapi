@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, Query
+from fastapi import APIRouter, Depends, Query, status
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
@@ -9,17 +9,17 @@ from app.models.user import User
 from app.schemas.phonebook import (
     PhonebookCreate,
     PhonebookFilter,
+    PhonebookGroupedByGroupnameResponse,
     PhonebookResponse,
     PhonebookUpdate,
-    PhonebookGroupedByGroupnameResponse,
 )
 from app.services.phonebook_service import (
     create_phonebook_service,
     delete_phonebook_service,
+    get_grouped_by_groupname_service,
     get_phonebook_list_service,
     get_phonebook_service,
     update_phonebook_service,
-    get_grouped_by_groupname_service
 )
 
 router = APIRouter(prefix="/phonebooks", tags=["Phonebook"])
