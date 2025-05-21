@@ -52,33 +52,6 @@ def generate_tokens(user: User) -> LoginResponse:
     return access_token, refresh_token
 
 
-def generate_access_token(user: User) -> str:
-    access_token = create_jwt_token(
-        data={
-            "sub": str(user.id),
-            "role": user.role,
-            "email": user.email,
-            "type": "access",
-        },
-        expires_delta=timedelta(seconds=ACCESS_TOKEN_EXPIRE_SECONDS),
-    )
-    return access_token
-
-
-def generate_refresh_token(user: User) -> str:
-    refresh_token = create_jwt_token(
-        data={"sub": str(user.id), "type": "refresh"},
-        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_SECONDS),
-    )
-    # Redis에 리프레시 토큰 저장
-    redis_client.setex(
-        f"auth:refresh:{user.id}",
-        REFRESH_TOKEN_EXPIRE_SECONDS,
-        refresh_token,
-    )
-    return refresh_token
-
-
 def refresh_access_token(db, request: Request) -> tuple[str, str]:
     raw_token = request.headers.get("X-Refresh-Token") or request.cookies.get(
         "refresh_token",
@@ -124,10 +97,7 @@ def refresh_access_token(db, request: Request) -> tuple[str, str]:
         )
 
     # 엑세스 토큰, 리프레시 토큰 재발급
-    new_access_token = generate_access_token(user)
-    new_refresh_token = raw_token
-
-    # new_access_token, new_refresh_token = generate_tokens(user)
+    new_access_token, new_refresh_token = generate_tokens(user)
     return new_access_token, new_refresh_token
 
 
