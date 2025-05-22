@@ -86,6 +86,19 @@ def get_invite_code_service(
     :param user: 유저 정보
     :return: 초대코드 정보
     """
+    # 권한 확인: 대표 원장만 조회 가능
+    shop_user = get_shop_user(db, shop_id, user.id)
+    if not shop_user:
+        raise CustomException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            domain=DOMAIN,
+        )
+    if not shop_user.is_primary_owner:
+        raise CustomException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            domain=DOMAIN,
+        )
+
     try:
         invite = get_invite_by_shop_id(db, shop_id)
         if not invite:
