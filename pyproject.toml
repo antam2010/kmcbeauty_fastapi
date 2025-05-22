@@ -1,13 +1,13 @@
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-select = [
+lint.select = [
     "E", "F", "W", "C90", "I", "N", "D", "UP", "YTT", "ANN", "S", "BLE", "B",
     "A", "COM", "C4", "DTZ", "EM", "EXE", "ISC", "ICN", "G", "INP", "PIE",
     "T20", "Q", "RSE", "RET", "SLF", "SIM", "TID", "ARG", "PTH", "ERA", "PD",
     "PGH", "PL", "TRY", "RUF"
 ]
-ignore = [
+lint.ignore = [
     "B008",  # FastAPI Depends() default argument 사용 허용
     "D100",  # 모듈 docstring 없음 허용
     "D101",  # 클래스 docstring 없음 허용
@@ -16,9 +16,8 @@ ignore = [
     "D104",  # public 패키지 docstring 없음 허용
     "D105",  # magic method docstring 없음 허용
     "D107",  # __init__ docstring 없음 허용
-    "ANN101",  # self type annotation
-    "ANN102",  # cls type annotation
     "PLR2004", # Magic value 사용 경고 무시
+    "TRY301",  # try-except에서 bare except 허용
 ]
 
 [tool.ruff.format]

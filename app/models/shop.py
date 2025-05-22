@@ -20,12 +20,19 @@ class Shop(Base, SoftDeleteMixin, TimestampMixin):
 
     # Shop → Phonebook (1:N)
     phonebook_list = relationship(
-        "Phonebook", back_populates="shop", cascade="all, delete-orphan",
+        "Phonebook",
+        back_populates="shop",
+        cascade="all, delete-orphan",
     )
     # 이 샵의 소유자와의 관계 (N:1)
     owner = relationship("User", back_populates="shops")
 
     # Shop → Treatment (1:N)
     treatments = relationship(
-        "Treatment", back_populates="shop", cascade="all, delete-orphan",
+        "Treatment",
+        back_populates="shop",
+        cascade="all, delete-orphan",
     )
+
+    # Shop → ShopInvite (1:N)
+    invites = relationship("ShopInvite", back_populates="shop", cascade="all, delete")

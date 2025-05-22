@@ -8,13 +8,14 @@ from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.shop import Shop
 from app.models.user import User
 from app.schemas.shop import ShopCreate, ShopResponse, ShopSelect, ShopUpdate
+from app.schemas.shop_invite import ShopInviteResponse
+from app.services.shop_invite_service import generate_invite_code_service
 from app.services.shop_service import (
-    create_shop_service,
     delete_selected_shop_service,
     get_my_shops_service,
     get_selected_shop_service,
     set_selected_shop_service,
-    update_shop_service,
+    upsert_shop_service,
 )
 
 router = APIRouter(prefix="/shops", tags=["Shop"])
@@ -40,13 +41,16 @@ def get_my_shops(
     summary="샵 생성",
     description="새로운 샵을 생성합니다.",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+    },
 )
 def create_shop(
     shop_data: ShopCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    return create_shop_service(db=db, user=current_user, shop_data=shop_data)
+) -> ShopResponse:
+    return upsert_shop_service(db=db, user=current_user, shop_data=shop_data)
 
 
 @router.put(
@@ -61,9 +65,12 @@ def update_shop(
     shop_data: ShopUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    return update_shop_service(
-        db=db, user=current_user, shop_id=shop_id, shop_data=shop_data,
+) -> ShopResponse:
+    return upsert_shop_service(
+        db=db,
+        user=current_user,
+        shop_data=shop_data,
+        shop_id=shop_id,
     )
 
 
@@ -117,3 +124,22 @@ def delete_selected_shop(
     current_user: User = Depends(get_current_user),
 ) -> None:
     return delete_selected_shop_service(user=current_user)
+
+
+@router.post(
+    "/{shop_id}/invites",
+    response_model=ShopInviteResponse,
+    summary="샵 초대코드 생성",
+    description="샵에 초대코드를 생성합니다.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+        status.HTTP_409_CONFLICT: COMMON_ERROR_RESPONSES[status.HTTP_409_CONFLICT],
+    },
+)
+def create_invite_link(
+    shop_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ShopInviteResponse:
+    return generate_invite_code_service(db=db, shop_id=shop_id, user=current_user)

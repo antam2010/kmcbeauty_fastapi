@@ -3,7 +3,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
 
 from app.models.shop import Shop
-from app.schemas.shop import ShopCreate, ShopUpdate
+from app.schemas.shop import ShopCreate
 
 
 # 단일 샵 조회
@@ -27,15 +27,5 @@ def create_shop(db: Session, shop_data: ShopCreate, user_id: int) -> Shop:
     shop = Shop(**shop_data.model_dump())
     shop.user_id = user_id
     db.add(shop)
-    db.commit()
-    db.refresh(shop)
-    return shop
-
-
-# 샵 수정
-def update_shop(db: Session, shop: Shop, shop_data: ShopUpdate) -> Shop:
-    for field, value in shop_data.model_dump().items():
-        setattr(shop, field, value)
-    db.commit()
-    db.refresh(shop)
+    db.flush()
     return shop

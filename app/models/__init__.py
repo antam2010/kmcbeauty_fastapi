@@ -1,5 +1,6 @@
 from .phonebook import Phonebook
 from .shop import Shop
+from .shop_invite import ShopInvite
 from .shop_user import ShopUser
 from .treatment import Treatment
 from .treatment_item import TreatmentItem
