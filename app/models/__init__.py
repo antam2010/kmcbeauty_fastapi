@@ -1,5 +1,4 @@
 from .phonebook import Phonebook
-from .refresh_token import RefreshToken
 from .shop import Shop
 from .shop_user import ShopUser
 from .treatment import Treatment

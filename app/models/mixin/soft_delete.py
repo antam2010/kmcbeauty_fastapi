@@ -1,17 +1,16 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, DateTime
-from sqlalchemy.orm import declared_attr
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class SoftDeleteMixin:
-    deleted_at = Column(DateTime, nullable=True, comment="삭제일시")
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        nullable=True, comment="삭제일시"
+    )
 
-    @declared_attr.directive
-    def __mapper_args__(cls):
-        return {"eager_defaults": True}
+    __mapper_args__ = {"eager_defaults": True}
 
-    def soft_delete(self):
+    def soft_delete(self) -> None:
         self.deleted_at = datetime.now(UTC)
 
     def is_deleted(self) -> bool:

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import HTTPException
 from sentry_sdk import capture_exception
 from starlette import status
@@ -33,7 +35,8 @@ class CustomException(HTTPException):
     ):
         # 기본 메시지 및 코드 설정
         default_code, default_detail = DEFAULT_MESSAGES.get(
-            status_code, ("UNKNOWN_ERROR", "알 수 없는 오류입니다."),
+            status_code,
+            ("UNKNOWN_ERROR", "알 수 없는 오류입니다."),
         )
 
         final_code = f"{domain.upper()}_{code or default_code}"
@@ -55,6 +58,21 @@ class CustomException(HTTPException):
             capture_exception(
                 exception or Exception(f"{final_code}: {final_detail} ({hint})"),
             )
+
+        logging.info(
+            "CustomException: %s - %s (%s)",
+            final_code,
+            final_detail,
+            hint,
+            extra={
+                "status_code": status_code,
+                "domain": domain,
+                "code": final_code,
+                "detail": final_detail,
+                "hint": hint,
+                "exception": str(exception),
+            },
+        )
 
         super().__init__(
             status_code=status_code,

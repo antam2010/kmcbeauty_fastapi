@@ -1,13 +1,25 @@
 {
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll": "explicit",
-      "source.organizeImports": "explicit"
-    },
-    "[python]": {
-      "editor.defaultFormatter": "charliermarsh.ruff"
-    },
-    "python.linting.enabled": true,
-    "python.linting.ruffEnabled": true
+  // 저장할 때 자동 포매팅
+  "editor.formatOnSave": true,
+  // Python 파일에 Ruff를 포매터로 지정
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  // 저장 시 import 정렬 등 자동 수정
+  "editor.codeActionsOnSave": [
+    "source.fixAll",
+    "source.organizeImports"
+  ],
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": [
+          "string.quoted.docstring.multi.python"
+        ],
+        "settings": {
+          "foreground": "#6aa56c"
+        }
+      }
+    ]
   }
-  
+}

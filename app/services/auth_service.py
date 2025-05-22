@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from fastapi import Request, status
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
 from app.core.config import (
     ACCESS_TOKEN_EXPIRE_SECONDS,
@@ -30,19 +31,13 @@ def authenticate_user_service(db, email: str, password: str) -> User:
 
 
 def generate_tokens(user: User) -> LoginResponse:
-    access_token = create_jwt_token(
-        data={
-            "sub": str(user.id),
-            "role": user.role,
-            "email": user.email,
-            "type": "access",
-        },
-        expires_delta=timedelta(seconds=ACCESS_TOKEN_EXPIRE_SECONDS),
-    )
-    refresh_token = create_jwt_token(
-        data={"sub": str(user.id), "type": "refresh"},
-        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_SECONDS),
-    )
+    """유저 정보를 기반으로 액세스 토큰과 리프레시 토큰을 생성해서 반환한다.
+
+    - 액세스 토큰: 만료 시간은 ACCESS_TOKEN_EXPIRE_SECONDS 초
+    - 리프레시 토큰: 만료 시간은 REFRESH_TOKEN_EXPIRE_SECONDS 일
+    """
+    access_token = generate_access_token(user)  # 액세스 토큰 생성
+    refresh_token = generate_refresh_token(user)  # 리프레시 토큰 생성
     # Redis에 리프레시 토큰 저장
     redis_client.setex(
         f"auth:refresh:{user.id}",
@@ -52,7 +47,50 @@ def generate_tokens(user: User) -> LoginResponse:
     return access_token, refresh_token
 
 
-def refresh_access_token(db, request: Request) -> tuple[str, str]:
+def generate_access_token(user: User) -> str:
+    """유저 정보를 기반으로 액세스 토큰(JWT)을 생성해서 반환한다.
+
+    - sub: 유저 ID
+    - role: 유저 권한(예: admin, user)
+    - email: 유저 이메일
+    - type: 'access' (액세스 토큰임을 명시)
+    - 만료 시간: ACCESS_TOKEN_EXPIRE_SECONDS 초
+    """
+    return create_jwt_token(
+        data={
+            "sub": str(user.id),
+            "role": user.role,
+            "email": user.email,
+            "type": "access",
+        },
+        expires_delta=timedelta(seconds=ACCESS_TOKEN_EXPIRE_SECONDS),
+    )
+
+
+def generate_refresh_token(user: User) -> str:
+    """유저 정보를 기반으로 리프레시 토큰(JWT)을 생성해서 반환한다.
+
+    - sub: 유저 ID
+    - type: 'refresh' (리프레시 토큰임을 명시)
+    - 만료 시간: REFRESH_TOKEN_EXPIRE_SECONDS 일
+    """
+    return create_jwt_token(
+        data={"sub": str(user.id), "type": "refresh"},
+        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_SECONDS),
+    )
+
+
+def refresh_access_token(db: Session, request: Request) -> tuple[str, str]:
+    """리프레시 토큰으로 액세스 토큰과(필요 시) 새로운 리프레시 토큰을 재발급한다.
+
+    리프레시 토큰 만료 TTL이 절반 이하일 때만 새로 발급하고,
+    절반 이상 남아있으면 기존 토큰을 그대로 반환한다.
+
+    - request: FastAPI Request 객체
+    - db: SQLAlchemy 세션 객체
+    - 반환값: (액세스 토큰, 리프레시 토큰)
+    - 예외: 리프레시 토큰이 없거나 유효하지 않은 경우
+    """
     raw_token = request.headers.get("X-Refresh-Token") or request.cookies.get(
         "refresh_token",
     )
@@ -66,16 +104,14 @@ def refresh_access_token(db, request: Request) -> tuple[str, str]:
     try:
         payload = jwt.decode(raw_token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = int(payload.get("sub"))
-        if payload.get("type") != "refresh":
-            raise ValueError("Invalid token type")
-    except (JWTError, ValueError) as e:
+    except JWTError as e:
         raise CustomException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             domain=DOMAIN,
             detail="Invalid refresh token",
-            hint="리프레시 토큰이 유효하지 않쇼",
+            hint="리프레시 토큰이 유효하지 않으니 로그인으로 보내도록",
             exception=e,
-        )
+        ) from e
 
     # Redis에서 리프레시 토큰 확인
     saved_token = redis_client.get(f"auth:refresh:{user_id}")
@@ -87,17 +123,28 @@ def refresh_access_token(db, request: Request) -> tuple[str, str]:
             hint="리프레시 토큰이 레디스에 없거나 만료되었으니 로그인으로 보내도록",
         )
 
+    # 남은 TTL 확인 (초 단위)
+    ttl = redis_client.ttl(f"auth:refresh:{user_id}")
+    half_ttl = REFRESH_TOKEN_EXPIRE_SECONDS // 2
+
     # 유저 정보 조회
     user = get_user_by_id(db, user_id)
-    if not user:
+    if not user or user.is_deleted():
         raise CustomException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             domain=DOMAIN,
             detail="User not found",
         )
 
-    # 엑세스 토큰, 리프레시 토큰 재발급
-    new_access_token, new_refresh_token = generate_tokens(user)
+    # 리프레시 토큰 재발급 여부 결정
+    if 0 < ttl <= half_ttl:
+        # 남은 시간이 절반 이하라면 새 리프레시 토큰 발급
+        new_access_token, new_refresh_token = generate_tokens(user)
+    else:
+        # 아직 충분히 남았으면 기존 토큰 유지
+        new_access_token = generate_access_token(user)
+        new_refresh_token = raw_token
+
     return new_access_token, new_refresh_token
 
 

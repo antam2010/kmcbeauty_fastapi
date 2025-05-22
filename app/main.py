@@ -25,6 +25,8 @@ from app.docs import api_change
 # docs
 from app.docs.tags_metadata import tags_metadata
 
+# 기타
+
 # 로그 설정
 setup_logging(app_env=APP_ENV)
 
@@ -96,24 +98,6 @@ async def error_logger(
         # Sentry 전송
         capture_exception(e)
         raise
-    return response
-
-
-@app.middleware("http")
-async def log_request_info(request: Request, call_next):
-    forwarded_for = request.headers.get("x-forwarded-for", "")
-    real_ip = request.headers.get("x-real-ip", "")
-    client_ip = request.client.host
-    host = request.headers.get("host", "")
-    ua = request.headers.get("user-agent", "")
-    path = request.url.path
-
-    logging.info(
-        f"[REQUEST] {forwarded_for} {real_ip} {client_ip} "
-        f"{request.method} {path} {host} {ua}",
-    )
-
-    response = await call_next(request)
     return response
 
 
