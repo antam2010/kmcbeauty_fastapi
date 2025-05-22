@@ -29,7 +29,7 @@ class CustomException(HTTPException):
         status_code: int,
         domain: str,
         code: str | None = None,
-        detail: str | None = "빼애애애애액 놉지비 놉지비 놉놉 지비지비",
+        detail: str | None = None,
         hint: str | None = "힌트 없음",
         exception: Exception | None = None,
     ):

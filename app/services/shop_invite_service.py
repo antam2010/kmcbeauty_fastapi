@@ -1,7 +1,8 @@
 from fastapi import status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.crud.shop_invite_curd import create_invite, get_valid_invite
+from app.crud.shop_invite_curd import create_invite, get_invite_by_shop_id
 from app.crud.shop_user_crud import get_shop_user
 from app.exceptions import CustomException
 from app.models.user import User
@@ -37,18 +38,25 @@ def generate_invite_code_service(
             detail="초대코드를 생성할 권한이 없습니다.",
         )
 
-    # 중복 생성 방지
-    if get_valid_invite(db, shop_id):
-        raise CustomException(
-            status_code=status.HTTP_409_CONFLICT,
-            domain=DOMAIN,
-            detail="이미 활성화된 초대코드가 존재합니다.",
-        )
+    try:
+        existing = get_invite_by_shop_id(db, shop_id)
+        if existing:
+            raise CustomException(
+                status_code=status.HTTP_409_CONFLICT,
+                domain=DOMAIN,
+            )
 
-    # 생성
-    invite = create_invite(db, shop_id)
+        # 생성
+        new_invite = create_invite(db, shop_id)
+
+    except SQLAlchemyError as e:
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+            exception=e,
+        ) from e
 
     return ShopInviteResponse(
-        invite_code=invite.invite_code,
-        expired_at=invite.expired_at,
+        invite_code=new_invite.invite_code,
+        expired_at=new_invite.expired_at,
     )

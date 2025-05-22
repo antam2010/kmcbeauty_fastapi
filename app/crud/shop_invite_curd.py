@@ -21,12 +21,8 @@ def create_invite(db: Session, shop_id: int) -> ShopInvite:
     return invite
 
 
-def get_valid_invite(db: Session, invite_code: str) -> ShopInvite | None:
-    return (
-        db.query(ShopInvite)
-        .filter(
-            ShopInvite.invite_code == invite_code,
-            ShopInvite.expired_at > datetime.now(UTC),
-        )
-        .first()
-    )
+def get_invite_by_shop_id(
+    db: Session,
+    shop_id: int,
+) -> ShopInvite | None:
+    return db.query(ShopInvite).filter(ShopInvite.shop_id == shop_id).first()

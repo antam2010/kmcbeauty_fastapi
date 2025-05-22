@@ -8,7 +8,7 @@ from app.models.mixin.timestamp import TimestampMixin
 class ShopInvite(Base, TimestampMixin):
     __tablename__ = "shop_invite"
     __table_args__ = (
-        Index("ix_shop_invite_shop_id", "shop_id"),
+        Index("idx_shop_invite_shop_id", "shop_id"),
         {"comment": "샵 초대코드 테이블"},
     )
 
