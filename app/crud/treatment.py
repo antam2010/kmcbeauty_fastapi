@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.phonebook import Phonebook
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
+from app.models.treatment_menu_detail import TreatmentMenuDetail
 from app.schemas.treatment import TreatmentFilter
 
 
@@ -14,6 +15,17 @@ def create_treatment(db: Session, treatment: Treatment) -> Treatment:
     db.add(treatment)
     db.flush()
     return treatment
+
+
+# 시술 예약 조회
+def get_treatment_by_id(db: Session, treatment_id: int) -> Treatment | None:
+    return db.query(Treatment).filter(Treatment.id == treatment_id).first()
+
+
+# 시술 예약 항목 삭제
+def delete_treatment_items(db: Session, treatment_id: int) -> None:
+    db.query(TreatmentItem).filter(TreatmentItem.treatment_id == treatment_id).delete()
+    db.flush()
 
 
 # 시술 예약 항목 등록
@@ -25,7 +37,9 @@ def create_treatment_item(db: Session, treatment_item: TreatmentItem) -> Treatme
 
 # 시술 예약 목록 조회
 def get_treatment_list(
-    db: Session, shop_id: int, filters: TreatmentFilter,
+    db: Session,
+    shop_id: int,
+    filters: TreatmentFilter,
 ) -> Page[Treatment]:
     query = (
         db.query(Treatment)
@@ -68,3 +82,10 @@ def get_treatment_list(
             query = query.order_by(sort_expr())
 
     return paginate(query)
+
+
+def validate_menu_detail_exists(
+    db: Session,
+    menu_detail_id: int,
+) -> TreatmentMenuDetail | None:
+    return db.query(TreatmentMenuDetail).filter_by(id=menu_detail_id).first()
