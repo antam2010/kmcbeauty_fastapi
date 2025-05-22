@@ -10,6 +10,12 @@ class UserCreate(BaseResponseModel):
     email: EmailStr = Field(..., description="유효한 이메일 주소")
     password: str = Field(..., min_length=4, description="비밀번호")
     role: UserRole = Field(..., description="유저 권한")
+    invite_code: str | None = Field(
+        None,
+        description="초대 코드",
+        min_length=10,
+        max_length=11,
+    )
 
 
 # 유저 수정 요청 스키마

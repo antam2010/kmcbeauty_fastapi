@@ -59,3 +59,20 @@ def delete_invite_by_shop_id(db: Session, shop_id: int) -> None:
     """
     db.query(ShopInvite).filter(ShopInvite.shop_id == shop_id).delete()
     db.flush()
+
+
+def get_invite_by_code(db: Session, invite_code: str) -> ShopInvite | None:
+    """샵 코드로 초대코드 조회.
+
+    :param db: DB 세션
+    :param invite_code: 샵 코드
+    :return: 초대코드 정보
+    """
+    return (
+        db.query(ShopInvite)
+        .filter(
+            ShopInvite.invite_code == invite_code,
+            ShopInvite.expired_at > datetime.now(UTC),
+        )
+        .first()
+    )
