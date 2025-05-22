@@ -9,7 +9,11 @@ from app.models.shop import Shop
 from app.models.user import User
 from app.schemas.shop import ShopCreate, ShopResponse, ShopSelect, ShopUpdate
 from app.schemas.shop_invite import ShopInviteResponse
-from app.services.shop_invite_service import generate_invite_code_service
+from app.services.shop_invite_service import (
+    delete_invite_code_service,
+    generate_invite_code_service,
+    get_invite_code_service,
+)
 from app.services.shop_service import (
     delete_selected_shop_service,
     get_my_shops_service,
@@ -143,3 +147,40 @@ def create_invite_link(
     current_user: User = Depends(get_current_user),
 ) -> ShopInviteResponse:
     return generate_invite_code_service(db=db, shop_id=shop_id, user=current_user)
+
+
+@router.get(
+    "/{shop_id}/invites",
+    response_model=ShopInviteResponse,
+    summary="샵 초대코드 조회",
+    description="샵에 초대코드를 조회합니다.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def get_invite_link(
+    shop_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ShopInviteResponse:
+    return get_invite_code_service(db=db, shop_id=shop_id, user=current_user)
+
+
+@router.delete(
+    "/{shop_id}/invites",
+    summary="샵 초대코드 삭제",
+    description="샵에 초대코드를 삭제합니다.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def delete_invite_link(
+    shop_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    return delete_invite_code_service(db=db, shop_id=shop_id, user=current_user)
