@@ -6,3 +6,4 @@ class TreatmentStatus(str, Enum):
     VISITED = "VISITED"  # 방문 및 시술 완료
     CANCELLED = "CANCELLED"  # 취소됨
     NO_SHOW = "NO_SHOW"  # 노쇼
+    COMPLETED = "COMPLETED"  # 시술 완료

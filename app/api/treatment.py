@@ -8,20 +8,37 @@ from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.user import User
 from app.schemas.treatment import (
     TreatmentCreate,
-    TreatmentDetail,
     TreatmentFilter,
     TreatmentResponse,
+    TreatmentUpdate,
 )
 from app.services.treatment_service import (
-    create_treatment_service,
     get_treatment_list_service,
-    update_treatment_service,
+    upsert_treatment_service,
 )
 
 router = APIRouter(prefix="/treatments", tags=["시술 예약"])
 
 
-# 시술 예약 생성
+@router.get(
+    "",
+    response_model=Page[TreatmentResponse],
+    summary="시술 예약 목록 조회",
+    description="시술 예약 목록을 조회합니다.",
+    status_code=status.HTTP_200_OK,
+)
+def list_treatments_api(
+    db: Session = Depends(get_db),
+    current_shop: User = Depends(get_current_shop),
+    filters: TreatmentFilter = Depends(),
+) -> Page[TreatmentResponse]:
+    return get_treatment_list_service(
+        db=db,
+        current_shop=current_shop,
+        filters=filters,
+    )
+
+
 @router.post(
     "",
     response_model=TreatmentResponse,
@@ -42,7 +59,7 @@ def create_treatment_api(
     db: Session = Depends(get_db),
     current_shop: User = Depends(get_current_shop),
 ) -> TreatmentResponse:
-    return create_treatment_service(data, db, current_shop)
+    return upsert_treatment_service(data=data, db=db, current_shop=current_shop)
 
 
 @router.put(
@@ -62,33 +79,13 @@ def create_treatment_api(
 )
 def update_treatment_api(
     treatment_id: int,
-    data: TreatmentCreate,
+    data: TreatmentUpdate,
     db: Session = Depends(get_db),
     current_shop: User = Depends(get_current_shop),
 ) -> TreatmentResponse:
-    return update_treatment_service(
+    return upsert_treatment_service(
         data=data,
         db=db,
         current_shop=current_shop,
         treatment_id=treatment_id,
-    )
-
-
-# 시술 예약 목록 조회
-@router.get(
-    "",
-    response_model=Page[TreatmentDetail],
-    summary="시술 예약 목록 조회",
-    description="시술 예약 목록을 조회합니다.",
-    status_code=status.HTTP_200_OK,
-)
-def list_treatments_api(
-    db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
-    filters: TreatmentFilter = Depends(),
-) -> Page[TreatmentDetail]:
-    return get_treatment_list_service(
-        db=db,
-        current_shop=current_shop,
-        filters=filters,
     )

@@ -1,4 +1,6 @@
-from sqlalchemy import Column, ForeignKey, Integer
+from typing import ClassVar
+
+from sqlalchemy import Column, ForeignKey, Integer, SmallInteger
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
@@ -7,7 +9,7 @@ from app.models.mixin.timestamp import TimestampMixin
 
 class TreatmentItem(Base, TimestampMixin):
     __tablename__ = "treatment_item"
-    __table_args__ = {"comment": "시술 항목 테이블"}
+    __table_args__: ClassVar[dict] = {"comment": "시술 항목 테이블"}
 
     id = Column(Integer, primary_key=True, index=True, comment="시술 항목 ID")
     treatment_id = Column(
@@ -24,11 +26,24 @@ class TreatmentItem(Base, TimestampMixin):
     )
 
     base_price = Column(
-        Integer, nullable=False, server_default="0", comment="기본 가격",
+        Integer,
+        nullable=False,
+        server_default="0",
+        comment="기본 가격",
     )
 
     duration_min = Column(
-        Integer, nullable=False, server_default="0", comment="소요 시간 (분)",
+        Integer,
+        nullable=False,
+        server_default="0",
+        comment="소요 시간 (분)",
+    )
+
+    session_no = Column(
+        SmallInteger,
+        nullable=False,
+        server_default="1",
+        comment="시술 회차",
     )
 
     # 이 항목이 속한 시술 예약 객체와의 관계 (N:1)

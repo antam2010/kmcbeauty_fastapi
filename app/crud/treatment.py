@@ -1,6 +1,6 @@
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.phonebook import Phonebook
@@ -25,7 +25,6 @@ def get_treatment_by_id(db: Session, treatment_id: int) -> Treatment | None:
 # 시술 예약 항목 삭제
 def delete_treatment_items(db: Session, treatment_id: int) -> None:
     db.query(TreatmentItem).filter(TreatmentItem.treatment_id == treatment_id).delete()
-    db.flush()
 
 
 # 시술 예약 항목 등록
@@ -41,37 +40,38 @@ def get_treatment_list(
     shop_id: int,
     filters: TreatmentFilter,
 ) -> Page[Treatment]:
-    query = (
-        db.query(Treatment)
+    stmt = (
+        select(Treatment)
         .options(
             joinedload(Treatment.treatment_items).joinedload(TreatmentItem.menu_detail),
             joinedload(Treatment.phonebook),
         )
-        .filter(Treatment.shop_id == shop_id)
+        .where(Treatment.shop_id == shop_id)
     )
 
     # 날짜 필터
     if filters.start_date:
-        query = query.filter(Treatment.reserved_at >= filters.start_date)
+        stmt = stmt.where(Treatment.reserved_at >= filters.start_date)
     if filters.end_date:
-        query = query.filter(Treatment.reserved_at <= filters.end_date)
+        stmt = stmt.where(Treatment.reserved_at <= filters.end_date)
 
     # 상태 필터
     if filters.status:
-        query = query.filter(Treatment.status == filters.status)
+        stmt = stmt.where(Treatment.status == filters.status)
 
     # 검색 필터
     if filters.search:
         keyword = f"%{filters.search}%"
-        query = (
-            query.join(Treatment.phonebook)
+        stmt = (
+            stmt.join(Treatment.phonebook)
             .outerjoin(Treatment.treatment_items)
             .outerjoin(TreatmentItem.menu_detail)
-        ).filter(
-            or_(
-                Phonebook.name.ilike(keyword),
-                Phonebook.phone_number.ilike(keyword),
-            ),
+            .where(
+                or_(
+                    Phonebook.name.ilike(keyword),
+                    Phonebook.phone_number.ilike(keyword),
+                ),
+            )
         )
 
     # 정렬
@@ -79,9 +79,10 @@ def get_treatment_list(
         sort_column = getattr(Treatment, filters.sort_by)
         sort_expr = getattr(sort_column, filters.sort_order, None)
         if sort_expr:
-            query = query.order_by(sort_expr())
+            stmt = stmt.order_by(sort_expr())
 
-    return paginate(query)
+    # 실행 및 페이지네이션
+    return paginate(db, stmt)
 
 
 def validate_menu_detail_exists(
@@ -89,3 +90,12 @@ def validate_menu_detail_exists(
     menu_detail_id: int,
 ) -> TreatmentMenuDetail | None:
     return db.query(TreatmentMenuDetail).filter_by(id=menu_detail_id).first()
+
+
+def get_treatment_items_by_treatment_id(
+    db: Session,
+    treatment_id: int,
+) -> list[TreatmentItem]:
+    return (
+        db.query(TreatmentItem).filter(TreatmentItem.treatment_id == treatment_id).all()
+    )
