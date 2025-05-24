@@ -1,8 +1,8 @@
-"""init schema
+"""initial schema
 
-Revision ID: 14273f7415fe
+Revision ID: 06223b763c27
 Revises: 
-Create Date: 2025-05-23 14:39:57.533196
+Create Date: 2025-05-24 17:03:24.905079
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '14273f7415fe'
+revision: str = '06223b763c27'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -100,7 +100,6 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False, comment='수정일시'),
     sa.ForeignKeyConstraint(['shop_id'], ['shop.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('shop_id', 'name', name='uq_treatment_menu_shop_id_name'),
     comment='시술 메뉴 대분류 테이블'
     )
     op.create_index(op.f('ix_treatment_menu_id'), 'treatment_menu', ['id'], unique=False)
@@ -110,7 +109,7 @@ def upgrade() -> None:
     sa.Column('phonebook_id', sa.Integer(), nullable=False, comment='시술 대상 고객 ID'),
     sa.Column('reserved_at', sa.DateTime(), nullable=False, comment='예약 일시'),
     sa.Column('memo', sa.Text(), nullable=True, comment='메모'),
-    sa.Column('status', sa.Enum('RESERVED', 'VISITED', 'CANCELLED', 'NO_SHOW', name='treatment_status'), nullable=False, comment='예약 상태'),
+    sa.Column('status', sa.Enum('RESERVED', 'VISITED', 'CANCELLED', 'NO_SHOW', 'COMPLETED', name='treatment_status'), nullable=False, comment='예약 상태'),
     sa.Column('finished_at', sa.DateTime(), nullable=True, comment='시술 완료일시'),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False, comment='생성일시'),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False, comment='수정일시'),
