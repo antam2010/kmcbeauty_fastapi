@@ -3,8 +3,8 @@ from typing import ClassVar
 
 from pydantic import Field
 
-from app.enum.treatment_status import TreatmentStatus
-from app.schemas.base import BaseResponseModel
+from app.enum.treatment_status import PaymentMethod, TreatmentStatus
+from app.schemas.mixin.base import BaseResponseModel
 from app.schemas.phonebook import PhonebookResponse
 from app.schemas.treatment_item import (
     TreatmentItemCreate,
@@ -21,6 +21,14 @@ class TreatmentBase(BaseResponseModel):
     memo: str | None = Field(None, description="메모")
     status: TreatmentStatus = Field(..., description="예약 상태")
     finished_at: datetime | None = Field(None, description="시술 완료일시")
+    payment_method: PaymentMethod = Field(
+        PaymentMethod.CARD,
+        description="결제 수단",
+    )
+    staff_user_id: int | None = Field(
+        None,
+        description="시술 담당자 유저 ID",
+    )
 
 
 class TreatmentCreate(TreatmentBase):
@@ -48,6 +56,10 @@ class TreatmentInDBBase(TreatmentBase):
     shop_id: int = Field(..., description="상점 ID")
     created_at: datetime = Field(..., description="생성일시")
     updated_at: datetime = Field(..., description="수정일시")
+    created_user_id: int | None = Field(
+        ...,
+        description="예약 생성자 유저 ID",
+    )
 
     model_config: ClassVar[dict] = {"from_attributes": True}
 
@@ -80,3 +92,7 @@ class TreatmentFilter(BaseResponseModel):
     )
     sort_by: str = Field(default="reserved_at", description="정렬 기준 필드명")
     sort_order: str = Field(default="desc", description="정렬 순서 (asc, desc)")
+    staff_user_id: int | None = Field(
+        None,
+        description="시술 담당자 유저 ID",
+    )

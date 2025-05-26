@@ -51,7 +51,8 @@ def read_user_handler(
     },
 )
 def create_user_handler(
-    user: UserCreate, db: Session = Depends(get_db),
+    user: UserCreate,
+    db: Session = Depends(get_db),
 ) -> UserResponse:
     return create_user_service(db, user)
 
@@ -86,6 +87,4 @@ def check_user_exsist(
     email: EmailStr = Query(..., description="이메일 주소"),
     db: Session = Depends(get_db),
 ) -> UserEmailCheckResponse:
-    """이메일 중복 체크
-    """
     return check_user_email_service(db, email=email)

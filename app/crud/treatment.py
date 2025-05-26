@@ -59,6 +59,10 @@ def get_treatment_list(
     if filters.status:
         stmt = stmt.where(Treatment.status == filters.status)
 
+    # 시술 담당자 필터
+    if filters.staff_user_id:
+        stmt = stmt.where(Treatment.staff_user_id == filters.staff_user_id)
+
     # 검색 필터
     if filters.search:
         keyword = f"%{filters.search}%"

@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import ClassVar
 
-from app.schemas.base import BaseResponseModel
+from pydantic import BaseModel
 
 
-class ShopInviteResponse(BaseResponseModel):
+class ShopInviteResponse(BaseModel):
     shop_id: int
     invite_code: str
     expired_at: datetime

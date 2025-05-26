@@ -16,7 +16,6 @@ class TokenDecodeError(Exception):
     """JWT 디코딩 실패 시 커스텀 예외"""
 
 
-
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -43,14 +42,13 @@ def create_jwt_token(data: dict, expires_delta: timedelta) -> str:
 
 def decode_jwt_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except ExpiredSignatureError:
-        raise TokenDecodeError("Access token has expired.")
-    except JWTError:
-        raise TokenDecodeError("Invalid access token.")
-    except Exception:
-        raise TokenDecodeError("Unexpected token decode error.")
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except ExpiredSignatureError as e:
+        raise TokenDecodeError(e) from e
+    except JWTError as e:
+        raise TokenDecodeError(e) from e
+    except Exception as e:
+        raise TokenDecodeError(e) from e
 
 
 def encrypt_token(token: str) -> str:

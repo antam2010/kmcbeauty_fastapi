@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import Field, field_validator
 
-from app.schemas.base import BaseResponseModel
+from app.schemas.mixin.base import BaseResponseModel
 from app.utils.phone import is_valid_korean_phone_number, normalize_korean_phone_number
 
 
@@ -23,7 +23,9 @@ class ShopBase(BaseResponseModel):
     address_detail: str | None = Field(None, description="상세 주소", max_length=255)
     phone: str | None = Field(None, description="전화번호", max_length=20)
     business_number: str | None = Field(
-        None, description="사업자 등록번호", max_length=20,
+        None,
+        description="사업자 등록번호",
+        max_length=20,
     )
 
 

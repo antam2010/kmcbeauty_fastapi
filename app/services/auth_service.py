@@ -10,17 +10,31 @@ from app.core.config import (
     REFRESH_TOKEN_EXPIRE_SECONDS,
     SECRET_KEY,
 )
-from app.core.redis_client import redis_client
 from app.core.security import create_jwt_token, verify_password
 from app.crud.user_crud import get_user_by_email, get_user_by_id
 from app.exceptions import CustomException
 from app.models.user import User
 from app.schemas.auth import LoginResponse
+from app.utils.redis.auth import (
+    clear_refresh_token_redis,
+    get_refresh_token_redis,
+    get_refresh_token_ttl,
+    set_refresh_token_redis,
+)
+from app.utils.redis.user import clear_user_redis
 
 DOMAIN = "AUTH"
 
 
-def authenticate_user_service(db, email: str, password: str) -> User:
+def authenticate_user_service(db: Session, email: str, password: str) -> User:
+    """이메일과 비밀번호를 사용하여 사용자를 인증한다.
+
+    - db: SQLAlchemy 세션 객체
+    - email: 사용자 이메일
+    - password: 사용자 비밀번호
+    - 반환값: 인증된 사용자 객체
+    - 예외: 인증 실패 시 CustomException 발생
+    """
     user = get_user_by_email(db, email)
     if not user or not verify_password(password, user.password):
         raise CustomException(
@@ -38,12 +52,7 @@ def generate_tokens(user: User) -> LoginResponse:
     """
     access_token = generate_access_token(user)  # 액세스 토큰 생성
     refresh_token = generate_refresh_token(user)  # 리프레시 토큰 생성
-    # Redis에 리프레시 토큰 저장
-    redis_client.setex(
-        f"auth:refresh:{user.id}",
-        REFRESH_TOKEN_EXPIRE_SECONDS,
-        refresh_token,
-    )
+    set_refresh_token_redis(user.id, refresh_token)  # Redis에 리프레시 토큰 저장
     return access_token, refresh_token
 
 
@@ -114,18 +123,18 @@ def refresh_access_token(db: Session, request: Request) -> tuple[str, str]:
         ) from e
 
     # Redis에서 리프레시 토큰 확인
-    saved_token = redis_client.get(f"auth:refresh:{user_id}")
+    saved_token = get_refresh_token_redis(user_id)
     if not saved_token or saved_token != raw_token:
         raise CustomException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             domain=DOMAIN,
             detail="Refresh token is invalid or expired.",
-            hint="리프레시 토큰이 레디스에 없거나 만료되었으니 로그인으로 보내도록",
+            hint="리프레시 토큰이 레디스에 없으니 로그인으로 보내도록",
         )
 
     # 남은 TTL 확인 (초 단위)
-    ttl = redis_client.ttl(f"auth:refresh:{user_id}")
-    half_ttl = REFRESH_TOKEN_EXPIRE_SECONDS // 2
+    ttl = get_refresh_token_ttl(user_id)
+    half_ttl = ttl / 2 if ttl > 0 else -1
 
     # 유저 정보 조회
     user = get_user_by_id(db, user_id)
@@ -140,6 +149,7 @@ def refresh_access_token(db: Session, request: Request) -> tuple[str, str]:
     if 0 < ttl <= half_ttl:
         # 남은 시간이 절반 이하라면 새 리프레시 토큰 발급
         new_access_token, new_refresh_token = generate_tokens(user)
+        set_refresh_token_redis(new_refresh_token)  # Redis에 새 리프레시 토큰 저장
     else:
         # 아직 충분히 남았으면 기존 토큰 유지
         new_access_token = generate_access_token(user)
@@ -149,12 +159,18 @@ def refresh_access_token(db: Session, request: Request) -> tuple[str, str]:
 
 
 def logout_user(token: str | None) -> bool:
+    """사용자 로그아웃 처리.
+
+    - token: 리프레시 토큰 (없으면 False 반환)
+    - 반환값: 성공 여부 (True/False)
+    """
+    if not token:
+        return False
     try:
-        if not token:
-            return False
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = int(payload.get("sub"))
-        redis_client.delete(f"auth:refresh:{user_id}")
-    except Exception:
-        raise False
+        clear_refresh_token_redis(user_id)
+        clear_user_redis(user_id)
+    except JWTError:
+        return False
     return True

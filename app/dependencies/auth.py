@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from sentry_sdk import set_user
@@ -12,51 +10,42 @@ from app.models.user import User
 from app.utils.redis.user import get_user_redis, set_user_redis
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+DOMAIN = "AUTH"
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
 ) -> User:
     try:
         payload = decode_jwt_token(token)
-    except TokenDecodeError as e:
+        user_id = payload.get("sub")
+        if not user_id:
+            raise ValueError("sub(claim) not found in token")
+
+        user_id = int(user_id)
+
+    except (TokenDecodeError, ValueError) as e:
         raise CustomException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            domain="AUTH",
-            hint=str(e),
-        )
+            domain=DOMAIN,
+            hint="유효하지 않은 인증 토큰입니다.",
+            exception=e,
+        ) from e
 
-    user_id: str | None = payload.get("sub")
-    if not user_id:
-        raise CustomException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            domain="AUTH",
-            hint="토큰 정보에 사용자 ID가 없습니다.",
-        )
+    # Redis → fallback to DB
+    if user_redis := get_user_redis(user_id):
+        user = User(**user_redis)
+    else:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise CustomException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                domain=DOMAIN,
+                hint="사용자를 찾을 수 없습니다.",
+            )
+        set_user_redis(user)  # ORM 객체를 캐싱
 
-    user_id = int(user_id)
-
-    # Redis에서 사용자 캐시 조회
-    cached_user = get_user_redis(user_id)
-    if cached_user:
-        # Sentry에 사용자 정보 설정
-        set_user({"id": user_id, "email": cached_user["email"]})
-        return User(**cached_user)
-
-    # Redis에 없으면 DB에서 조회
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        logging.exception("User not found: %s", user_id)
-        raise CustomException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            domain="AUTH",
-            hint="사용자를 찾을 수 없습니다.",
-        )
-
-    # Sentry에 사용자 정보 설정
+    # Sentry 사용자 식별 정보 설정
     set_user({"id": user.id, "email": user.email})
-
-    # Redis에 캐싱
-    set_user_redis(user)
-
     return user

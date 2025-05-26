@@ -3,26 +3,31 @@ from typing import Annotated
 
 from pydantic import Field, field_validator
 
-from app.schemas.base import BaseResponseModel
+from app.schemas.mixin.base import BaseResponseModel
 from app.utils.phone import is_valid_korean_phone_number, normalize_korean_phone_number
 
 
 # 전화번호 유효성 검사 + 포맷 통일 Mixin
 class PhoneNumberValidatorMixin:
+    INVALID_PHONE_MESSAGE = "유효하지 않은 전화번호입니다."
+
     @field_validator("phone_number")
     @classmethod
     def validate_phone(cls, v: str | None) -> str | None:
         if v is None:
             return None
         if not is_valid_korean_phone_number(v):
-            raise ValueError("유효하지 않은 전화번호입니다.")
+            message = cls.INVALID_PHONE_MESSAGE
+            raise ValueError(message)
         return normalize_korean_phone_number(v)
 
 
 # 전화번호부 생성 요청 스키마
 class PhonebookCreate(BaseResponseModel, PhoneNumberValidatorMixin):
     group_name: str | None = Field(
-        default=None, max_length=100, description="그룹 이름",
+        default=None,
+        max_length=100,
+        description="그룹 이름",
     )
     memo: str | None = Field(default=None, description="메모")
     name: str = Field(..., max_length=100, description="이름")
@@ -32,19 +37,24 @@ class PhonebookCreate(BaseResponseModel, PhoneNumberValidatorMixin):
 # 전화번호부 수정 요청 스키마
 class PhonebookUpdate(BaseResponseModel, PhoneNumberValidatorMixin):
     group_name: str | None = Field(
-        default=None, max_length=100, description="그룹 이름",
+        default=None,
+        max_length=100,
+        description="그룹 이름",
     )
     memo: str | None = Field(default=None, description="메모")
     name: str | None = Field(default=None, max_length=100, description="이름")
     phone_number: str | None = Field(
-        default=None, max_length=20, description="전화번호",
+        default=None,
+        max_length=20,
+        description="전화번호",
     )
 
 
 # 전화번호부 목록 요청 (필터링용)
 class PhonebookFilter(BaseResponseModel):
     search: str | None = Field(
-        default=None, description="검색어 (이름, 전화번호, 그룹명, 메모 등)",
+        default=None,
+        description="검색어 (이름, 전화번호, 그룹명, 메모 등)",
     )
 
 

@@ -1,28 +1,23 @@
-from datetime import UTC, datetime
+from typing import ClassVar
 
-from sqlalchemy import Column, DateTime, func
-from sqlalchemy.orm import declared_attr
+from sqlalchemy import Column, DateTime
+
+from app.utils.datetime import now_kst
 
 
 class TimestampMixin:
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(UTC),
-        server_default=func.now(),
+        default=now_kst,
         comment="생성일시",
     )
 
     updated_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(UTC),
-        onupdate=lambda: datetime.now(UTC),
-        server_default=func.now(),
-        server_onupdate=func.now(),
+        default=now_kst,
+        onupdate=now_kst,
         comment="수정일시",
     )
-
-    @declared_attr.directive
-    def __mapper_args__(cls):
-        return {"eager_defaults": True}
+    __mapper_args__: ClassVar[dict] = {"eager_defaults": True}

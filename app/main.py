@@ -103,7 +103,7 @@ async def error_logger(
 
 # 헬스체크 엔드포인트 (서버 상태 확인)
 @app.get("/health", tags=["System"])
-async def health_check():
+async def health_check() -> dict:
     return {"status": "ok", "message": "API 서버가 정상 동작 중입니다."}
 
 

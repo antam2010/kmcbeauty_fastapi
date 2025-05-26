@@ -78,8 +78,6 @@ def update_shop(
     )
 
 
-## 선택한 샵 등록 ##
-## version 1.0.0 ##
 @router.post(
     "/selected",
     summary="선택한 샵 설정",
@@ -184,3 +182,23 @@ def delete_invite_link(
     current_user: User = Depends(get_current_user),
 ) -> None:
     return delete_invite_code_service(db=db, shop_id=shop_id, user=current_user)
+
+
+# @router.get(
+#     "/{shop_id}/users",
+#     response_model=Page[User],
+#     summary="샵 유저 목록 조회",
+#     description="특정 샵에 속한 유저 목록을 조회합니다.",
+#     status_code=status.HTTP_200_OK,
+#     responses={
+#         status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+#         status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+#     },
+# )
+# def get_shop_users(
+#     shop_id: int,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ) -> Page[User]:
+#     """특정 샵에 속한 유저 목록을 조회합니다."""
+#     return None

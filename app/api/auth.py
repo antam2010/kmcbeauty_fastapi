@@ -20,7 +20,9 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post(
     "/login",
     summary="사용자 로그인",
-    description="이메일(username)과 비밀번호(password)를 입력하여 JWT 토큰을 발급받습니다.",
+    description=(
+        "이메일(username)과 비밀번호(password)를 입력하여 JWT 토큰을 발급받습니다."
+    ),
     response_model=LoginResponse,
     status_code=status.HTTP_200_OK,
     responses={
@@ -87,7 +89,7 @@ def refresh_token_handler(
 @router.post(
     "/logout",
     summary="사용자 로그아웃",
-    description="로그아웃 시 쿠키 제거 및 레디스에서 리프레시 토큰 삭제, result 에서 삭제 여부 확인",
+    description="로그아웃 시 쿠키 제거 및 레디스에서 리프레시 토큰 삭제",
     status_code=status.HTTP_200_OK,
 )
 def logout(request: Request) -> JSONResponse:

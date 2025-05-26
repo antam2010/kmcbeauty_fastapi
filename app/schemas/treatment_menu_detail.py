@@ -3,7 +3,7 @@ from typing import ClassVar
 
 from pydantic import Field
 
-from app.schemas.base import BaseResponseModel
+from app.schemas.mixin.base import BaseResponseModel
 
 
 class TreatmentMenuDetailBase(BaseResponseModel):

@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -15,6 +13,7 @@ from app.crud.user_crud import (
 )
 from app.enum.role import UserRole
 from app.exceptions import CustomException
+from app.models.shop_invite import ShopInvite
 from app.models.user import User
 from app.schemas.user import (
     UserCreate,
@@ -22,30 +21,24 @@ from app.schemas.user import (
     UserResponse,
     UserUpdate,
 )
-from app.utils.redis.user import clear_user_redis
+from app.utils.redis.auth import clear_refresh_token_redis
 
 DOMAIN = "USER"
 
-ROLE_NAME_MAP = {
-    "ADMIN": "관리자",
-    "MASTER": "원장",
-    "MANAGER": "매니저",
-}
 
-
-# 내 정보 조회
 def get_user_service(db: Session, current_user: User) -> UserResponse:
-    user_response = UserResponse.model_validate(current_user)
-    user_response.role_name = ROLE_NAME_MAP.get(current_user.role, "Unknown")
+    """현재 로그인한 사용자의 정보를 조회합니다."""
+    user = get_user_by_id(db, current_user.id)
+    if not user:
+        raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
+
+    user_response = UserResponse.model_validate(user)
+    user_response.role_name = user.role.label
     return user_response
 
 
-# 회원 생성
-def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
-    role = user_create.role
-
-    # 1. ADMIN은 가입 불가
-    if role == UserRole.ADMIN:
+def validate_user_creation(data: UserCreate, db: Session) -> ShopInvite | None:
+    if data.role == UserRole.ADMIN:
         raise CustomException(
             status_code=status.HTTP_403_FORBIDDEN,
             domain=DOMAIN,
@@ -53,22 +46,30 @@ def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
         )
 
     invite = None
-    if role == UserRole.MANAGER:
-        # 2. MANAGER는 초대 코드 필수
-        if not user_create.invite_code:
+    if data.role == UserRole.MANAGER:
+        if not data.invite_code:
             raise CustomException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 domain=DOMAIN,
                 detail="MANAGER 권한은 초대 코드가 필요합니다.",
             )
 
-        invite = get_invite_by_code(db, user_create.invite_code)
+        invite = get_invite_by_code(db, data.invite_code)
         if not invite:
             raise CustomException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 domain=DOMAIN,
                 detail="유효하지 않거나 만료된 초대 코드입니다.",
             )
+    return invite
+
+
+# 회원 생성
+def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
+    role = user_create.role
+
+    # 1. 유저 생성 유효성 검사
+    invite = validate_user_creation(user_create, db)
 
     # 3. 유저 생성 준비
     user_data = user_create.model_dump(exclude={"invite_code"})
@@ -107,7 +108,7 @@ def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
             exception=e,
         ) from e
     user_response = UserResponse.model_validate(user)
-    user_response.role_name = ROLE_NAME_MAP.get(user.role, "Unknown")
+    user_response.role_name = user.role.label
     return user_response
 
 
@@ -118,8 +119,10 @@ def update_user_service(
     current_user: User,
 ) -> UserResponse:
     try:
+        validate_user_creation(user_update, db)
+
         user = get_user_by_id(db, current_user.id)
-        if not user:
+        if not user or user.is_deleted():
             raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
 
         user_data = user_update.model_dump(exclude_unset=True)
@@ -129,28 +132,32 @@ def update_user_service(
             user_data["password"] = hash_password(user_data["password"])
 
         # 레디스 캐시 삭제
-        clear_user_redis(user.id)
+        clear_refresh_token_redis(user.id)
 
         # 사용자 정보 업데이트
         updated_user = update_user_db(db, user, user_data)
         user_response = UserResponse.model_validate(updated_user)
-        user_response.role_name = ROLE_NAME_MAP.get(updated_user.role, "Unknown")
-        return user_response
-
-    except IntegrityError:
-        raise CustomException(status_code=status.HTTP_409_CONFLICT, domain=DOMAIN)
-    except CustomException as e:
-        raise e
+        user_response.role_name = user.role.label
+    except IntegrityError as e:
+        raise CustomException(
+            status_code=status.HTTP_409_CONFLICT,
+            domain=DOMAIN,
+            exception=e,
+        ) from e
+    except CustomException:
+        raise
     except Exception as e:
-        logging.exception(f"Error updating user: {e}")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+            exception=e,
+        ) from e
+    else:
+        return user_response
 
 
 def check_user_email_service(db: Session, email: str) -> UserEmailCheckResponse:
-    """이메일 중복 체크 서비스"""
+    """이메일 중복 체크 서비스."""
     exists = None
     message = None
     user = get_user_by_email(db, email=email)

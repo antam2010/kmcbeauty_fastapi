@@ -68,6 +68,7 @@ def upsert_treatment_service(
     :param treatment_id: 수정할 시술 예약 ID
     :return: Treatment 모델
     """
+    print(data)
     try:
         if treatment_id is None:
             # 생성 로직
@@ -78,6 +79,8 @@ def upsert_treatment_service(
                 memo=data.memo,
                 status=data.status,
                 finished_at=data.finished_at,
+                staff_user_id=data.staff_user_id,
+                created_user_id=current_shop.user_id,
             )
             treatment = create_treatment(db, treatment)
         else:
@@ -95,6 +98,7 @@ def upsert_treatment_service(
             treatment.status = data.status
             treatment.memo = data.memo
             treatment.finished_at = data.finished_at
+            treatment.staff_user_id = data.staff_user_id
 
         # 시술 항목 upsert 처리
         existing_items = get_treatment_items_by_treatment_id(db, treatment.id)
