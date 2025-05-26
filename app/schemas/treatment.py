@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import ClassVar
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from app.enum.treatment_status import PaymentMethod, TreatmentStatus
 from app.schemas.mixin.base import BaseResponseModel
@@ -66,6 +66,25 @@ class TreatmentInDBBase(TreatmentBase):
 
 class TreatmentResponse(TreatmentInDBBase):
     """시술 조회 스키마."""
+
+    status_label: str = Field(
+        None,
+        description="예약 상태 라벨",
+    )
+    payment_method_label: str = Field(
+        None,
+        description="결제 수단 라벨",
+    )
+
+    @model_validator(mode="after")
+    def fill_label(self) -> str:
+        self.status_label = self.status.label
+        return self
+
+    @model_validator(mode="after")
+    def fill_payment_method_label(self) -> str:
+        self.payment_method_label = self.payment_method.label
+        return self
 
     treatment_items: list[TreatmentItemResponse] = Field(
         ...,

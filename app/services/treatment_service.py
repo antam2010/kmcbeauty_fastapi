@@ -37,7 +37,12 @@ def get_treatment_list_service(
     :return: Treatment 모델
     """
     try:
-        return get_treatment_list(db=db, shop_id=current_shop.id, filters=filters)
+        return get_treatment_list(
+            db=db,
+            shop_id=current_shop.id,
+            filters=filters,
+        )
+
     except SQLAlchemyError as e:
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
