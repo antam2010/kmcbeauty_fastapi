@@ -1,13 +1,14 @@
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.enum.treatment_status import TreatmentStatus
 from app.models.phonebook import Phonebook
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
 from app.models.treatment_menu_detail import TreatmentMenuDetail
-from app.schemas.treatment import TreatmentFilter
+from app.schemas.treatment import TreatmentAutoComplete, TreatmentFilter
 
 
 # 시술 예약 등록
@@ -102,4 +103,24 @@ def get_treatment_items_by_treatment_id(
 ) -> list[TreatmentItem]:
     return (
         db.query(TreatmentItem).filter(TreatmentItem.treatment_id == treatment_id).all()
+    )
+
+
+def get_treatments_to_autocomplete(
+    db: Session,
+) -> list[TreatmentAutoComplete]:
+    return (
+        db.query(
+            Treatment.id.label("treatment_id"),
+            Treatment.reserved_at,
+            func.sum(TreatmentItem.duration_min).label("total_duration_min"),
+        )
+        .join(TreatmentItem, TreatmentItem.treatment_id == Treatment.id)
+        .filter(
+            Treatment.status.in_(TreatmentStatus.unfinished_statuses()),
+            Treatment.finished_at.is_(None),
+        )
+        .group_by(Treatment.id, Treatment.reserved_at)
+        .limit(100)
+        .all()
     )

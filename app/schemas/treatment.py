@@ -115,3 +115,13 @@ class TreatmentFilter(BaseResponseModel):
         None,
         description="시술 담당자 유저 ID",
     )
+
+
+class TreatmentAutoComplete(BaseResponseModel):
+    """시술 자동 완료 스키마."""
+
+    treatment_id: int = Field(..., description="시술 예약 ID")
+    reserved_at: datetime = Field(..., description="예약 일시")
+    total_duration_min: int = Field(..., description="총 시술 시간 (분)")
+    status: TreatmentStatus = Field(..., description="시술 상태")
+    finished_at: datetime | None = Field(None, description="시술 완료일시")

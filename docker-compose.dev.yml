@@ -15,3 +15,18 @@ services:
     restart: always
     ports:
       - "6379:6379"
+  celery_worker:
+    build: .
+    volumes:
+      - .:/app
+    command: celery -A celery_app worker --loglevel=info
+    depends_on:
+      - redis
+
+  celery_beat:
+    build: .
+    volumes:
+      - .:/app
+    command: celery -A celery_app beat --loglevel=info
+    depends_on:
+      - redis

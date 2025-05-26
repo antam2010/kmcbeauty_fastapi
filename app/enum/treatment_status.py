@@ -18,6 +18,10 @@ class TreatmentStatus(str, Enum):
             TreatmentStatus.COMPLETED: "시술 완료",
         }.get(self.value, "Unknown")
 
+    @classmethod
+    def unfinished_statuses(cls) -> list[str]:
+        return [cls.RESERVED, cls.VISITED]
+
 
 class PaymentMethod(str, Enum):
     CARD = "CARD"  # 카드 결제

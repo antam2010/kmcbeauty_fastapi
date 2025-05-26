@@ -24,6 +24,27 @@ services:
     networks:
       shared_network_prod:
         ipv4_address: 172.20.0.11
+  celery_worker:
+    build: .
+    volumes:
+      - .:/app
+    command: celery -A celery_app worker --loglevel=info
+    depends_on:
+      - redis
+    networks:
+      shared_network_prod:
+        ipv4_address: 172.20.0.12
+
+  celery_beat:
+    build: .
+    volumes:
+      - .:/app
+    command: celery -A celery_app beat --loglevel=info
+    depends_on:
+      - redis
+    networks:
+      shared_network_prod:
+        ipv4_address: 172.20.0.13
 
 networks:
   shared_network_prod:
