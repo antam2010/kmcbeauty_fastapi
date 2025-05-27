@@ -4,7 +4,7 @@ from typing import ClassVar
 from pydantic import Field, model_validator
 
 from app.enum.treatment_status import PaymentMethod, TreatmentStatus
-from app.schemas.mixin.base import BaseResponseModel
+from app.schemas.mixin.base import BaseModel, BaseResponseModel
 from app.schemas.phonebook import PhonebookResponse
 from app.schemas.treatment_item import (
     TreatmentItemCreate,
@@ -96,7 +96,7 @@ class TreatmentResponse(TreatmentInDBBase):
     )
 
 
-class TreatmentFilter(BaseResponseModel):
+class TreatmentFilter(BaseModel):
     """시술 필터링 스키마."""
 
     start_date: date | None = Field(None, description="예약 시작일 (YYYY-MM-DD)")

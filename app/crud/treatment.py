@@ -9,6 +9,7 @@ from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
 from app.models.treatment_menu_detail import TreatmentMenuDetail
 from app.schemas.treatment import TreatmentAutoComplete, TreatmentFilter
+from app.utils.query import apply_date_range_filter
 
 
 # 시술 예약 등록
@@ -51,10 +52,14 @@ def get_treatment_list(
     )
 
     # 날짜 필터
-    if filters.start_date:
-        stmt = stmt.where(Treatment.reserved_at >= filters.start_date)
-    if filters.end_date:
-        stmt = stmt.where(Treatment.reserved_at <= filters.end_date)
+    # WHERE treatment.reserved_at >= '2025-05-24 15:00:00.000000'
+    #   AND treatment.reserved_at <= '2025-05-27 14:59:59.999999'
+    stmt = apply_date_range_filter(
+        stmt,
+        Treatment.reserved_at,
+        filters.start_date,
+        filters.end_date,
+    )
 
     # 상태 필터
     if filters.status:

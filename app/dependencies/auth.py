@@ -7,7 +7,7 @@ from app.core.security import TokenDecodeError, decode_jwt_token
 from app.database import get_db
 from app.exceptions import CustomException
 from app.models.user import User
-from app.utils.redis.user import get_user_redis, set_user_redis
+from app.utils.redis.user import clear_user_redis, get_user_redis, set_user_redis
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 DOMAIN = "AUTH"
@@ -21,7 +21,8 @@ def get_current_user(
         payload = decode_jwt_token(token)
         user_id = payload.get("sub")
         if not user_id:
-            raise ValueError("sub(claim) not found in token")
+            error_msg = "sub(claim) not found in token"
+            raise ValueError(error_msg)
 
         user_id = int(user_id)
 
@@ -49,3 +50,13 @@ def get_current_user(
     # Sentry 사용자 식별 정보 설정
     set_user({"id": user.id, "email": user.email})
     return user
+
+
+def clear_current_user_cache(
+    user_id: int,
+) -> None:
+    """현재 사용자 캐시를 제거합니다.
+
+    주로 로그아웃 시 사용됩니다.
+    """
+    clear_user_redis(user_id)

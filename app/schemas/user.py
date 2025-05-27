@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import ClassVar
 
 from pydantic import EmailStr, Field
@@ -42,6 +43,8 @@ class UserResponse(UserBase):
 
     id: int = Field(..., description="유저 고유 ID")
     role_name: str = Field(None, description="유저 권한 이름(소스코드)")
+    created_at: datetime = Field(..., description="생성일시")
+    updated_at: datetime = Field(..., description="수정일시")
 
     model_config: ClassVar[dict] = {
         "from_attributes": True,

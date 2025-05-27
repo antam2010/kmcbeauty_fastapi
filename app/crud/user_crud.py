@@ -28,3 +28,11 @@ def update_user_db(db: Session, user: User, user_data: dict) -> User:
 def get_user_by_email(db: Session, email: str) -> User | None:
     """이메일 기준 사용자 단순 조회 (권한 체크 없음)."""
     return db.query(User).filter(User.email == email).first()
+
+
+def delete_user_db(db: Session, user: User, is_soft_delete: bool = True) -> None:
+    """사용자 삭제 (소프트 삭제 또는 하드 삭제)."""
+    if is_soft_delete:
+        user.soft_delete()
+    else:
+        db.delete(user)

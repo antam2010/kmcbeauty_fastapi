@@ -1,5 +1,5 @@
 from fastapi import status
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
@@ -7,6 +7,7 @@ from app.crud.shop_invite_curd import get_invite_by_code
 from app.crud.shop_user_crud import ShopUser, create_shop_user
 from app.crud.user_crud import (
     create_user,
+    delete_user_db,
     get_user_by_email,
     get_user_by_id,
     update_user_db,
@@ -34,6 +35,7 @@ def get_user_service(db: Session, current_user: User) -> UserResponse:
 
     user_response = UserResponse.model_validate(user)
     user_response.role_name = user.role.label
+
     return user_response
 
 
@@ -154,6 +156,38 @@ def update_user_service(
         ) from e
     else:
         return user_response
+
+
+def delete_user_service(
+    db: Session,
+    current_user: User,
+    is_soft_delete: bool = False,
+) -> None:
+    """현재 로그인한 사용자를 삭제합니다."""
+    user = get_user_by_id(db, current_user.id)
+    if not user:
+        raise CustomException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            domain=DOMAIN,
+            hint="없슈.",
+        )
+
+    clear_refresh_token_redis(user.id)  # 레디스 캐시 삭제
+
+    try:
+        delete_user_db(
+            db=db,
+            user=user,
+            is_soft_delete=is_soft_delete,
+        )
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+            exception=e,
+        ) from e
 
 
 def check_user_email_service(db: Session, email: str) -> UserEmailCheckResponse:

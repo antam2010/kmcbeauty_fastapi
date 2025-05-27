@@ -4,12 +4,13 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.shop import Shop
+from app.models.user import User
 from app.utils.redis.shop import get_selected_shop_redis
 
 
 def get_current_shop(
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> Shop:
     shop_id = get_selected_shop_redis(user.id)
     if not shop_id:

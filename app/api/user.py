@@ -15,6 +15,7 @@ from app.schemas.user import (
 from app.services.user_service import (
     check_user_email_service,
     create_user_service,
+    delete_user_service,
     get_user_service,
     update_user_service,
 )
@@ -74,6 +75,40 @@ def update_user_handler(
     current_user: User = Depends(get_current_user),
 ) -> UserResponse:
     return update_user_service(db, user, current_user)
+
+
+@router.delete(
+    "/me",
+    summary="사용자 삭제",
+    description="현재 로그인한 사용자를 삭제합니다.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def delete_user_handler(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    """현재 로그인한 사용자를 삭제합니다."""
+    delete_user_service(db=db, current_user=current_user, is_soft_delete=True)
+
+
+@router.delete(
+    "/me/force",
+    summary="사용자 강제 삭제",
+    description="현재 로그인한 사용자를 강제로 삭제합니다.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def delete_user_force_handler(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    """현재 로그인한 사용자를 강제로 삭제합니다."""
+    delete_user_service(db=db, current_user=current_user, is_soft_delete=False)
 
 
 @router.get(

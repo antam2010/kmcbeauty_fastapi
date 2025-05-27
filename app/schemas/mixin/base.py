@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, field_validator
 
-from app.utils.datetime import KST
+from app.utils.datetime import UTC
 
 
 class BaseResponseModel(BaseModel):
@@ -10,5 +10,5 @@ class BaseResponseModel(BaseModel):
     @classmethod
     def attach_utc(cls, v: object) -> datetime:
         if isinstance(v, datetime) and v.tzinfo is None:
-            return v.replace(tzinfo=KST)
+            return v.replace(tzinfo=UTC)
         return v
