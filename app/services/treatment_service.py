@@ -3,7 +3,7 @@ from fastapi_pagination import Page
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.crud.treatment import (
+from app.crud.treatment_crud import (
     create_treatment,
     get_treatment_by_id,
     get_treatment_items_by_treatment_id,

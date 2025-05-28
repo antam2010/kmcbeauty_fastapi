@@ -3,7 +3,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.crud.treatment import get_treatment_summary
+from app.crud.treatment_crud import get_treatment_summary
 from app.models.shop import Shop
 from app.schemas.dashboard import (
     DashboardFilter,

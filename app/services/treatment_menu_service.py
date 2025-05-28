@@ -6,7 +6,7 @@ from fastapi_pagination import Page
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.crud.treatment_menu import (
+from app.crud.treatment_menu_crud import (
     create_treatment_menu,
     create_treatment_menu_detail,
     get_menu_by_id,
@@ -34,10 +34,11 @@ def get_treatment_menus_service(
     current_shop: Shop,
     filters: TreatmentMenuFilter,
 ) -> Page[TreatmentMenu]:
-    """시술 메뉴 목록 조회 서비스
-    """
+    """시술 메뉴 목록 조회 서비스"""
     list = get_treatment_menus_by_user(
-        db=db, shop_id=current_shop.id, search=filters.search,
+        db=db,
+        shop_id=current_shop.id,
+        search=filters.search,
     )
     return list
 
@@ -112,8 +113,7 @@ def delete_treatment_menu_service(
     current_shop: Shop,
     menu_id: int,
 ) -> None:
-    """시술 메뉴 삭제 서비스
-    """
+    """시술 메뉴 삭제 서비스"""
     try:
         menu = get_menu_by_id(
             db=db,
@@ -152,8 +152,7 @@ def restore_treatment_menu_service(
     current_shop: Shop,
     menu_id: int,
 ) -> None:
-    """시술 메뉴 복구 서비스
-    """
+    """시술 메뉴 복구 서비스"""
     try:
         menu = get_menu_by_id(
             db=db,
@@ -208,7 +207,6 @@ def create_treatment_menu_detail_service(
     db: Session,
     detail_id: int | None = None,
 ) -> TreatmentMenuDetail:
-
     try:
         if detail_id:
             # 시술 메뉴 상세 수정
@@ -263,8 +261,7 @@ def delete_treatment_menu_detail_service(
     menu_id: int,
     detail_id: int,
 ) -> None:
-    """시술 메뉴 상세 삭제 서비스
-    """
+    """시술 메뉴 상세 삭제 서비스"""
     try:
         menu_detail = get_menu_detail_by_id(
             db=db,
