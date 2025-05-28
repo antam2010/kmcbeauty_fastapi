@@ -9,3 +9,7 @@ def now_kst() -> datetime:
 
 def now_utc() -> datetime:
     return datetime.now(UTC)
+
+
+def now_kst_today() -> datetime:
+    return now_kst().date()

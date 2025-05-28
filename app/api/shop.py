@@ -9,6 +9,7 @@ from app.models.shop import Shop
 from app.models.user import User
 from app.schemas.shop import ShopCreate, ShopResponse, ShopSelect, ShopUpdate
 from app.schemas.shop_invite import ShopInviteResponse
+from app.schemas.shop_user import ShopUserUserResponse
 from app.services.shop_invite_service import (
     delete_invite_code_service,
     generate_invite_code_service,
@@ -21,8 +22,9 @@ from app.services.shop_service import (
     set_selected_shop_service,
     upsert_shop_service,
 )
+from app.services.shop_user_service import get_shop_users_service
 
-router = APIRouter(prefix="/shops", tags=["Shop"])
+router = APIRouter(prefix="/shops", tags=["상점"])
 
 
 @router.get(
@@ -184,21 +186,19 @@ def delete_invite_link(
     return delete_invite_code_service(db=db, shop_id=shop_id, user=current_user)
 
 
-# @router.get(
-#     "/{shop_id}/users",
-#     response_model=Page[User],
-#     summary="샵 유저 목록 조회",
-#     description="특정 샵에 속한 유저 목록을 조회합니다.",
-#     status_code=status.HTTP_200_OK,
-#     responses={
-#         status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
-#         status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
-#     },
-# )
-# def get_shop_users(
-#     shop_id: int,
-#     db: Session = Depends(get_db),
-#     current_user: User = Depends(get_current_user),
-# ) -> Page[User]:
-#     """특정 샵에 속한 유저 목록을 조회합니다."""
-#     return None
+@router.get(
+    "/{shop_id}/users",
+    response_model=list[ShopUserUserResponse],
+    summary="샵 유저 목록 조회",
+    description="특정 샵에 속한 유저 목록을 조회합니다.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def get_shop_users(
+    shop_id: int,
+    db: Session = Depends(get_db),
+) -> list[ShopUserUserResponse]:
+    return get_shop_users_service(db=db, shop_id=shop_id)

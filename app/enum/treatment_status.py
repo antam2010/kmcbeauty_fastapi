@@ -22,6 +22,16 @@ class TreatmentStatus(str, Enum):
     def unfinished_statuses(cls) -> list[str]:
         return [cls.RESERVED, cls.VISITED]
 
+    @classmethod
+    def for_expected_sales(cls) -> list[str]:
+        """예상매출에 포함할 상태들."""
+        return [cls.RESERVED.value, cls.VISITED.value, cls.COMPLETED.value]
+
+    @classmethod
+    def for_actual_sales(cls) -> str:
+        """실매출(완료 기준)은 COMPLETED만."""
+        return cls.COMPLETED.value
+
 
 class PaymentMethod(str, Enum):
     CARD = "CARD"  # 카드 결제
@@ -36,12 +46,12 @@ class PaymentMethod(str, Enum):
             PaymentMethod.UNPAID: "미수금",
         }.get(self.value, "Unknown")
 
-    @property
-    def is_paid(self) -> bool:
-        """결제 수단이 결제 완료 상태인지 확인."""
-        return self in {PaymentMethod.CARD, PaymentMethod.CASH}
+    @classmethod
+    def paid_methods(cls) -> list[str]:
+        """결제 완료 방식(카드/현금) 배열 리턴."""
+        return [cls.CARD.value, cls.CASH.value]
 
-    @property
-    def is_unpaid(self) -> bool:
-        """결제 수단이 미수금 상태인지 확인."""
-        return self == PaymentMethod.UNPAID
+    @classmethod
+    def unpaid_methods(cls) -> list[str]:
+        """외상 결제 방식(미수금) 배열 리턴."""
+        return [cls.UNPAID.value]

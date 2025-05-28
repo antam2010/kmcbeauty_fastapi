@@ -3,15 +3,15 @@ tags_metadata = [
         "name": "System",
     },
     {
-        "name": "Users",
+        "name": "유저",
         "description": "{DOMAIN} = USER",
     },
     {
-        "name": "Auth",
+        "name": "인증",
         "description": "{DOMAIN} = AUTH",
     },
     {
-        "name": "Phonebook",
+        "name": "전화번호부",
         "description": "{DOMAIN} = PHONEBOOK",
     },
     {
@@ -23,7 +23,11 @@ tags_metadata = [
         "description": "{DOMAIN} = TREATMENT_MENU",
     },
     {
-        "name": "Shop",
+        "name": "상점",
         "description": "{DOMAIN} = SHOP",
+    },
+    {
+        "name": "통계",
+        "description": "{DOMAIN} = SUMMARY",
     },
 ]

@@ -1,11 +1,13 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from sqlalchemy.orm import Session
 
+from app.crud.shop_crud import get_user_shop_by_id
 from app.database import get_db
 from app.dependencies.auth import get_current_user
+from app.exceptions import CustomException
 from app.models.shop import Shop
 from app.models.user import User
-from app.utils.redis.shop import get_selected_shop_redis
+from app.utils.redis.shop import get_selected_shop_redis, set_selected_shop_redis
 
 
 def get_current_shop(
@@ -14,19 +16,18 @@ def get_current_shop(
 ) -> Shop:
     shop_id = get_selected_shop_redis(user.id)
     if not shop_id:
-        raise HTTPException(
+        raise CustomException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "SHOP_NOT_SELECTED",
-                "message": "상점이 선택되지 않았습니다.",
-            },
+            code="SHOP_NOT_SELECTED",
+            hint="redis에 만료되거나 없음.",
         )
 
-    shop = db.query(Shop).filter(Shop.id == shop_id, Shop.user_id == user.id).first()
+    shop = get_user_shop_by_id(db, user.id, shop_id)
     if not shop:
-        raise HTTPException(
+        raise CustomException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"code": "SHOP_NOT_FOUND", "message": "상점을 찾을 수 없습니다."},
+            code="SHOP_NOT_FOUND",
+            hint="그런 상점 없습니다.",
         )
-
+    set_selected_shop_redis(user.id, shop.id)
     return shop

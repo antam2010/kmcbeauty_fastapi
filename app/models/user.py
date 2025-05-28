@@ -28,3 +28,10 @@ class User(Base, SoftDeleteMixin, TimestampMixin):
     # User → shop (1:N)
     # User는 여러 개의 shop을 가질 수 있다.
     shops = relationship("Shop", back_populates="owner", cascade="all, delete-orphan")
+
+    shop_users = relationship(
+        "ShopUser",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

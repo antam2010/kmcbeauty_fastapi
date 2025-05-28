@@ -27,7 +27,7 @@ class CustomException(HTTPException):
         self,
         *,
         status_code: int,
-        domain: str,
+        domain: str | None = None,
         code: str | None = None,
         detail: str | None = None,
         hint: str | None = "힌트 없음",
@@ -38,8 +38,11 @@ class CustomException(HTTPException):
             status_code,
             ("UNKNOWN_ERROR", "알 수 없는 오류입니다."),
         )
+        if domain is None:
+            final_code = f"{code}"
+        else:
+            final_code = f"{domain.upper()}_{code or default_code}"
 
-        final_code = f"{domain.upper()}_{code or default_code}"
         final_detail = detail or default_detail
 
         # 예외 메시지 변환 (항상 문자열, 없으면 "-")

@@ -14,7 +14,7 @@ from app.services.auth_service import (
     refresh_access_token,
 )
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(prefix="/auth", tags=["인증"])
 
 
 @router.post(

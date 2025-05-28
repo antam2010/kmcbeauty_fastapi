@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.shop import get_current_shop
 from app.docs.common_responses import COMMON_ERROR_RESPONSES
-from app.models.user import User
+from app.models.shop import Shop
 from app.schemas.phonebook import (
     PhonebookCreate,
     PhonebookFilter,
@@ -22,7 +22,7 @@ from app.services.phonebook_service import (
     update_phonebook_service,
 )
 
-router = APIRouter(prefix="/phonebooks", tags=["Phonebook"])
+router = APIRouter(prefix="/phonebooks", tags=["전화번호부"])
 
 
 # 전화번호부 목록 조회
@@ -36,7 +36,7 @@ router = APIRouter(prefix="/phonebooks", tags=["Phonebook"])
 def list_phonebook(
     params: PhonebookFilter = Depends(),
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
 ) -> Page[PhonebookResponse]:
     return get_phonebook_list_service(
         db,
@@ -55,7 +55,7 @@ def list_phonebook(
 )
 def list_groups_by_group_name(
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
     with_items: bool = Query(False, description="전화번호부 항목 포함 여부"),
 ) -> list[PhonebookGroupedByGroupnameResponse]:
     return get_grouped_by_groupname_service(
@@ -79,7 +79,7 @@ def list_groups_by_group_name(
 def read_phonebook_handler(
     phonebook_id: int,
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
 ) -> PhonebookResponse:
     return get_phonebook_service(db, current_shop, phonebook_id)
 
@@ -98,7 +98,7 @@ def read_phonebook_handler(
 def create_phonebook_handler(
     phonebook: PhonebookCreate,
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
 ) -> PhonebookResponse:
     return create_phonebook_service(db, phonebook, current_shop)
 
@@ -115,7 +115,7 @@ def update_phonebook_handler(
     phonebook_id: int,
     phonebook: PhonebookUpdate,
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
 ) -> PhonebookResponse:
     return update_phonebook_service(db, phonebook_id, phonebook, current_shop)
 
@@ -130,6 +130,6 @@ def update_phonebook_handler(
 def delete_phonebook_handler(
     phonebook_id: int,
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
 ):
     delete_phonebook_service(db, phonebook_id, current_shop)

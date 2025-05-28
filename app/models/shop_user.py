@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy.orm import relationship
 
 from app.models.base import Base
 
@@ -28,4 +29,11 @@ class ShopUser(Base):
         nullable=False,
         default=0,
         comment="대표 원장 여부 (1=대표, 0=아님)",
+    )
+
+    user = relationship(
+        "User",
+        back_populates="shop_users",
+        foreign_keys=[user_id],
+        lazy="select",
     )

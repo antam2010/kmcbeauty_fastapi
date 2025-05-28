@@ -21,7 +21,7 @@ from app.services.user_service import (
 )
 
 # 사용자 관련 API 그룹 지
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/users", tags=["유저"])
 
 
 @router.get(

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.shop import get_current_shop
 from app.docs.common_responses import COMMON_ERROR_RESPONSES
-from app.models.user import User
+from app.models.shop import Shop
 from app.schemas.treatment import (
     TreatmentCreate,
     TreatmentFilter,
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/treatments", tags=["시술 예약"])
 )
 def list_treatments_api(
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
     filters: TreatmentFilter = Depends(),
 ) -> Page[TreatmentResponse]:
     return get_treatment_list_service(
@@ -57,7 +57,7 @@ def list_treatments_api(
 def create_treatment_api(
     data: TreatmentCreate,
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
 ) -> TreatmentResponse:
     return upsert_treatment_service(data=data, db=db, current_shop=current_shop)
 
@@ -81,7 +81,7 @@ def update_treatment_api(
     treatment_id: int,
     data: TreatmentUpdate,
     db: Session = Depends(get_db),
-    current_shop: User = Depends(get_current_shop),
+    current_shop: Shop = Depends(get_current_shop),
 ) -> TreatmentResponse:
     return upsert_treatment_service(
         data=data,
