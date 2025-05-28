@@ -7,7 +7,8 @@ from sqlalchemy.sql import case
 from app.enum.treatment_status import PaymentMethod, TreatmentStatus
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
-from app.schemas.dashboard import TreatmentSummarySchema
+from app.models.treatment_menu_detail import TreatmentMenuDetail
+from app.schemas.dashboard import TreatmentSalesItem, TreatmentSummarySchema
 from app.utils.query import apply_date_range_filter
 
 
@@ -90,3 +91,67 @@ def get_treatment_summary(
         actual_sales=actual_sales,
         unpaid_total=unpaid_total,
     )
+
+
+def get_treatment_sales_summary(
+    db: Session,
+    shop_id: int,
+    start_date: date,
+    end_date: date,
+):
+    # 결제방식 enum 활용
+    paid_methods = PaymentMethod.paid_methods()
+    expected_statuses = TreatmentStatus.for_expected_sales()
+    completed_status = TreatmentStatus.for_actual_sales()
+
+    stmt = (
+        select(
+            TreatmentItem.menu_detail_id,
+            TreatmentMenuDetail.name,
+            func.count(TreatmentItem.id).label("count"),
+            func.sum(
+                # 예상매출: 노쇼/취소 제외, 실제 매출 가능성 있는 상태만 합산
+                case(
+                    (
+                        Treatment.status.in_(expected_statuses),
+                        TreatmentItem.base_price,
+                    ),
+                    else_=0,
+                ),
+            ).label("expected_price"),
+            func.sum(
+                # 실매출: COMPLETED + 결제완료만
+                case(
+                    (
+                        (Treatment.status == completed_status)
+                        & (Treatment.payment_method.in_(paid_methods)),
+                        TreatmentItem.base_price,
+                    ),
+                    else_=0,
+                ),
+            ).label("actual_price"),
+        )
+        .join(Treatment, TreatmentItem.treatment_id == Treatment.id)
+        .join(
+            TreatmentMenuDetail,
+            TreatmentItem.menu_detail_id == TreatmentMenuDetail.id,
+        )
+        .where(Treatment.shop_id == shop_id)
+        .group_by(TreatmentItem.menu_detail_id, TreatmentMenuDetail.name)
+    )
+    stmt = apply_date_range_filter(stmt, Treatment.reserved_at, start_date, end_date)
+
+    results = db.execute(stmt).fetchall()
+
+    # 결과를 스키마 리스트로 가공
+    sales_list = [
+        TreatmentSalesItem(
+            menu_detail_id=row.menu_detail_id,
+            name=row.name,
+            count=row.count,
+            expected_price=int(row.expected_price or 0),
+            actual_price=int(row.actual_price or 0),
+        )
+        for row in results
+    ]
+    return sales_list

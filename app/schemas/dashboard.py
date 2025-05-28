@@ -10,6 +10,10 @@ class DashboardFilter(BaseModel):
         default_factory=now_kst_today,
         description="조회 날짜 (YYYY-MM-DD)",
     )
+    force_refresh: bool = Field(
+        default=False,
+        description="캐시 무효화 여부. True인 경우 캐시를 무시하고 DB에서 직접 조회",
+    )
 
 
 class TreatmentSummarySchema(BaseModel):
@@ -51,6 +55,25 @@ class TreatmentSummarySchema(BaseModel):
     )
 
 
+class TreatmentSalesItem(BaseModel):
+    menu_detail_id: int = Field(..., description="시술 항목 ID")
+    name: str = Field(..., description="시술명")
+    count: int = Field(..., description="예약 건수")
+    expected_price: int = Field(..., description="총 예상 매출")
+    actual_price: int = Field(..., description="실제 시술 완료된 금액")
+
+
+class TreatmentSalesSummary(BaseModel):
+    target_date: list[TreatmentSalesItem] = Field(
+        ...,
+        description="조회 날짜에 시술 항목별 매출/건수 요약",
+    )
+    month: list[TreatmentSalesItem] = Field(
+        ...,
+        description="월간 시술 항목별 매출/건수 요약",
+    )
+
+
 class DashboardSummary(BaseModel):
     target_date: TreatmentSummarySchema = Field(
         ...,
@@ -63,5 +86,15 @@ class DashboardSummary(BaseModel):
 
 
 class DashboardSummaryResponse(BaseModel):
-    target_date: date
-    summary: DashboardSummary
+    target_date: date = Field(
+        default_factory=now_kst_today,
+        description="조회 날짜 (YYYY-MM-DD)",
+    )
+    summary: DashboardSummary = Field(
+        ...,
+        description="대시보드 요약 정보",
+    )
+    sales: TreatmentSalesSummary = Field(
+        ...,
+        description="시술 항목별 매출/건수 요약",
+    )
