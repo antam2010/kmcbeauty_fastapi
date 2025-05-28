@@ -69,4 +69,16 @@ class Treatment(Base, TimestampMixin):
         foreign_keys=[phonebook_id],
     )
 
-    shop = relationship("Shop", back_populates="treatments")
+    shop = relationship("Shop", back_populates="treatments", foreign_keys=[shop_id])
+
+    staff_user = relationship(
+        "User",
+        foreign_keys=[staff_user_id],
+        backref="treatments_as_staff",
+    )
+
+    created_user = relationship(
+        "User",
+        foreign_keys=[created_user_id],
+        backref="treatments_created",
+    )

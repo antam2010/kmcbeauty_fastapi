@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -63,7 +63,7 @@ class TreatmentSalesItem(BaseModel):
     actual_price: int = Field(..., description="실제 시술 완료된 금액")
 
 
-class TreatmentSalesSummary(BaseModel):
+class DashboardSalesSummary(BaseModel):
     target_date: list[TreatmentSalesItem] = Field(
         ...,
         description="조회 날짜에 시술 항목별 매출/건수 요약",
@@ -85,6 +85,28 @@ class DashboardSummary(BaseModel):
     )
 
 
+class DashboardCustomerInsight(BaseModel):
+    id: int = Field(..., description="예약 ID")
+    reserved_at: datetime = Field(..., description="예약 일시")
+    customer_name: str | None = Field(None, description="고객 이름")
+    phone_number: str | None = Field(None, description="전화번호")
+    status: str = Field(..., description="예약 상태 (예: RESERVED, COMPLETED 등)")
+    treatments: list[str] = Field(..., description="시술 항목 이름 목록")
+    total_duration_min: int = Field(..., description="총 시술 소요 시간 (분)")
+    total_price: int = Field(..., description="총 시술 금액 (원)")
+    memo: str | None = Field(None, description="시술 메모")
+    payment_method: str = Field(
+        ...,
+        description="결제 수단 (CARD, CASH, UNPAID 등)",
+    )
+    staff: str | None = Field(None, description="담당 직원 이름")
+    total_reservations: int = Field(..., description="고객의 총 예약 횟수")
+    no_show_count: int = Field(..., description="노쇼 횟수")
+    no_show_rate: float = Field(..., description="노쇼 비율 (%)")
+    unpaid_amount: int = Field(..., description="외상 금액 (미결제)")
+    total_spent: int = Field(..., description="총 결제 금액")
+
+
 class DashboardSummaryResponse(BaseModel):
     target_date: date = Field(
         default_factory=now_kst_today,
@@ -94,7 +116,11 @@ class DashboardSummaryResponse(BaseModel):
         ...,
         description="대시보드 요약 정보",
     )
-    sales: TreatmentSalesSummary = Field(
+    sales: DashboardSalesSummary = Field(
         ...,
         description="시술 항목별 매출/건수 요약",
+    )
+    customer_insights: list[DashboardCustomerInsight] = Field(
+        ...,
+        description="고객 인사이트 정보",
     )

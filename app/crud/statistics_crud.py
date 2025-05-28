@@ -1,14 +1,18 @@
 from datetime import date
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import case
 
 from app.enum.treatment_status import PaymentMethod, TreatmentStatus
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
 from app.models.treatment_menu_detail import TreatmentMenuDetail
-from app.schemas.dashboard import TreatmentSalesItem, TreatmentSummarySchema
+from app.schemas.dashboard import (
+    DashboardCustomerInsight,
+    TreatmentSalesItem,
+    TreatmentSummarySchema,
+)
 from app.utils.query import apply_date_range_filter
 
 
@@ -98,7 +102,7 @@ def get_treatment_sales_summary(
     shop_id: int,
     start_date: date,
     end_date: date,
-):
+) -> list[TreatmentSalesItem]:
     # 결제방식 enum 활용
     paid_methods = PaymentMethod.paid_methods()
     expected_statuses = TreatmentStatus.for_expected_sales()
@@ -120,7 +124,7 @@ def get_treatment_sales_summary(
                 ),
             ).label("expected_price"),
             func.sum(
-                # 실매출: COMPLETED + 결제완료만
+                # 실매출: COMPLETED  결제완료만
                 case(
                     (
                         (Treatment.status == completed_status)
@@ -144,7 +148,7 @@ def get_treatment_sales_summary(
     results = db.execute(stmt).fetchall()
 
     # 결과를 스키마 리스트로 가공
-    sales_list = [
+    return [
         TreatmentSalesItem(
             menu_detail_id=row.menu_detail_id,
             name=row.name,
@@ -154,4 +158,128 @@ def get_treatment_sales_summary(
         )
         for row in results
     ]
-    return sales_list
+
+
+def get_today_reservation_list_with_customer_insight(
+    db: Session,
+    shop_id: int,
+    start_date: date,
+    end_date: date,
+) -> list[DashboardCustomerInsight]:
+    # 1. 오늘 예약 리스트(관계: 고객, 담당자, 시술항목) 쿼리
+    stmt = (
+        select(Treatment)
+        .options(
+            joinedload(Treatment.treatment_items).joinedload(TreatmentItem.menu_detail),
+            joinedload(Treatment.phonebook),
+            joinedload(Treatment.staff_user),
+        )
+        .where(Treatment.shop_id == shop_id)
+        .order_by(Treatment.reserved_at.asc())
+    )
+    stmt = apply_date_range_filter(
+        stmt,
+        Treatment.reserved_at,
+        start_date,
+        end_date,
+    )
+    treatments = db.execute(stmt).unique().scalars().all()
+
+    # 2. 오늘 예약에 등장한 phonebook_id 한 번에 추출
+    phonebook_ids = list({t.phonebook_id for t in treatments})
+    # 3. 고객 인사이트(누적예약수, 노쇼, 외상, 총 결제금액) 일괄 쿼리 (dict 매핑)
+    insight_map = get_customer_insight_bulk(db, shop_id, phonebook_ids)
+
+    # 4. 최종 응답 구조로 가공
+    result = []
+    for t in treatments:
+        items = t.treatment_items
+        treatments_list = [it.menu_detail.name for it in items]
+        total_duration = sum(it.duration_min or 0 for it in items)
+        total_price = sum(it.base_price or 0 for it in items)
+        phonebook = t.phonebook
+        staff_name = t.staff_user.name if t.staff_user else None
+        customer_insight = insight_map.get(t.phonebook_id, {})
+        result.append(
+            {
+                "id": t.id,
+                "reserved_at": t.reserved_at,
+                "customer_name": phonebook.name if phonebook else None,
+                "phone_number": phonebook.phone_number if phonebook else None,
+                "status": t.status,
+                "treatments": treatments_list,
+                "total_duration_min": total_duration,
+                "total_price": total_price,
+                "memo": t.memo,
+                "payment_method": t.payment_method,
+                "staff": staff_name,
+                # 고객 인사이트 추가
+                "total_reservations": customer_insight.get("total_reservations", 0),
+                "no_show_count": customer_insight.get("no_show_count", 0),
+                "no_show_rate": customer_insight.get("no_show_rate", 0.0),
+                "unpaid_amount": customer_insight.get("unpaid_amount", 0),
+                "total_spent": customer_insight.get("total_spent", 0),
+            },
+        )
+    return result
+
+
+def get_customer_insight_bulk(
+    db: Session,
+    shop_id: int,
+    phonebook_ids: list[int],
+) -> dict[int, dict]:
+    """고객별 전체 예약수, 노쇼수, 노쇼율, 외상합, 총 결제금액 등 일괄 반환."""
+    completed_status = TreatmentStatus.for_actual_sales()
+
+    subq = (
+        select(
+            Treatment.phonebook_id.label("phonebook_id"),
+            func.count(Treatment.id).label("total_reservations"),
+            func.sum(
+                case((Treatment.status == TreatmentStatus.NO_SHOW.value, 1), else_=0),
+            ).label(
+                "no_show_count",
+            ),
+            func.sum(
+                case(
+                    (
+                        (Treatment.status == completed_status)
+                        & (Treatment.payment_method == PaymentMethod.UNPAID.value),
+                        TreatmentItem.base_price,
+                    ),
+                    else_=0,
+                ),
+            ).label("unpaid_amount"),
+            func.sum(
+                case(
+                    (
+                        (Treatment.status == completed_status)
+                        & (Treatment.payment_method.in_(PaymentMethod.paid_methods())),
+                        TreatmentItem.base_price,
+                    ),
+                    else_=0,
+                ),
+            ).label("total_spent"),
+        )
+        .join(TreatmentItem, Treatment.id == TreatmentItem.treatment_id)
+        .where(Treatment.shop_id == shop_id)
+        .where(Treatment.phonebook_id.in_(phonebook_ids))
+        .group_by(Treatment.phonebook_id)
+    )
+    insight_rows = db.execute(subq).fetchall()
+    insight_map = {}
+    for row in insight_rows:
+        no_show_rate = (
+            (row.no_show_count / row.total_reservations) * 100
+            if row.total_reservations
+            else 0
+        )
+        insight_map[row.phonebook_id] = {
+            "total_reservations": row.total_reservations,
+            "no_show_count": row.no_show_count,
+            "no_show_rate": round(no_show_rate, 1),
+            "unpaid_amount": int(row.unpaid_amount or 0),
+            "total_spent": int(row.total_spent or 0),
+        }
+    return insight_map

@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from app.core.redis_client import redis_client
 
@@ -20,23 +21,25 @@ def set_dashboard_cache(
     shop_id: int,
     field: str,
     period: str,
-    value: dict | list,
+    value: dict | list | Any,
     ttl: int = REDIS_TTL,
 ) -> None:
-    """대시보드 데이터 캐시 저장 (value는 dict 또는 Pydantic model)."""
-    if hasattr(value, "model_dump"):
-        # Pydantic v2 이상
-        data = value.model_dump()
-    elif hasattr(value, "dict"):
-        # Pydantic v1
-        data = value.dict()
-    elif isinstance(value, list):
-        # Pydantic model 리스트
-        data = [v.model_dump() if hasattr(v, "model_dump") else v.dict() for v in value]
+    """대시보드 데이터 캐시 저장 (dict, Pydantic model, list 가능)."""
+
+    def serialize(v: object) -> dict:
+        if hasattr(v, "model_dump"):
+            return v.model_dump(mode="json")  # Pydantic v2
+        if hasattr(v, "dict"):
+            return v.dict()  # Pydantic v1 fallback
+        return v
+
+    if isinstance(value, list):
+        data = [serialize(v) for v in value]
     else:
-        data = value  # 이미 dict라면 그대로
+        data = serialize(value)
+
     key = get_dashboard_cache_key(shop_id, field, period)
-    redis_client.set(key, json.dumps(data), ex=ttl)
+    redis_client.set(key, json.dumps(data, ensure_ascii=False, default=str), ex=ttl)
 
 
 def get_dashboard_cache(shop_id: int, field: str, period: str) -> dict | list | None:

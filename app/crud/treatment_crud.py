@@ -36,12 +36,10 @@ def create_treatment_item(db: Session, treatment_item: TreatmentItem) -> Treatme
     return treatment_item
 
 
-# 시술 예약 목록 조회
-def get_treatment_list(
-    db: Session,
+def stmt_treatment_list(
     shop_id: int,
     filters: TreatmentFilter,
-) -> Page[Treatment]:
+) -> select:
     stmt = (
         select(Treatment)
         .options(
@@ -52,8 +50,6 @@ def get_treatment_list(
     )
 
     # 날짜 필터
-    # WHERE treatment.reserved_at >= '2025-05-24 15:00:00.000000'
-    #   AND treatment.reserved_at <= '2025-05-27 14:59:59.999999'
     stmt = apply_date_range_filter(
         stmt,
         Treatment.reserved_at,
@@ -91,6 +87,24 @@ def get_treatment_list(
         if sort_expr:
             stmt = stmt.order_by(sort_expr())
 
+    return stmt
+
+
+# 시술 예약 목록 조회
+def get_treatment_list(
+    db: Session,
+    shop_id: int,
+    filters: TreatmentFilter,
+) -> Page[Treatment]:
+    """시술 예약 목록 조회.
+
+    :param db: 데이터베이스 세션
+    :param shop_id: 샵 ID
+    :param filters: 필터링 조건
+    :return: 페이지네이션된 Treatment 객체 목록
+    """
+    # 쿼리 생성
+    stmt = stmt_treatment_list(shop_id, filters)
     # 실행 및 페이지네이션
     return paginate(db, stmt)
 

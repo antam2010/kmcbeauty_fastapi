@@ -4,13 +4,17 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.crud.statistics_crud import get_treatment_sales_summary, get_treatment_summary
+from app.crud.statistics_crud import (
+    get_today_reservation_list_with_customer_insight,
+    get_treatment_sales_summary,
+    get_treatment_summary,
+)
 from app.models.shop import Shop
 from app.schemas.dashboard import (
     DashboardFilter,
+    DashboardSalesSummary,
     DashboardSummary,
     DashboardSummaryResponse,
-    TreatmentSalesSummary,
 )
 from app.utils.redis.dashboard import (
     clear_dashboard_cache,
@@ -41,6 +45,9 @@ def get_dashboard_summary_service(
     # ---- 시술별 매출(오늘/월간) ----
     s_target_key = ("sales", target_date.isoformat())
     s_month_key = ("sales", month_start.isoformat())
+
+    # ---- 고객 인사이트 ----
+    c_insight_key = ("customer_insight", target_date.isoformat())
 
     # ----- 공통 캐시 처리 -----
     def get_or_set_cache(
@@ -96,6 +103,15 @@ def get_dashboard_summary_service(
         ),
     )
 
+    customer_insight = get_or_set_cache(
+        c_insight_key,
+        lambda: get_today_reservation_list_with_customer_insight(
+            db,
+            shop.id,
+            start_date=target_date,
+            end_date=target_date,
+        ),
+    )
     # ---- 통합 결과 리턴 ----
     return DashboardSummaryResponse(
         target_date=target_date,
@@ -103,8 +119,9 @@ def get_dashboard_summary_service(
             target_date=treatment_target_summary,
             month=treatment_month_summary,
         ),
-        sales=TreatmentSalesSummary(
+        sales=DashboardSalesSummary(
             target_date=treatment_sales_target,
             month=treatment_sales_month,
         ),
+        customer_insights=customer_insight,
     ).model_dump()

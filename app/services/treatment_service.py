@@ -73,7 +73,6 @@ def upsert_treatment_service(
     :param treatment_id: 수정할 시술 예약 ID
     :return: Treatment 모델
     """
-    print(data)
     try:
         if treatment_id is None:
             # 생성 로직
