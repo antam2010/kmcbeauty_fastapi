@@ -200,5 +200,6 @@ def delete_invite_link(
 def get_shop_users(
     shop_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> list[ShopUserUserResponse]:
-    return get_shop_users_service(db=db, shop_id=shop_id)
+    return get_shop_users_service(db=db, shop_id=shop_id, current_user=current_user)

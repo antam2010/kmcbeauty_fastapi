@@ -30,7 +30,7 @@ class CustomException(HTTPException):
         domain: str | None = None,
         code: str | None = None,
         detail: str | None = None,
-        hint: str | None = "힌트 없음",
+        hint: str | None = "놉",
         exception: Exception | None = None,
     ):
         # 기본 메시지 및 코드 설정
