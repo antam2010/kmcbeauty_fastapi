@@ -3,7 +3,7 @@ from datetime import timedelta
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.crud.treatment import get_treatments_to_autocomplete
+from app.crud.treatment_crud import get_treatments_to_autocomplete
 from app.database import SessionLocal
 from app.exceptions import CustomException
 from app.models.treatment import Treatment
