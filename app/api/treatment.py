@@ -10,6 +10,7 @@ from app.schemas.treatment import (
     TreatmentCreate,
     TreatmentFilter,
     TreatmentResponse,
+    TreatmentSimpleResponse,
     TreatmentUpdate,
 )
 from app.services.treatment_service import (
@@ -41,7 +42,7 @@ def list_treatments_api(
 
 @router.post(
     "",
-    response_model=TreatmentResponse,
+    response_model=TreatmentSimpleResponse,
     summary="시술 예약 생성",
     description="시술 예약을 생성합니다.",
     status_code=status.HTTP_201_CREATED,
@@ -58,13 +59,13 @@ def create_treatment_api(
     data: TreatmentCreate,
     db: Session = Depends(get_db),
     current_shop: Shop = Depends(get_current_shop),
-) -> TreatmentResponse:
+) -> TreatmentSimpleResponse:
     return upsert_treatment_service(data=data, db=db, current_shop=current_shop)
 
 
 @router.put(
     "/{treatment_id}",
-    response_model=TreatmentResponse,
+    response_model=TreatmentSimpleResponse,
     summary="시술 예약 수정",
     description="시술 예약을 수정합니다.",
     status_code=status.HTTP_200_OK,
@@ -82,7 +83,7 @@ def update_treatment_api(
     data: TreatmentUpdate,
     db: Session = Depends(get_db),
     current_shop: Shop = Depends(get_current_shop),
-) -> TreatmentResponse:
+) -> TreatmentSimpleResponse:
     return upsert_treatment_service(
         data=data,
         db=db,

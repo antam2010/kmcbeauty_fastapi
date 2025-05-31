@@ -45,6 +45,7 @@ def stmt_treatment_list(
         .options(
             joinedload(Treatment.treatment_items).joinedload(TreatmentItem.menu_detail),
             joinedload(Treatment.phonebook),
+            joinedload(Treatment.staff_user),
         )
         .where(Treatment.shop_id == shop_id)
     )

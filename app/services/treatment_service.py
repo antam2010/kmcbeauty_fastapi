@@ -18,6 +18,7 @@ from app.schemas.treatment import (
     TreatmentCreate,
     TreatmentFilter,
     TreatmentResponse,
+    TreatmentSimpleResponse,
     TreatmentUpdate,
 )
 from app.schemas.treatment_item import TreatmentItemCreate
@@ -65,7 +66,7 @@ def upsert_treatment_service(
     data: TreatmentCreate | TreatmentUpdate,
     current_shop: Shop,
     treatment_id: int | None = None,
-) -> TreatmentResponse:
+) -> TreatmentSimpleResponse:
     """시술 예약을 생성하거나 업데이트하는 서비스.
 
     :param db: DB 세션
@@ -84,7 +85,7 @@ def upsert_treatment_service(
 
         db.commit()
         db.refresh(treatment)
-        return TreatmentResponse.model_validate(treatment)
+        return TreatmentSimpleResponse.model_validate(treatment)
 
     except CustomException:
         db.rollback()

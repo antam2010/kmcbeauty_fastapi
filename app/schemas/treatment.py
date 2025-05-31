@@ -11,6 +11,7 @@ from app.schemas.treatment_item import (
     TreatmentItemResponse,
     TreatmentItemUpdate,
 )
+from app.schemas.user import UserBase
 
 
 class TreatmentBase(BaseResponseModel):
@@ -95,6 +96,11 @@ class TreatmentResponse(TreatmentInDBBase):
         description="시술 대상 고객 정보",
     )
 
+    staff_user: UserBase | None = Field(
+        None,
+        description="시술 담당자 유저 정보",
+    )
+
 
 class TreatmentFilter(BaseModel):
     """시술 필터링 스키마."""
@@ -125,3 +131,11 @@ class TreatmentAutoComplete(BaseResponseModel):
     total_duration_min: int = Field(..., description="총 시술 시간 (분)")
     status: TreatmentStatus = Field(..., description="시술 상태")
     finished_at: datetime | None = Field(None, description="시술 완료일시")
+
+
+class TreatmentSimpleResponse(BaseResponseModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config: ClassVar[dict] = {"from_attributes": True}
