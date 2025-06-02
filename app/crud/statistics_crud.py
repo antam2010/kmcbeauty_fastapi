@@ -12,7 +12,7 @@ from app.models.user import User
 from app.schemas.dashboard import (
     DashboardCustomerInsight,
     DashboardStaffSummaryItem,
-    TreatmentItemSimple,
+    TreatmentItemBase,
     TreatmentSalesItem,
     TreatmentSummarySchema,
 )
@@ -38,7 +38,7 @@ def get_treatment_summary(
         select(
             Treatment.status,
             Treatment.payment_method,
-            func.count(Treatment.id).label("count"),
+            func.count(func.distinct(Treatment.id)).label("count"),
             func.sum(TreatmentItem.base_price).label("total_price"),
             func.sum(
                 case(
@@ -200,7 +200,11 @@ def get_today_reservation_list_with_customer_insight(
     for t in treatments:
         items = t.treatment_items
         treatments_list = [
-            TreatmentItemSimple(
+            TreatmentItemBase(
+                treatment_id=t.id,
+                menu_detail_id=it.menu_detail_id,
+                base_price=it.base_price or 0,
+                duration_min=it.duration_min or 0,
                 session_no=it.session_no,
                 menu_detail=TreatmentMenuDetailBase.model_validate(it.menu_detail),
             )

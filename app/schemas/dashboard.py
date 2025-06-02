@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
-from app.schemas.treatment_item import TreatmentItemSimple
+from app.schemas.treatment_item import TreatmentItemBase
 from app.schemas.user import UserBaseResponse
 from app.utils.datetime import now_kst_today
 
@@ -104,7 +104,7 @@ class DashboardCustomerInsight(BaseModel):
     customer_name: str | None = Field(None, description="고객 이름")
     phone_number: str | None = Field(None, description="전화번호")
     status: str = Field(..., description="예약 상태 (예: RESERVED, COMPLETED 등)")
-    treatments: list[TreatmentItemSimple] = Field(
+    treatments: list[TreatmentItemBase] = Field(
         ...,
         description="시술 항목 이름 목록",
     )
