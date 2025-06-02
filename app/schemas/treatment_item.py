@@ -24,6 +24,18 @@ class TreatmentItemBase(BaseResponseModel):
     model_config: ClassVar[dict] = {"from_attributes": True}
 
 
+class TreatmentItemSimple(BaseResponseModel):
+    """시술 항목 간단 정보 스키마."""
+
+    session_no: int = Field(1, description="시술 회차")
+    menu_detail: TreatmentMenuDetailBase = Field(
+        None,
+        description="시술 항목 상세 정보",
+    )
+
+    model_config: ClassVar[dict] = {"from_attributes": True}
+
+
 class TreatmentItemCreate(BaseResponseModel):
     """시술 항목 생성 요청 스키마."""
 

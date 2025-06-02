@@ -8,11 +8,16 @@ from app.enum.treatment_status import PaymentMethod, TreatmentStatus
 from app.models.treatment import Treatment
 from app.models.treatment_item import TreatmentItem
 from app.models.treatment_menu_detail import TreatmentMenuDetail
+from app.models.user import User
 from app.schemas.dashboard import (
     DashboardCustomerInsight,
+    DashboardStaffSummaryItem,
+    TreatmentItemSimple,
     TreatmentSalesItem,
     TreatmentSummarySchema,
 )
+from app.schemas.treatment_menu_detail import TreatmentMenuDetailBase
+from app.schemas.user import UserBaseResponse
 from app.utils.query import apply_date_range_filter
 
 
@@ -194,32 +199,40 @@ def get_today_reservation_list_with_customer_insight(
     result = []
     for t in treatments:
         items = t.treatment_items
-        treatments_list = [it.menu_detail.name for it in items]
+        treatments_list = [
+            TreatmentItemSimple(
+                session_no=it.session_no,
+                menu_detail=TreatmentMenuDetailBase.model_validate(it.menu_detail),
+            )
+            for it in items
+        ]
         total_duration = sum(it.duration_min or 0 for it in items)
         total_price = sum(it.base_price or 0 for it in items)
         phonebook = t.phonebook
         staff_name = t.staff_user.name if t.staff_user else None
         customer_insight = insight_map.get(t.phonebook_id, {})
         result.append(
-            {
-                "id": t.id,
-                "reserved_at": t.reserved_at,
-                "customer_name": phonebook.name if phonebook else None,
-                "phone_number": phonebook.phone_number if phonebook else None,
-                "status": t.status,
-                "treatments": treatments_list,
-                "total_duration_min": total_duration,
-                "total_price": total_price,
-                "memo": t.memo,
-                "payment_method": t.payment_method,
-                "staff": staff_name,
-                # 고객 인사이트 추가
-                "total_reservations": customer_insight.get("total_reservations", 0),
-                "no_show_count": customer_insight.get("no_show_count", 0),
-                "no_show_rate": customer_insight.get("no_show_rate", 0.0),
-                "unpaid_amount": customer_insight.get("unpaid_amount", 0),
-                "total_spent": customer_insight.get("total_spent", 0),
-            },
+            DashboardCustomerInsight(
+                id=t.id,
+                reserved_at=t.reserved_at,
+                customer_name=phonebook.name if phonebook else None,
+                phone_number=phonebook.phone_number if phonebook else None,
+                status=t.status,
+                treatments=treatments_list,
+                total_duration_min=total_duration,
+                total_price=total_price,
+                memo=t.memo,
+                payment_method=t.payment_method,
+                staff=staff_name,
+                staff_user=UserBaseResponse.model_validate(t.staff_user)
+                if t.staff_user
+                else None,
+                total_reservations=customer_insight.get("total_reservations", 0),
+                no_show_count=customer_insight.get("no_show_count", 0),
+                no_show_rate=customer_insight.get("no_show_rate", 0.0),
+                unpaid_amount=customer_insight.get("unpaid_amount", 0),
+                total_spent=customer_insight.get("total_spent", 0),
+            ),
         )
     return result
 
@@ -283,3 +296,40 @@ def get_customer_insight_bulk(
             "total_spent": int(row.total_spent or 0),
         }
     return insight_map
+
+
+def get_staff_summary(
+    db: Session,
+    shop_id: int,
+    start_date: date,
+    end_date: date,
+) -> list[DashboardStaffSummaryItem]:
+    """시술 담당자별 예약 건수 요약 조회."""
+    stmt = (
+        select(
+            Treatment.staff_user_id,
+            User.name.label("staff_name"),
+            func.count(Treatment.id).label("count"),
+        )
+        .join(User, Treatment.staff_user_id == User.id)
+        .where(Treatment.shop_id == shop_id)
+        .where(Treatment.staff_user_id.is_not(None))
+        .group_by(Treatment.staff_user_id)
+    )
+    stmt = apply_date_range_filter(
+        stmt,
+        Treatment.reserved_at,
+        start_date,
+        end_date,
+    )
+
+    rows = db.execute(stmt).fetchall()
+
+    return [
+        DashboardStaffSummaryItem(
+            staff_id=row.staff_user_id,
+            staff_name=row.staff_name or "알 수 없는 스태프",
+            count=row.count,
+        )
+        for row in rows
+    ]

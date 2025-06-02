@@ -2,6 +2,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.treatment_item import TreatmentItemSimple
+from app.schemas.user import UserBaseResponse
 from app.utils.datetime import now_kst_today
 
 
@@ -85,13 +87,27 @@ class DashboardSummary(BaseModel):
     )
 
 
+class DashboardStaffSummaryItem(BaseModel):
+    staff_id: int
+    staff_name: str
+    count: int
+
+
+class DashboardStaffSummary(BaseModel):
+    target_date: list[DashboardStaffSummaryItem]
+    month: list[DashboardStaffSummaryItem]
+
+
 class DashboardCustomerInsight(BaseModel):
     id: int = Field(..., description="예약 ID")
     reserved_at: datetime = Field(..., description="예약 일시")
     customer_name: str | None = Field(None, description="고객 이름")
     phone_number: str | None = Field(None, description="전화번호")
     status: str = Field(..., description="예약 상태 (예: RESERVED, COMPLETED 등)")
-    treatments: list[str] = Field(..., description="시술 항목 이름 목록")
+    treatments: list[TreatmentItemSimple] = Field(
+        ...,
+        description="시술 항목 이름 목록",
+    )
     total_duration_min: int = Field(..., description="총 시술 소요 시간 (분)")
     total_price: int = Field(..., description="총 시술 금액 (원)")
     memo: str | None = Field(None, description="시술 메모")
@@ -100,6 +116,10 @@ class DashboardCustomerInsight(BaseModel):
         description="결제 수단 (CARD, CASH, UNPAID 등)",
     )
     staff: str | None = Field(None, description="담당 직원 이름")
+    staff_user: UserBaseResponse = Field(
+        ...,
+        description="담당 직원 정보",
+    )
     total_reservations: int = Field(..., description="고객의 총 예약 횟수")
     no_show_count: int = Field(..., description="노쇼 횟수")
     no_show_rate: float = Field(..., description="노쇼 비율 (%)")
@@ -123,4 +143,8 @@ class DashboardSummaryResponse(BaseModel):
     customer_insights: list[DashboardCustomerInsight] = Field(
         ...,
         description="고객 인사이트 정보",
+    )
+    staff_summary: DashboardStaffSummary = Field(
+        ...,
+        description="직원별 시술 통계 요약",
     )

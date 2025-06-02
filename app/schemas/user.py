@@ -14,6 +14,14 @@ class UserBase(BaseResponseModel):
     role: UserRole = Field(..., description="유저 권한")
 
 
+class UserBaseResponse(UserBase):
+    """유저 기본 응답 스키마."""
+
+    model_config: ClassVar[dict] = {
+        "from_attributes": True,
+    }
+
+
 class UserCreate(UserBase):
     """유저 생성 요청 스키마."""
 
