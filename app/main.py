@@ -1,29 +1,19 @@
 import logging
 
 from fastapi import FastAPI, Request
-
-# FastAPI의 라우터
 from fastapi.middleware.cors import CORSMiddleware
-
-# 라이브러리
 from fastapi_pagination import add_pagination
-
-# Sentry
 from sentry_sdk import capture_exception
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
-# 추가할 라우터
 from app.api import auth, phonebook, shop, summary, treatment, treatment_menu, user
-
-# core
 from app.core.config import APP_ENV, SENTRY_DSN
 from app.core.logging import setup_logging
 from app.core.sentry import init_sentry
 from app.docs import api_change
-
-# docs
 from app.docs.tags_metadata import tags_metadata
+from app.exceptions import CustomException
 
 # 기타
 
@@ -89,6 +79,8 @@ async def error_logger(
     try:
         # call_next 의 반환값을 Response 타입으로 명시
         response: Response = await call_next(request)
+    except CustomException:
+        raise
     except Exception as e:
         # 핸들되지 않은 예외(500) 일 때 스택트레이스 포함 로깅
         logging.exception(

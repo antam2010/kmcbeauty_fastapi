@@ -29,6 +29,7 @@ class TreatmentBase(BaseResponseModel):
     staff_user_id: int | None = Field(
         None,
         description="시술 담당자 유저 ID",
+        ge=1,
     )
 
 

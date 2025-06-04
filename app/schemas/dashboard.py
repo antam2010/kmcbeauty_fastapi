@@ -116,8 +116,8 @@ class DashboardCustomerInsight(BaseModel):
         description="결제 수단 (CARD, CASH, UNPAID 등)",
     )
     staff: str | None = Field(None, description="담당 직원 이름")
-    staff_user: UserBaseResponse = Field(
-        ...,
+    staff_user: UserBaseResponse | None = Field(
+        None,
         description="담당 직원 정보",
     )
     total_reservations: int = Field(..., description="고객의 총 예약 횟수")
