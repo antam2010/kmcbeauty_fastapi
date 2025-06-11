@@ -66,7 +66,8 @@ class CustomException(HTTPException):
         # 500 이상 에러는 Sentry로
         if status_code >= 500:
             capture_exception(
-                exception or Exception(f"{final_code}: {final_detail} ({hint})"),
+                exception
+                or Exception(f"{status_code}:{final_code}: {final_detail} ({hint})"),
             )
 
         logging.error(
