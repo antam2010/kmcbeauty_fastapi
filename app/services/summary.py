@@ -1,3 +1,4 @@
+import logging
 from calendar import monthrange
 from collections.abc import Callable
 from datetime import date
@@ -68,12 +69,25 @@ def get_dashboard_summary_service(
             clear_dashboard_cache(shop.id, field, period)
 
         cached = get_dashboard_cache(shop.id, field, period)
-        if cached and not force_refresh:
+        if cached is not None and not force_refresh:
             if pydantic_model:
                 if isinstance(cached, list):
+                    logging.debug(
+                        f"Cache hit for {field} on {period} for shop {shop.id} - multiple items",
+                    )
                     return [pydantic_model.model_validate(v) for v in cached]
+                logging.debug(
+                    f"Cache hit for {field} on {period} for shop {shop.id} - single item",
+                )
                 return pydantic_model.model_validate(cached)
+            logging.debug(
+                f"Cache hit for {field} on {period} for shop {shop.id} - raw data",
+            )
             return cached
+
+        logging.debug(
+            f"Cache miss for {field} on {period} for shop {shop.id}, fetching data...",
+        )
 
         result = get_func()
 

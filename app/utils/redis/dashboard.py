@@ -3,16 +3,11 @@ import json
 from app.core.redis_client import redis_client
 
 REDIS_PREFIX = "dashboard"
-REDIS_TTL = 1800  # 30분 (1800초)
+REDIS_TTL = 1800  # 30분
 
 
 def get_dashboard_cache_key(shop_id: int, field: str, period: str) -> str:
-    """대시보드용 Redis 캐시 키 생성.
-
-    :param shop_id: 샵 ID
-    :param field: 'summary' 또는 'sales'
-    :param period: '2025-06-12' 또는 '2025-06' 등(일/월 단위)
-    """
+    """Redis 키 생성 함수"""
     return f"{REDIS_PREFIX}:{shop_id}:{field}:{period}"
 
 
@@ -24,18 +19,18 @@ def set_dashboard_cache(
     ttl: int = REDIS_TTL,
 ) -> None:
     key = get_dashboard_cache_key(shop_id, field, period)
-    redis_client.set(key, json.dumps(value, ensure_ascii=False), ex=ttl)
+    serialized = json.dumps(value, ensure_ascii=False)
+    redis_client.set(key, serialized, ex=ttl)
 
 
 def get_dashboard_cache(shop_id: int, field: str, period: str) -> dict | list | None:
     key = get_dashboard_cache_key(shop_id, field, period)
     raw = redis_client.get(key)
-    if not raw:
+    if raw is None:
         return None
     return json.loads(raw)
 
 
 def clear_dashboard_cache(shop_id: int, field: str, period: str) -> None:
-    """대시보드 캐시 삭제(무효화)."""
     key = get_dashboard_cache_key(shop_id, field, period)
     redis_client.delete(key)

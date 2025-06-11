@@ -13,7 +13,7 @@ def setup_logging(app_env: str):
     """
     # 1) 기본 로깅 레벨 및 파일명 설정
     if app_env == "debug":
-        log_level = logging.INFO
+        log_level = logging.DEBUG
         log_file = "logs/debug.log"
         sql_log_level = logging.INFO
     elif app_env == "stage":
