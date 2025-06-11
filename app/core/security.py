@@ -13,7 +13,7 @@ fernet = Fernet(FERNET_KEY.encode())
 
 
 class TokenDecodeError(Exception):
-    """JWT 디코딩 실패 시 커스텀 예외"""
+    """JWT 디코딩 실패 시 커스텀 예외."""
 
 
 def hash_password(password: str) -> str:

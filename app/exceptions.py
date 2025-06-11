@@ -46,10 +46,7 @@ class CustomException(HTTPException):
         final_detail = detail or default_detail
 
         # 예외 메시지 변환 (항상 문자열, 없으면 "-")
-        try:
-            exception_str = str(exception) if exception is not None else "-"
-        except (TypeError, ValueError):
-            exception_str = "<exception stringify error>"
+        exception_str = str(exception) if exception is not None else "-"
 
         # 응답 구조 정의
         error_response = {
@@ -66,11 +63,10 @@ class CustomException(HTTPException):
         # 500 이상 에러는 Sentry로
         if status_code >= 500:
             capture_exception(
-                exception
-                or Exception(f"{status_code}:{final_code}: {final_detail} ({hint})"),
+                exception or Exception(f"{final_code}: {final_detail} ({hint})"),
             )
 
-        logging.error(
+        logging.warning(
             "CustomException: %s - %s (%s) | Exception: %s",
             final_code,
             final_detail,
