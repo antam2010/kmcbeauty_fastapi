@@ -33,6 +33,13 @@ def get_current_user(
             hint="유효하지 않은 인증 토큰입니다.",
             exception=e,
         ) from e
+    except Exception as e:
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+            hint="인증 토큰 처리 중 오류가 발생했습니다.",
+            exception=e,
+        ) from e
 
     # Redis → fallback to DB
     if user_redis := get_user_redis(user_id):
