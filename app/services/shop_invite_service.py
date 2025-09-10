@@ -49,6 +49,9 @@ def generate_invite_code_service(
                 domain=DOMAIN,
             )
 
+        # 기한 지난 초대코드 삭제
+        delete_invite_by_shop_id(db, shop_id)
+
         # 생성
         new_invite = create_invite(db, shop_id)
         db.commit()
