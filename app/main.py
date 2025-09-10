@@ -62,7 +62,13 @@ app.add_middleware(
         "https://kmc2.daeho2.shop",
         "https://bueafit.vercel.app",
     ],
-    allow_origin_regex=r"http://localhost(:\d+)?",
+    # http/https + localhost/127.0.0.1/::1 + 10/172.16-31/192.168 대역 + 선택적 포트
+    allow_origin_regex=r"^https?://("
+    r"localhost|127\.0\.0\.1|\[::1\]|"
+    r"10(?:\.\d{1,3}){3}|"
+    r"172\.(?:1[6-9]|2[0-9]|3[0-1])(?:\.\d{1,3}){2}|"
+    r"192\.168(?:\.\d{1,3}){2}"
+    r")(?::\d+)?$",
     allow_credentials=True,  # 쿠키 허용
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
     allow_headers=["*"],  # 모든 헤더 허용
