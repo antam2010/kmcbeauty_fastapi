@@ -50,6 +50,15 @@ class PhonebookUpdate(BaseResponseModel, PhoneNumberValidatorMixin):
     )
 
 
+# 중복 확인 응답 스키마
+class DuplicateCheckResponse(BaseResponseModel, PhoneNumberValidatorMixin):
+    exists: bool = Field(..., description="중복 여부")
+    phone_number: str | None = Field(
+        default=None,
+        description="입력한 전화번호",
+    )
+
+
 # 전화번호부 목록 요청 (필터링용)
 class PhonebookFilter(BaseResponseModel):
     search: str | None = Field(

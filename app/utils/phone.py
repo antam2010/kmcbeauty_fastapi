@@ -15,8 +15,7 @@ def is_valid_korean_phone_number(phone: str) -> bool:
 
 
 def normalize_korean_phone_number(phone: str) -> str:
-    """전화번호를 000-0000-0000 형식으로 변환
-    """
+    """전화번호를 000-0000-0000 형식으로 변환"""
     match = PHONE_REGEX.match(phone.strip())
     if not match:
         return phone.strip()

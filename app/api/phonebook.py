@@ -7,6 +7,7 @@ from app.dependencies.shop import get_current_shop
 from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.shop import Shop
 from app.schemas.phonebook import (
+    DuplicateCheckResponse,
     PhonebookCreate,
     PhonebookFilter,
     PhonebookGroupedByGroupnameResponse,
@@ -14,6 +15,7 @@ from app.schemas.phonebook import (
     PhonebookUpdate,
 )
 from app.services.phonebook_service import (
+    check_duplicate_phone_number_service,
     create_phonebook_service,
     delete_phonebook_service,
     get_grouped_by_groupname_service,
@@ -63,6 +65,22 @@ def list_groups_by_group_name(
         with_items=with_items,
         current_shop=current_shop,
     )
+
+
+# 이미 전화번호부에 등록된 번호인지 확인
+@router.get(
+    "/check-duplicate",
+    status_code=status.HTTP_200_OK,
+    response_model=DuplicateCheckResponse,
+    summary="전화번호부 중복 확인",
+    description="이미 전화번호부에 등록된 번호인지 확인합니다.",
+)
+def check_duplicate_phone_number(
+    phone_number: str = Query(..., description="확인할 전화번호"),
+    db: Session = Depends(get_db),
+    current_shop: Shop = Depends(get_current_shop),
+) -> DuplicateCheckResponse:
+    return check_duplicate_phone_number_service(db, current_shop, phone_number)
 
 
 # 전화번호부 상세 조회
