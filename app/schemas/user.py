@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import ClassVar
 
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, model_validator
 
 from app.enum.role import UserRole
 from app.schemas.mixin.base import BaseResponseModel
@@ -57,6 +57,12 @@ class UserResponse(UserBase):
     model_config: ClassVar[dict] = {
         "from_attributes": True,
     }
+
+    @model_validator(mode="after")
+    def set_role_name(self) -> "UserResponse":
+        if self.role and not self.role_name:
+            self.role_name = self.role.label
+        return self
 
 
 # 이메일 중복 체크 응답 스키마

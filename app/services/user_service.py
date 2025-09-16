@@ -33,10 +33,7 @@ def get_user_service(db: Session, current_user: User) -> UserResponse:
     if not user:
         raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)
 
-    user_response = UserResponse.model_validate(user)
-    user_response.role_name = user.role.label
-
-    return user_response
+    return UserResponse.model_validate(user)
 
 
 def validate_user_creation(data: UserCreate, db: Session) -> ShopInvite | None:
@@ -109,9 +106,8 @@ def create_user_service(db: Session, user_create: UserCreate) -> UserResponse:
             domain=DOMAIN,
             exception=e,
         ) from e
-    user_response = UserResponse.model_validate(user)
-    user_response.role_name = user.role.label
-    return user_response
+
+    return UserResponse.model_validate(user)
 
 
 # 회원 수정
@@ -138,8 +134,7 @@ def update_user_service(
 
         # 사용자 정보 업데이트
         updated_user = update_user_db(db, user, user_data)
-        user_response = UserResponse.model_validate(updated_user)
-        user_response.role_name = user.role.label
+        return UserResponse.model_validate(updated_user)
     except IntegrityError as e:
         raise CustomException(
             status_code=status.HTTP_409_CONFLICT,
@@ -154,8 +149,6 @@ def update_user_service(
             domain=DOMAIN,
             exception=e,
         ) from e
-    else:
-        return user_response
 
 
 def delete_user_service(
