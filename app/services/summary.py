@@ -1,6 +1,6 @@
 import logging
 from calendar import monthrange
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 from datetime import date
 from typing import TypeVar
 
@@ -57,6 +57,30 @@ def get_dashboard_summary_service(
     staff_target_key = ("staff_summary", target_date.isoformat())
     staff_month_key = ("staff_summary", month_start.isoformat())
 
+    # ---- 유틸: 이터러블/Row/직렬화 보조 ----
+    def _is_iterable_but_not_str(x: object) -> bool:
+        return isinstance(x, Iterable) and not isinstance(x, (str, bytes, bytearray))
+
+    def _row_to_plain(x: object):
+        """SQLAlchemy Row 지원: Row -> dict, 그 외는 그대로."""
+        if hasattr(x, "_mapping"):  # sqlalchemy.engine.Row
+            return dict(x._mapping)
+        return x
+
+    def _to_cacheable(obj: object):
+        """캐시에 넣을 때: Pydantic 모델이면 model_dump(), Row면 dict, 리스트는 원소별 처리."""
+        if isinstance(obj, list):
+            out = []
+            for it in obj:
+                if hasattr(it, "model_dump"):
+                    out.append(it.model_dump(mode="json"))
+                else:
+                    out.append(_row_to_plain(it))
+            return out
+        if hasattr(obj, "model_dump"):
+            return obj.model_dump(mode="json")
+        return _row_to_plain(obj)
+
     # ---- 공통 캐시 처리 함수 ----
     def get_or_set_cache(
         key_tuple: tuple[str, str],
@@ -70,6 +94,7 @@ def get_dashboard_summary_service(
 
         cached = get_dashboard_cache(shop.id, field, period)
         if cached is not None and not force_refresh:
+            # 캐시 히트: 모델로 복원
             if pydantic_model:
                 if isinstance(cached, list):
                     logging.debug(
@@ -89,22 +114,57 @@ def get_dashboard_summary_service(
             f"Cache miss for {field} on {period} for shop {shop.id}, fetching data...",
         )
 
-        result = get_func()
+        # 1) 원본 취득
+        raw = get_func()
 
-        if isinstance(result, list):
-            serialized = [
-                r.model_dump(mode="json") if hasattr(r, "model_dump") else r
-                for r in result
-            ]
+        # 2) 반환형 '확정' (제너레이터/Row/tuple(items) 등 방어)
+        if pydantic_model:
+            # (a) Mapping -> 단일 모델
+            if isinstance(raw, Mapping):
+                result_obj: list[T] | T = pydantic_model.model_validate(dict(raw))
+
+            # (b) 이터러블 계열 -> 리스트로 확정
+            elif _is_iterable_but_not_str(raw):
+                seq = list(raw)  # 제너레이터 소모 방지
+
+                # dict.items() 같은 (key, value) 튜플 나열이면 단일 dict로 합쳐서 모델
+                if seq and all(
+                    isinstance(it, tuple) and len(it) == 2 and isinstance(it[0], str)
+                    for it in seq
+                ):
+                    result_obj = pydantic_model.model_validate(dict(seq))
+
+                # Row/Mapping 들의 리스트면 각 원소를 dict로 정규화 후 모델 리스트
+                elif seq and isinstance(_row_to_plain(seq[0]), Mapping):
+                    result_obj = [
+                        pydantic_model.model_validate(dict(_row_to_plain(it)))
+                        for it in seq
+                    ]
+
+                # 그 외엔 요소별로 그대로 모델링 시도
+                else:
+                    result_obj = [
+                        pydantic_model.model_validate(_row_to_plain(it)) for it in seq
+                    ]
+
+            # (c) 단일 Row/스칼라
+            else:
+                raw2 = _row_to_plain(raw)
+                if isinstance(raw2, Mapping):
+                    result_obj = pydantic_model.model_validate(dict(raw2))
+                else:
+                    result_obj = pydantic_model.model_validate(raw2)
+        # pydantic_model 없을 때도 제너레이터/Row는 확정
+        elif _is_iterable_but_not_str(raw):
+            result_obj = list(raw)
         else:
-            serialized = (
-                result.model_dump(mode="json")
-                if hasattr(result, "model_dump")
-                else result
-            )
+            result_obj = _row_to_plain(raw)
 
-        set_dashboard_cache(shop.id, field, period, serialized)
-        return result
+        # 3) 캐시에 넣기 (항상 직렬화된 형태)
+        to_cache = _to_cacheable(result_obj)
+        set_dashboard_cache(shop.id, field, period, to_cache)
+
+        return result_obj
 
     # ---- 실제 데이터 획득 ----
     treatment_target_summary = get_or_set_cache(
@@ -178,6 +238,7 @@ def get_dashboard_summary_service(
         pydantic_model=DashboardStaffSummaryItem,
         force_refresh=force_refresh,
     )
+
     staff_month_summary = get_or_set_cache(
         staff_month_key,
         lambda: get_staff_summary(
