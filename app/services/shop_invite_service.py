@@ -11,7 +11,7 @@ from app.crud.shop_invite_curd import (
 from app.crud.shop_user_crud import get_shop_user
 from app.exceptions import CustomException
 from app.models.user import User
-from app.schemas.shop_invite import ShopInviteResponse
+from app.schemas.shop_invite import ShopInviteCreateRequest, ShopInviteResponse
 
 DOMAIN = "SHOP_INVITE"
 
@@ -20,6 +20,7 @@ def generate_invite_code_service(
     db: Session,
     shop_id: int,
     user: User,
+    invite_data: ShopInviteCreateRequest,
 ) -> ShopInviteResponse:
     """초대코드 생성 서비스.
 
@@ -53,7 +54,7 @@ def generate_invite_code_service(
         delete_invite_by_shop_id(db, shop_id)
 
         # 생성
-        new_invite = create_invite(db, shop_id)
+        new_invite = create_invite(db, shop_id, invite_data.expire_in)
         db.commit()
         db.refresh(new_invite)
 

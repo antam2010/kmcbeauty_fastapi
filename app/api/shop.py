@@ -8,7 +8,7 @@ from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.models.shop import Shop
 from app.models.user import User
 from app.schemas.shop import ShopCreate, ShopResponse, ShopSelect, ShopUpdate
-from app.schemas.shop_invite import ShopInviteResponse
+from app.schemas.shop_invite import ShopInviteCreateRequest, ShopInviteResponse
 from app.schemas.shop_user import ShopUserUserResponse
 from app.services.shop_invite_service import (
     delete_invite_code_service,
@@ -145,8 +145,14 @@ def create_invite_link(
     shop_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    invite_data: ShopInviteCreateRequest = Depends(),
 ) -> ShopInviteResponse:
-    return generate_invite_code_service(db=db, shop_id=shop_id, user=current_user)
+    return generate_invite_code_service(
+        db=db,
+        shop_id=shop_id,
+        user=current_user,
+        invite_data=invite_data,
+    )
 
 
 @router.get(

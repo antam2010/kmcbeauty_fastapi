@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from app.models.shop_invite import ShopInvite
 
 
-def create_invite(db: Session, shop_id: int) -> ShopInvite:
+def create_invite(db: Session, shop_id: int, expire_in: int) -> ShopInvite:
     invite_code = secrets.token_urlsafe(8)
-    expired_at = datetime.now(UTC) + timedelta(days=7)
+    expired_at = datetime.now(UTC) + timedelta(seconds=expire_in)
 
     invite = ShopInvite(
         shop_id=shop_id,
