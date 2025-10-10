@@ -7,7 +7,16 @@ from sentry_sdk import capture_exception
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
-from app.api import auth, phonebook, shop, summary, treatment, treatment_menu, user
+from app.api import (
+    auth,
+    device_push_token,
+    phonebook,
+    shop,
+    summary,
+    treatment,
+    treatment_menu,
+    user,
+)
 from app.core.config import APP_ENV, SENTRY_DSN
 from app.core.logging import setup_logging
 from app.core.sentry import init_sentry
@@ -111,6 +120,7 @@ app.include_router(treatment.router)
 app.include_router(treatment_menu.router)
 app.include_router(shop.router)
 app.include_router(summary.router)
+app.include_router(device_push_token.router)
 app.include_router(api_change.router)
 
 # FastAPI Pagination 설정

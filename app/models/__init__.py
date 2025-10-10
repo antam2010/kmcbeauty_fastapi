@@ -1,3 +1,4 @@
+from .device_push_token import DevicePushToken
 from .phonebook import Phonebook
 from .shop import Shop
 from .shop_invite import ShopInvite
