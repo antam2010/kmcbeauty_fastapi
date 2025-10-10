@@ -17,7 +17,12 @@ from app.schemas.user import UserBase
 class TreatmentBase(BaseResponseModel):
     """시술 정보의 기본 스키마."""
 
-    phonebook_id: int = Field(..., description="시술 대상 고객 ID")
+    phonebook_id: int | None = Field(None, description="시술 대상 고객 ID (선택)")
+    customer_name: str | None = Field(None, description="고객명 (전화번호부 미등록 시)")
+    customer_phone: str | None = Field(
+        None,
+        description="고객 전화번호 (전화번호부 미등록 시)",
+    )
     reserved_at: datetime = Field(..., description="예약 일시")
     memo: str | None = Field(None, description="메모")
     status: TreatmentStatus = Field(..., description="예약 상태")
@@ -92,9 +97,9 @@ class TreatmentResponse(TreatmentInDBBase):
         ...,
         description="시술 항목 리스트",
     )
-    phonebook: PhonebookResponse = Field(
-        ...,
-        description="시술 대상 고객 정보",
+    phonebook: PhonebookResponse | None = Field(
+        None,
+        description="시술 대상 고객 정보 (전화번호부 등록 고객)",
     )
 
     staff_user: UserBase | None = Field(

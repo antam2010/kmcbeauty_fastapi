@@ -215,12 +215,17 @@ def get_today_reservation_list_with_customer_insight(
         phonebook = t.phonebook
         staff_name = t.staff_user.name if t.staff_user else None
         customer_insight = insight_map.get(t.phonebook_id, {})
+
+        # 고객 정보: phonebook 우선, 없으면 customer_name/phone 사용
+        customer_name = phonebook.name if phonebook else t.customer_name
+        phone_number = phonebook.phone_number if phonebook else t.customer_phone
+
         result.append(
             DashboardCustomerInsight(
                 id=t.id,
                 reserved_at=t.reserved_at,
-                customer_name=phonebook.name if phonebook else None,
-                phone_number=phonebook.phone_number if phonebook else None,
+                customer_name=customer_name,
+                phone_number=phone_number,
                 status=t.status,
                 treatments=treatments_list,
                 total_duration_min=total_duration,

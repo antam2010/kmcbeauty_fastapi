@@ -70,13 +70,17 @@ def stmt_treatment_list(
     if filters.search:
         keyword = f"%{filters.search}%"
         stmt = (
-            stmt.join(Treatment.phonebook)
+            stmt.outerjoin(Treatment.phonebook)
             .outerjoin(Treatment.treatment_items)
             .outerjoin(TreatmentItem.menu_detail)
             .where(
                 or_(
+                    # 전화번호부 고객 정보
                     Phonebook.name.ilike(keyword),
                     Phonebook.phone_number.ilike(keyword),
+                    # 직접 입력된 고객 정보
+                    Treatment.customer_name.ilike(keyword),
+                    Treatment.customer_phone.ilike(keyword),
                 ),
             )
         )
