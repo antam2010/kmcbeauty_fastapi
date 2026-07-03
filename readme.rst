@@ -19,16 +19,20 @@ KMCBeauty FastAPI 프로젝트 실행 가이드
     deactivate
 
 
-2. Docker 개발 서버 실행
+2. 개발 서버 / 배포
 ===========================
 
-start_local.sh 실행::
+로컬 개발 서버 실행 (uvicorn, localhost:3100)::
 
-    ./start_local.sh
+    ./scripts/start_local.sh
 
-또는 수동 실행::
+컨테이너 배포는 docker-compose 대신 단일 Swarm 스택(docker-stack.yml)을 사용합니다.
+스테이지/운영 배포::
 
-    docker compose -f docker-compose.dev.yml up --build -d
+    ./scripts/start_stage.sh
+    # 또는 수동:
+    docker build -t kmcbeauty-api:latest .
+    docker stack deploy -c docker-stack.yml kmcbeauty
 
 
 3. Alembic 마이그레이션
@@ -51,8 +55,10 @@ DB에 마이그레이션 롤백::
 
 브라우저에서 아래 주소로 접속:
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:3100/docs
+- ReDoc: http://localhost:3100/redoc
+
+(로컬 uvicorn 기준. Swarm 배포 시 호스트 포트 미공개 — 외부 NGINX가 kmcbeauty_api:3100 라우팅)
 
 
 5. 의존성 목록 저장 (선택)
@@ -79,8 +85,12 @@ DB에 마이그레이션 롤백::
     ├── crud/
     alembic/
     ├── versions/
-    docker-compose.dev.yml
-    start_local.sh
+    docker-stack.yml
+    Dockerfile
+    scripts/
+    ├── start_local.sh
+    ├── start_stage.sh
+    └── stop.sh
 
 7. -isort 및 black 적용
 ========================
