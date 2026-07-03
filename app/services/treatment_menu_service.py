@@ -227,7 +227,8 @@ def create_treatment_menu_detail_service(
             menu_detail.duration_min = filters.duration_min
             menu_detail.base_price = filters.base_price
         else:
-            # 시술 메뉴 상세 생성
+            # 시술 메뉴 상세 생성 (CRUD 가 add/flush 까지 수행; 커밋 경계는 서비스 소유)
+            # SPEC-FIX-001 REQ-FIX-005: CRUD 내부 db.commit() 을 서비스로 이관.
             menu_detail = create_treatment_menu_detail(
                 db=db,
                 menu_id=menu_id,
@@ -235,7 +236,6 @@ def create_treatment_menu_detail_service(
                 duration_min=filters.duration_min,
                 base_price=filters.base_price,
             )
-            db.add(menu_detail)
 
         db.commit()
         db.refresh(menu_detail)

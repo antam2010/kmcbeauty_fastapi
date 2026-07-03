@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
@@ -8,6 +8,10 @@ from app.models.mixin.timestamp import TimestampMixin
 
 class Shop(Base, SoftDeleteMixin, TimestampMixin):
     __tablename__ = "shop"
+    # 유저별 샵 조회(get_user_shops/get_user_shop_by_id)의 잦은 FK 필터를 위한 인덱스.
+    # (SPEC-FIX-001 REQ-FIX-005)
+    __table_args__ = (Index("ix_shop_user_id", "user_id"),)
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String(255), nullable=False, comment="샵 이름")
