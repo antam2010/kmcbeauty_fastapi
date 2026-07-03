@@ -11,10 +11,18 @@ class UserBase(BaseResponseModel):
     name: str = Field(..., min_length=3, max_length=50, description="이름")
     email: EmailStr = Field(..., description="유효한 이메일 주소")
 
+
+class UserRoleMixin(BaseResponseModel):
+    """서버가 결정한 유저 권한을 응답에 노출하기 위한 믹스인.
+
+    권한 상승 방지: role 은 클라이언트 입력(UserCreate)이 아니라 서버가 결정한다.
+    응답 스키마에서만 role 을 노출한다.
+    """
+
     role: UserRole = Field(..., description="유저 권한")
 
 
-class UserBaseResponse(UserBase):
+class UserBaseResponse(UserBase, UserRoleMixin):
     """유저 기본 응답 스키마."""
 
     model_config: ClassVar[dict] = {
@@ -23,7 +31,11 @@ class UserBaseResponse(UserBase):
 
 
 class UserCreate(UserBase):
-    """유저 생성 요청 스키마."""
+    """유저 생성 요청 스키마.
+
+    권한 상승 방지: 클라이언트는 role 을 전송할 수 없다. 서버가 invite_code 유무로
+    role 을 결정한다(초대 코드 있으면 MANAGER, 없으면 기본값 MASTER).
+    """
 
     password: str = Field(..., min_length=4, description="비밀번호")
     invite_code: str | None = Field(
@@ -35,7 +47,11 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(UserBase):
-    """유저 수정 요청 스키마."""
+    """유저 수정 요청 스키마.
+
+    권한 상승 방지: role 등 권한 필드는 포함하지 않는다. 권한 변경은 별도 관리자
+    경로에서만 허용된다(user_crud.update_user_db 화이트리스트로도 이중 차단).
+    """
 
     password: str = Field(None, min_length=4, description="비밀번호")
 
@@ -46,7 +62,7 @@ class UserUpdateToken(BaseResponseModel):
     token: str = Field(..., description="휴대폰 토큰")
 
 
-class UserResponse(UserBase):
+class UserResponse(UserBase, UserRoleMixin):
     """유저 응답 스키마."""
 
     id: int = Field(..., description="유저 고유 ID")

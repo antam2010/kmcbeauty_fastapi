@@ -7,20 +7,24 @@ from firebase_admin import credentials, messaging
 
 logger = logging.getLogger(__name__)
 
-# Firebase 서비스 계정 키 파일 경로 (환경변수에서 읽기)
-SERVICE_ACCOUNT_KEY_PATH = os.getenv(
-    "FIREBASE_SERVICE_ACCOUNT_KEY_PATH",
-    "firebase-service-account.json",
-)
+# Firebase 서비스 계정 키 파일 경로.
+# 시크릿 노출 방지: 하드코딩된 기본 경로로 폴백하지 않고 환경변수를 필수로 요구한다.
+SERVICE_ACCOUNT_KEY_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_KEY_PATH")
 
 # Firebase 초기화
-try:
-    if not firebase_admin._apps:
-        cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
-        firebase_admin.initialize_app(cred)
-        logger.info("Firebase Admin SDK initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
+if not SERVICE_ACCOUNT_KEY_PATH:
+    logger.error(
+        "FIREBASE_SERVICE_ACCOUNT_KEY_PATH env var is not set; "
+        "Firebase Admin SDK will not be initialized.",
+    )
+else:
+    try:
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase Admin SDK initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
 
 
 def send_fcm_message(
@@ -91,7 +95,10 @@ def send_fcm_multicast(
             data=data or {},
             tokens=tokens,
         )
-        response = messaging.send_multicast(message)
+        # firebase-admin 7.x 에서 send_multicast()는 제거되었으므로
+        # send_each_for_multicast()를 사용한다. 응답 객체의
+        # success_count / failure_count 필드는 동일하게 제공된다.
+        response = messaging.send_each_for_multicast(message)
         logger.info(
             f"FCM multicast sent: {response.success_count} successful, "
             f"{response.failure_count} failed",

@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.config import REFRESH_TOKEN_EXPIRE_SECONDS
+from app.core.rate_limit import limiter
 from app.database import get_db
 from app.docs.common_responses import COMMON_ERROR_RESPONSES
 from app.schemas.auth import LoginResponse
@@ -31,7 +32,9 @@ router = APIRouter(prefix="/auth", tags=["인증"])
         ],
     },
 )
+@limiter.limit("5/minute")
 def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
