@@ -4,3 +4,7 @@ __pycache__/
 .env
 logs/*
 celerybeat-schedule
+
+# Firebase 서비스 계정 키 (시크릿, 추적 제외)
+firebase-service-account.json
+*firebase*service*account*.json
