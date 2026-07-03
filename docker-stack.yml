@@ -1,0 +1,150 @@
+# ==============================================================================
+# Docker Swarm stack (production)
+#
+# Deploy:
+#   1) Build & make the image available to every Swarm node (registry recommended):
+#        docker build -t kmcbeauty-api:latest .
+#        docker tag  kmcbeauty-api:latest <registry>/kmcbeauty-api:latest
+#        docker push <registry>/kmcbeauty-api:latest
+#      -> then set `image:` below to <registry>/kmcbeauty-api:latest
+#      NOTE: `docker stack deploy` does NOT build images. On a single-node Swarm
+#      a locally built `kmcbeauty-api:latest` is enough; on multi-node clusters
+#      the image MUST be pushed to a registry reachable by all nodes.
+#   2) docker stack deploy -c docker-stack.yml kmcbeauty
+#
+# Networking:
+#   - No service publishes a host port. An EXTERNAL NGINX (attached to the same
+#     `shared_network_prod` overlay network) reverse-proxies to each service by
+#     its Swarm service DNS name over the overlay, e.g. http://kmcbeauty_api:3100.
+#   - Redis and Celery are internal-only (reachable only inside the overlay).
+# ==============================================================================
+version: "3.8"
+
+services:
+  # --- FastAPI application ---------------------------------------------------
+  # Reachable by NGINX at:  kmcbeauty_api:3100  (over shared_network_prod)
+  kmcbeauty_api:
+    image: kmcbeauty-api:latest
+    # `build:` is kept for local single-node builds. `docker stack deploy`
+    # ignores it and uses `image:` — build/push separately for multi-node.
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 3100
+    env_file:
+      - .env
+    networks:
+      - shared_network_prod
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 0
+        window: 30s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: stop-first
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  # --- Redis (broker + app cache) -------------------------------------------
+  # Internal-only. Reachable inside the overlay at:  redis:6379
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - shared_network_prod
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 30s
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+  # --- Celery worker ---------------------------------------------------------
+  # Same image as the API. Swarm ignores depends_on ordering, so the worker
+  # relies on restart_policy + Celery broker retry to wait for Redis.
+  celery_worker:
+    image: kmcbeauty-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A celery_app worker --loglevel=info
+    env_file:
+      - .env
+    networks:
+      - shared_network_prod
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 30s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+
+  # --- Celery beat (scheduler) ----------------------------------------------
+  # MUST be a single replica to avoid duplicate scheduled task dispatch.
+  celery_beat:
+    image: kmcbeauty-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A celery_app beat --loglevel=info
+    env_file:
+      - .env
+    networks:
+      - shared_network_prod
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 30s
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+networks:
+  # External overlay network shared with the NGINX reverse proxy.
+  # Create once (if not present):
+  #   docker network create --driver overlay --attachable shared_network_prod
+  shared_network_prod:
+    external: true
+
+volumes:
+  redis_data:
