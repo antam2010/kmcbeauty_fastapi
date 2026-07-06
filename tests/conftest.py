@@ -14,6 +14,6 @@ os.environ.setdefault("ACCESS_TOKEN_EXPIRE_SECONDS", "900")
 os.environ.setdefault("REFRESH_TOKEN_EXPIRE_SECONDS", "1209600")
 os.environ.setdefault("APP_ENV", "local")
 os.environ.setdefault("SENTRY_DSN", "")
-# Fernet 키(url-safe base64 인코딩된 32바이트). security.py 가 import 시점에
-# Fernet(FERNET_KEY) 를 생성하므로 유효한 키여야 한다.
-os.environ.setdefault("FERNET_KEY", "RtQdOaBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789abc=")
+# Fernet 키(url-safe base64 인코딩된 32바이트, 정확히 44자). security.py 가
+# import 시점에 Fernet(FERNET_KEY) 를 생성하므로 유효한 키여야 한다.
+os.environ.setdefault("FERNET_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
