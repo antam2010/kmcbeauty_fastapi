@@ -1,7 +1,7 @@
 ---
 id: SPEC-INFRA-002
-version: 1.0.0
-status: approved
+version: 1.1.0
+status: completed
 created: 2026-07-07
 updated: 2026-07-07
 author: antam2010
@@ -13,6 +13,9 @@ issue_number: null
 
 ## HISTORY
 
+- 2026-07-07 (v1.1.0): 구현 완료. status approved → completed. 4개 커밋(b6038b3/87188e2/ba0f114/1509481)으로
+  REQ-INFRA-101~115 전체 구현. Sprint Contract(thorough harness, strict profile) 기반 구현, evaluator-active 최종
+  PASS 판정. Implementation Notes 섹션 추가.
 - 2026-07-07 (v0.1.0): 최초 작성. SPEC-INFRA-001(배포 하드닝 · CI/CD)이 도입한 산출물 위에
   **증분**으로 시크릿 관리를 하드닝한다. 설정 로딩을 pydantic-settings BaseSettings +
   `secrets_dir` 로 전면 전환(사용자 결정), 민감 env 를 Docker secret 으로 이관, GitHub Actions
@@ -237,3 +240,71 @@ secret inventory, the rotation runbook, and the pre-deploy secret verification s
 4. **Docker secret 이름 규약** — **소문자 external 이름 + `secrets.target` 매핑**으로 컨테이너 내
    파일명을 pydantic 필드명에 정렬(예: `kmc_secret_key_v1` → `target: SECRET_KEY`). 버전 suffix 는
    external 이름에만 붙고 target 은 불변이므로 **앱 코드가 회전에 무관**해진다(REQ-INFRA-107/112/114).
+
+---
+
+## Implementation Notes (2026-07-07)
+
+### 구현 커밋 매핑
+
+| 커밋 | 마일스톤 | 내용 요약 |
+|------|---------|----------|
+| `b6038b3` | M1 | BaseSettings 전환, 소비처 중앙 임포트 통일, REDIS_URL 이중 정의 통일, 특성화 테스트 |
+| `87188e2` | M2 | Docker secrets 전환 (docker-stack.yml), .env.prod.example 민감 키 이관 표기, deploy_migrate.sh 일회성 Swarm 서비스 |
+| `ba0f114` | M3+M4 | GitHub 시크릿 등록 스크립트(setup_github_secrets.sh), 회전 runbook, CD 파이프라인 시크릿 존재 검증, docs/deployment.md 갱신 |
+| `1509481` | 기록 | SPEC 문서화 및 progress.md 갱신 |
+
+### Sprint Contract 기반 구현 결과
+
+- 하네스 레벨: **thorough**, evaluator 프로파일: **strict**
+- 계약 위반 위험으로 사전 명시된 5건 전부 해소됨:
+  1. `alembic/env.py` BaseSettings 인스턴스화 시 필수 필드 검증 실패 위험 → `DATABASE_URL` 외 `SECRET_KEY`/`FERNET_KEY` 도 마이그레이션 Swarm 서비스에 마운트하여 해소
+  2. `celery_beat` 전이 임포트로 인한 시크릿 마운트 누락 위험 → `celery_beat` 서비스에 모든 필수 시크릿 마운트 추가
+  3. `conftest.py` BaseSettings env-var 우선순위 미보장 위험 → env-var precedence 확인 및 FERNET_KEY 유효 44자 키로 교체
+  4. `secrets.target` 불변 규약 미준수 위험 → target 필드 명시, external 이름에만 버전 suffix 적용
+  5. CD 파이프라인 시크릿 존재 사전 검증 누락 위험 → `cd.yml`에 `docker secret inspect` 단계 추가
+
+### evaluator-active 최종 판정
+
+| 차원 | 점수 |
+|------|------|
+| Security | 100 |
+| Functionality | 100 |
+| Craft | 92 |
+| Consistency | 95 |
+| **종합 판정** | **PASS** |
+
+### 구현 편차 (수용됨)
+
+- **마이그레이션 Swarm 서비스 시크릿 마운트 확장**: 일회성 Swarm 서비스가 `DATABASE_URL` 외에도 `SECRET_KEY`/`FERNET_KEY` 를 마운트한다. alembic이 full `Settings` 인스턴스화 시 필수 필드 검증을 수행하므로 필요한 편차이다. 비시크릿 필드(`REDIS_URL`, `SENTRY_DSN` 등)는 `-e` 플래그로 전달.
+- **M1 하위호환 별칭 최종 정리**: M1 구현 중 생성된 하위호환 별칭은 dead code 제거 단계(ba0f114)에서 정리 완료.
+
+### 테스트 결과
+
+- `app/core/config.py` 커버리지: **100%**
+- 전체 테스트: **90 passed** (기존 fastapi-pagination 비호환 5건 제외, SPEC-INFRA-001 이전부터 존재)
+
+### 라이브 유예 항목 (AC-5/7/9/10)
+
+아래 인수 기준은 운영 환경에서만 검증 가능하여 `docs/deployment.md` 리허설 절차로 대체한다.
+
+| AC | 내용 | 대체 검증 |
+|----|------|---------|
+| AC-5 | 실 마운트 검증 (`docker exec cat /run/secrets/SECRET_KEY`) | deployment.md §"시크릿 검증 절차" |
+| AC-7 | 마이그레이션 E2E (Swarm 서비스 종료 코드 0 확인) | deployment.md §"마이그레이션 절차" |
+| AC-9 | 실패 시 abort 동작 (잘못된 시크릿으로 실행) | deployment.md §"장애 대응 runbook" |
+| AC-10 | 무중단 회전 (v1→v2 교체 후 헬스체크) | deployment.md §"시크릿 회전 runbook" |
+
+### 운영 사전 작업 (미완료 — 운영팀 수행 필요)
+
+```bash
+# 1. Swarm 매니저 노드에서 시크릿 3종 생성
+echo -n "<값>" | docker secret create kmc_secret_key_v1 -
+echo -n "<값>" | docker secret create kmc_fernet_key_v1 -
+echo -n "<값>" | docker secret create kmc_database_url_v1 -
+
+# 2. 서버 .env.prod에서 3키 제거 (SECRET_KEY, FERNET_KEY, DATABASE_URL)
+
+# 3. GitHub Actions 시크릿 등록
+bash scripts/setup_github_secrets.sh
+```

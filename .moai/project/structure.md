@@ -62,7 +62,7 @@ app/
 │   └── shop.py           # 현재 샵 컨텍스트 추출
 │
 ├── core/                 # 애플리케이션 설정·인프라
-│   ├── config.py         # pydantic-settings + dotenv 로딩
+│   ├── config.py         # 중앙 settings 싱글톤 (@MX:ANCHOR) — BaseSettings(secrets_dir="/run/secrets"), env-var 우선, .env fallback; 모든 소비처가 이 객체에서 값을 읽음
 │   ├── security.py       # argon2 해시 + bcrypt 레거시
 │   ├── logging.py        # 로그 설정
 │   ├── sentry.py         # Sentry SDK 초기화
@@ -125,14 +125,16 @@ alembic/
 
 ```
 tests/
-├── conftest.py              # 환경변수 주입 (앱 임포트 전 설정)
+├── conftest.py              # 환경변수 주입 (앱 임포트 전 설정, BaseSettings env-var 우선 활용)
+├── test_config_unit.py      # Settings 특성화 단위 테스트 (필드·기본값·env 우선순위)
+├── test_config_integration.py  # BaseSettings + secrets_dir 통합 테스트
 ├── test_security.py         # 보안 단위 테스트
 ├── test_contract_*.py       # 계약 테스트 (API 인터페이스 검증)
 ├── test_perf_*.py           # 성능 테스트
 └── test_regression_*.py     # 회귀·특성화 테스트
 ```
 
-총 13개 테스트 파일. `conftest.py`가 앱 임포트 전 환경변수를 설정해 테스트 환경 격리를 보장함.
+총 15개 테스트 파일. `conftest.py`가 앱 임포트 전 환경변수를 설정해 테스트 환경 격리를 보장함.
 
 ---
 
@@ -144,4 +146,5 @@ tests/
 | `scripts/start_local.sh` | 로컬 개발 실행 |
 | `scripts/start_stage.sh` | 스테이징 환경 실행 |
 | `scripts/stop.sh` | 서비스 중지 |
-| `scripts/deploy_migrate.sh` | 배포 전 Alembic 마이그레이션 실행 |
+| `scripts/deploy_migrate.sh` | 배포 전 Alembic 마이그레이션 실행 (일회성 Swarm 서비스로 시크릿 마운트) |
+| `scripts/setup_github_secrets.sh` | `gh secret set` 기반 GitHub Actions 시크릿 등록·갱신 자동화 |

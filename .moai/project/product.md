@@ -82,3 +82,4 @@ RESERVED → IN_PROGRESS → COMPLETED
 - ruff 기존 lint 부채(~700건) 및 format 미적용 파일(11개)은 SPEC-INFRA-001 범위 밖 — 별도 정리 필요
 
 > SPEC-INFRA-001(2026-07-07)으로 해소된 이슈: REDIS_URL localhost 결함, Firebase 시크릿 마운트 누락, `.env.prod` 부재
+> SPEC-INFRA-002(2026-07-07)으로 해소된 이슈: `.env.prod` 평문 시크릿 집중, os.getenv 산개(단일 진실원천 부재), GitHub 시크릿 수기 관리, Docker secret 회전 절차 부재

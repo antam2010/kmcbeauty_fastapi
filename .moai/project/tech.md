@@ -43,7 +43,7 @@
 | 라이브러리 | 버전 | 용도 |
 |-----------|------|------|
 | Pydantic | 2.13 | 요청/응답 스키마 검증 |
-| pydantic-settings | — | `.env` 기반 설정 관리 |
+| pydantic-settings | 2.14.2 | 설정 관리 — `BaseSettings(secrets_dir="/run/secrets")`, env-var 우선, `.env` fallback |
 
 ---
 
@@ -112,12 +112,31 @@ Sentry 설정: `traces_sample_rate=0.2`, 로컬·디버그 환경에서 비활�
 - 외부 포트 노출 없음: NGINX가 `shared_network_prod` overlay 네트워크를 통해 리버스 프록시
 - 헬스체크: `curl /health` (Dockerfile 설정)
 
-### 환경변수 관리
+### 설정 로딩 스택
+
+`app/core/config.py` 의 `Settings` 싱글톤 한 곳에서 모든 설정을 읽는다.
+
+| 소스 | 우선순위 | 비고 |
+|------|---------|------|
+| 환경변수 (`os.environ`) | 1 (최고) | 로컬 개발·테스트·CI |
+| `.env` / `.env.prod` | 2 | `env_file` fallback |
+| Docker secrets (`/run/secrets/`) | 3 (기본) | `secrets_dir="/run/secrets"` |
 
 - 로컬 개발: `.env` 파일 (오버레이 DNS 불필요)
-- Swarm 배포: `.env.prod` 파일 (`env_file` 지시어, `.gitignore`에 포함)
+- Swarm 배포: Docker secrets 마운트 + `.env.prod` 비시크릿 값
 - `.env.example`: 로컬 변수 문서화 템플릿
-- `.env.prod.example`: 운영 변수 문서화 템플릿 (`.env.prod` 생성 기준)
+- `.env.prod.example`: 운영 변수 문서화 템플릿 (민감 키는 "managed via Docker secret" 표기)
+
+### Docker secrets (Swarm)
+
+| external 이름 | target (컨테이너 내 파일) | 서비스 |
+|--------------|------------------------|------|
+| `firebase_service_account` | `firebase_service_account` | api, celery_worker, celery_beat |
+| `kmc_secret_key_v1` | `SECRET_KEY` | api, celery_worker, celery_beat |
+| `kmc_fernet_key_v1` | `FERNET_KEY` | api, celery_worker, celery_beat |
+| `kmc_database_url_v1` | `DATABASE_URL` | api, celery_worker, celery_beat, migration(일회성) |
+
+`target` 은 불변 — 회전 시 external 이름(버전 suffix)만 교체하므로 앱 코드 변경 불필요.
 
 ### CI/CD 파이프라인
 
@@ -128,7 +147,7 @@ Sentry 설정: `traces_sample_rate=0.2`, 로컬·디버그 환경에서 비활�
 
 - 이미지 레지스트리: `ghcr.io/antam2010/kmcbeauty-api:<sha>` (불변 SHA 태그)
 - 배포 시 `IMAGE_TAG` 환경변수 치환으로 `:latest` 함정 회피
-- Docker secrets: `firebase_service_account` (api, celery_worker, celery_beat 모두 마운트)
+- Docker secrets: `firebase_service_account`, `kmc_secret_key_v1`, `kmc_fernet_key_v1`, `kmc_database_url_v1` (api, celery_worker, celery_beat 모두 마운트)
 - CD 수동 승인 게이트: GitHub environment `production` 보호 규칙
 
 ---
