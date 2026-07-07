@@ -6,7 +6,12 @@
 #
 # 흐름:
 #   build-and-push: GHCR 로그인 → docker build → push ghcr.io/<owner>/kmcbeauty-api:<sha>
-#   deploy:         environment=production(수동 승인 가능) → SSH → deploy_migrate → stack deploy
+#   deploy:         environment=production(수동 승인 가능) → SSH → 시크릿 사전 검증
+#                   (REQ-INFRA-113, docker secret ls) → deploy_migrate → stack deploy
+#
+# 시크릿 사전 검증(SPEC-INFRA-002 REQ-INFRA-113):
+#   SSH 스크립트 선두에서 필수 Docker secret(kmc_secret_key_v1/kmc_fernet_key_v1/
+#   kmc_database_url_v1/firebase_service_account) 존재를 확인하고, 누락 시 배포를 중단한다.
 #
 # 필요한 저장소 시크릿(docs/deployment.md 참조):
 #   SWARM_SSH_HOST  : 매니저 노드 호스트/IP
@@ -77,6 +82,26 @@ jobs:
             cd "${DEPLOY_DIR:-/opt/kmcbeauty}"
             export IMAGE_TAG="ghcr.io/antam2010/kmcbeauty-api:${GITHUB_SHA}"
             echo "Deploying ${IMAGE_TAG}"
+            # --- 시크릿 사전 검증(REQ-INFRA-113): 마이그레이션/배포 이전에 수행 ---
+            # 필수 Docker secret 이 하나라도 없으면 fail-fast(빈/오설정 대상으로 진행 방지).
+            # 회전 중이면 REQUIRED_SECRETS 를 _v2 로 갱신한다(source 만 교체, target 불변).
+            REQUIRED_SECRETS="kmc_secret_key_v1 kmc_fernet_key_v1 kmc_database_url_v1 firebase_service_account"
+            EXISTING_SECRETS="$(docker secret ls --format '{{.Name}}')"
+            MISSING=""
+            for s in $REQUIRED_SECRETS; do
+              echo "$EXISTING_SECRETS" | grep -qx "$s" || MISSING="$MISSING $s"
+            done
+            if [ -n "$MISSING" ]; then
+              echo "ERROR: 필수 Docker secret 누락:${MISSING}. 배포를 중단합니다." >&2
+              echo "먼저 매니저 노드에서 docker secret create 로 등록하세요(docs/deployment.md)." >&2
+              exit 1
+            fi
+            # .env.prod(비시크릿 설정) 존재도 함께 확인.
+            if [ ! -f .env.prod ]; then
+              echo "ERROR: .env.prod 가 매니저 노드에 없습니다. 배포를 중단합니다." >&2
+              exit 1
+            fi
+            echo "OK: 필수 시크릿 및 .env.prod 확인 완료."
             # 최신 배포 매니페스트/스크립트 동기화(운영 노드의 배포 브랜치 기준).
             git fetch --all --prune
             git checkout main
