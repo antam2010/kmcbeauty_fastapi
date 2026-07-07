@@ -8,17 +8,24 @@
 
 ```
 kmcbeauty_fastapi/
-├── app/                  # 애플리케이션 소스 코드
-├── alembic/              # DB 마이그레이션 (8개 revision)
-├── tests/                # pytest 테스트 (13개 파일)
+├── app/                  # 애플리케이션 소스 코드 (진입점: app/main.py)
+├── alembic/              # DB 마이그레이션 (7개 revision)
+├── tests/                # pytest 테스트 (14개 파일, test_infra_guards.py 포함)
 ├── scripts/              # 배포·기동 스크립트
 ├── worker/               # Celery 작업 모듈
+├── docs/                 # 운영 문서 (deployment.md, scaling.md)
+├── docker/               # 환경별 Compose 파일
+│   └── compose/
+│       └── compose.dev.yml  # 로컬 개발용 (Redis 필수 + MySQL 선택)
+├── .github/
+│   └── workflows/        # GitHub Actions (ci.yml, cd.yml)
 ├── celery_app.py         # Celery 애플리케이션 팩토리
-├── main.py               # FastAPI 앱 진입점
 ├── docker-stack.yml      # Docker Swarm 배포 스택
 ├── Dockerfile            # 단일 스테이지 컨테이너 빌드
 ├── requirements.txt      # 의존성 목록
-└── .env.example          # 환경변수 문서화 템플릿
+├── .env.example          # 환경변수 문서화 템플릿 (로컬)
+├── .env.prod.example     # 운영 환경변수 템플릿 (.env.prod 생성 기준)
+└── .pre-commit-config.yaml  # ruff lint+format pre-commit 훅
 ```
 
 ---
@@ -105,12 +112,12 @@ worker/
 ```
 alembic/
 ├── env.py          # SQLAlchemy 연결 설정
-├── versions/       # 8개 revision 파일
+├── versions/       # 7개 revision 파일
 └── alembic.ini     # 마이그레이션 설정
 ```
 
 - 대상 DB: MySQL (드라이버: PyMySQL)
-- 총 마이그레이션: 8개
+- 총 마이그레이션: 7개
 
 ---
 
@@ -134,6 +141,7 @@ tests/
 | 파일 | 용도 |
 |------|------|
 | `scripts/start_swarm.sh` | Swarm init + overlay 네트워크 생성 + 스택 배포 |
-| `start_local.sh` | 로컬 개발 실행 |
-| `start_stage.sh` | 스테이징 환경 실행 |
-| `stop.sh` | 서비스 중지 |
+| `scripts/start_local.sh` | 로컬 개발 실행 |
+| `scripts/start_stage.sh` | 스테이징 환경 실행 |
+| `scripts/stop.sh` | 서비스 중지 |
+| `scripts/deploy_migrate.sh` | 배포 전 Alembic 마이그레이션 실행 |

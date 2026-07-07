@@ -78,6 +78,7 @@ RESERVED → IN_PROGRESS → COMPLETED
 
 ## 알려진 제약사항
 
-- `.env`의 `REDIS_URL`이 `localhost`로 설정되어 있어 **Swarm 환경에서 동작 불가** — `redis://redis:6379/0`으로 변경 필요
-- Firebase 서비스 계정 JSON 경로가 설정되어 있으나 `docker-stack.yml`에 시크릿/볼륨 마운트 누락
-- `readme.rst`에 언급된 `.env.prod` 파일이 실제로 존재하지 않음
+- 일부 테스트(5건)가 fastapi-pagination 0.15.15 환경 비호환으로 실패 — SPEC-INFRA-001 이전부터 존재, 별도 정리 필요
+- ruff 기존 lint 부채(~700건) 및 format 미적용 파일(11개)은 SPEC-INFRA-001 범위 밖 — 별도 정리 필요
+
+> SPEC-INFRA-001(2026-07-07)으로 해소된 이슈: REDIS_URL localhost 결함, Firebase 시크릿 마운트 누락, `.env.prod` 부재

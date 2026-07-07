@@ -7,7 +7,7 @@
 | 항목 | 버전 / 값 |
 |------|----------|
 | Python | 3.13-slim (Dockerfile 기준) |
-| ruff target-version | py312 (⚠ Python 버전과 불일치) |
+| ruff target-version | py313 |
 | 컨테이너 베이스 이미지 | `python:3.13-slim` |
 | 실행 사용자 | non-root (Dockerfile 설정) |
 
@@ -34,7 +34,7 @@
 | PyMySQL | — | MySQL 드라이버 |
 
 - 대상 DB: **MySQL**
-- 마이그레이션 수: 8개 revision
+- 마이그레이션 수: 7개 revision
 
 ---
 
@@ -90,10 +90,11 @@ Sentry 설정: `traces_sample_rate=0.2`, 로컬·디버그 환경에서 비활�
 
 | 도구 | 버전 | 용도 |
 |------|------|------|
-| ruff | 0.14 | 린트 + 포맷 (line-length 88) |
+| ruff | 0.14.0 | 린트 + 포맷 (line-length 88, target-version py313) |
 | pytest | 8.4.2 | 테스트 프레임워크 |
-
-미적용 도구: pre-commit, mypy, CI/CD 파이프라인 (.github에 PR 템플릿만 존재)
+| pytest-cov | 6.1.1 | 커버리지 측정 (report-only, --fail-under 게이트 없음) |
+| coverage | 7.6.10 | 커버리지 리포트 백엔드 |
+| pre-commit | — | ruff lint+format 커밋 훅 (`.pre-commit-config.yaml`) |
 
 ---
 
@@ -113,16 +114,22 @@ Sentry 설정: `traces_sample_rate=0.2`, 로컬·디버그 환경에서 비활�
 
 ### 환경변수 관리
 
-- `.env` 파일로 주입 (`env_file` 지시어)
-- `.env.example`이 모든 변수 문서화
+- 로컬 개발: `.env` 파일 (오버레이 DNS 불필요)
+- Swarm 배포: `.env.prod` 파일 (`env_file` 지시어, `.gitignore`에 포함)
+- `.env.example`: 로컬 변수 문서화 템플릿
+- `.env.prod.example`: 운영 변수 문서화 템플릿 (`.env.prod` 생성 기준)
 
-### 알려진 인프라 이슈
+### CI/CD 파이프라인
 
-| 이슈 | 원인 | 해결 방법 |
-|------|------|----------|
-| Redis 연결 실패 (Swarm) | `.env`의 `REDIS_URL=localhost` | `redis://redis:6379/0`으로 변경 |
-| Firebase 푸시 알림 미동작 | `docker-stack.yml`에 서비스 계정 JSON 시크릿/볼륨 마운트 누락 | Docker secret 또는 볼륨 마운트 추가 |
-| `.env.prod` 파일 부재 | `readme.rst` 문서와 실제 파일 불일치 | 파일 생성 또는 문서 수정 |
+| 파일 | 트리거 | 역할 |
+|------|--------|------|
+| `.github/workflows/ci.yml` | PR 오픈 / push | ruff check + format-check + pytest (Python 3.13, pip 캐시) |
+| `.github/workflows/cd.yml` | main 병합 | GHCR 이미지 빌드·푸시 + SSH Swarm 배포 |
+
+- 이미지 레지스트리: `ghcr.io/antam2010/kmcbeauty-api:<sha>` (불변 SHA 태그)
+- 배포 시 `IMAGE_TAG` 환경변수 치환으로 `:latest` 함정 회피
+- Docker secrets: `firebase_service_account` (api, celery_worker, celery_beat 모두 마운트)
+- CD 수동 승인 게이트: GitHub environment `production` 보호 규칙
 
 ---
 
@@ -130,3 +137,4 @@ Sentry 설정: `traces_sample_rate=0.2`, 로컬·디버그 환경에서 비활�
 
 - `requirements.txt` 단일 파일로 관리
 - lock 파일(poetry.lock, pip-tools generated) 없음 — 재현 가능한 빌드를 위해 도입 권장
+- uv 도입 평가 완료 — 현재 pip 방식 유지 결정 (평가 기록: `docs/deployment.md`)
