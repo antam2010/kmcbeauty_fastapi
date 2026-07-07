@@ -1,6 +1,6 @@
 [tool.ruff]
 line-length = 88
-target-version = "py312"
+target-version = "py313"
 lint.select = [
     "E", "F", "W", "C90", "I", "N", "D", "UP", "YTT", "ANN", "S", "BLE", "B",
     "A", "COM", "C4", "DTZ", "EM", "EXE", "ISC", "ICN", "G", "INP", "PIE",

@@ -24,6 +24,8 @@ click==8.1.8
 click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
+# coverage: pytest-cov 백엔드. CI 커버리지 리포트에 사용(게이트 없음, SPEC-INFRA-001).
+coverage==7.6.10
 cryptography==46.0.2
 dnspython==2.7.0
 ecdsa==0.19.1
@@ -91,6 +93,8 @@ PyJWT==2.10.1
 PyMySQL==1.2.0
 pyparsing==3.2.5
 pytest==8.4.2
+# pytest-cov: CI 커버리지 리포트 생성용(--cov-fail-under 게이트는 두지 않음, SPEC-INFRA-001 REQ-INFRA-006).
+pytest-cov==6.1.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-jose==3.5.0
