@@ -6,12 +6,7 @@ from jose import ExpiredSignatureError, JWTError, jwt
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.config import (
-    ACCESS_TOKEN_EXPIRE_SECONDS,
-    ALGORITHM,
-    REFRESH_TOKEN_EXPIRE_SECONDS,
-    SECRET_KEY,
-)
+from app.core.config import settings
 from app.core.security import create_jwt_token, verify_and_upgrade_password
 from app.crud.user_crud import get_user_by_email, get_user_by_id
 from app.exceptions import CustomException
@@ -116,7 +111,7 @@ def generate_access_token(user: User) -> str:
             "email": user.email,
             "type": "access",
         },
-        expires_delta=timedelta(seconds=ACCESS_TOKEN_EXPIRE_SECONDS),
+        expires_delta=timedelta(seconds=settings.ACCESS_TOKEN_EXPIRE_SECONDS),
     )
 
 
@@ -132,7 +127,7 @@ def generate_refresh_token(user: User) -> str:
     """
     return create_jwt_token(
         data={"sub": str(user.id), "type": "refresh"},
-        expires_delta=timedelta(seconds=REFRESH_TOKEN_EXPIRE_SECONDS),
+        expires_delta=timedelta(seconds=settings.REFRESH_TOKEN_EXPIRE_SECONDS),
     )
 
 
@@ -161,7 +156,11 @@ def refresh_access_token(db: Session, request: Request) -> tuple[str, str]:
             hint="헤더나 쿠키에 리프레시 토큰 확인해보슈",
         )
     try:
-        payload = jwt.decode(raw_token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            raw_token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
         sub = payload.get("sub")
         if sub is None:
             raise ValueError("sub claim missing")
@@ -224,7 +223,7 @@ def refresh_access_token(db: Session, request: Request) -> tuple[str, str]:
         )
 
     # 회전 임계치: 남은 TTL 이 "유효 만료 시간의 절반" 이하이면 회전한다.
-    half_ttl = REFRESH_TOKEN_EXPIRE_SECONDS / 2
+    half_ttl = settings.REFRESH_TOKEN_EXPIRE_SECONDS / 2
 
     # 유저 정보 조회
     user = get_user_by_id(db, user_id)
@@ -258,7 +257,11 @@ def logout_user(token: str | None) -> bool:
     if not token:
         return False
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
     except ExpiredSignatureError:
         # 서명이 만료된 토큰이라도 sub 를 추출해 서버측 세션(Redis)을 반드시 폐기한다.
         # 만료를 이유로 revoke 를 건너뛰면 세션이 남아 재사용 위험이 있다.
@@ -266,8 +269,8 @@ def logout_user(token: str | None) -> bool:
         try:
             payload = jwt.decode(
                 token,
-                SECRET_KEY,
-                algorithms=[ALGORITHM],
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM],
                 options={"verify_exp": False},
             )
         except JWTError:

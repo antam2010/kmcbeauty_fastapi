@@ -2,13 +2,11 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+from app.core.config import settings
+
 
 def before_send(event, hint):
-    import os
-
-    env = os.getenv("APP_ENV", "local")
-
-    if env in ["local", "debug"]:
+    if settings.APP_ENV in ["local", "debug"]:
         return None  # 완전히 차단하고 싶으면 이렇게
 
     return event

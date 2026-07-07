@@ -1,15 +1,17 @@
 import logging
-import os
 from typing import Any
 
 import firebase_admin
 from firebase_admin import credentials, messaging
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
-# Firebase 서비스 계정 키 파일 경로.
-# 시크릿 노출 방지: 하드코딩된 기본 경로로 폴백하지 않고 환경변수를 필수로 요구한다.
-SERVICE_ACCOUNT_KEY_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_KEY_PATH")
+# Firebase 서비스 계정 키 파일 경로(중앙 settings 에서 소싱).
+# 시크릿 노출 방지: 하드코딩된 기본 경로로 폴백하지 않고 설정값을 필수로 요구한다.
+# 미설정 시 빈 문자열이므로 아래 분기에서 초기화를 스킵한다(현행 동작 보존).
+SERVICE_ACCOUNT_KEY_PATH = settings.FIREBASE_SERVICE_ACCOUNT_KEY_PATH
 
 # Firebase 초기화
 if not SERVICE_ACCOUNT_KEY_PATH:

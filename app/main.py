@@ -19,7 +19,7 @@ from app.api import (
     treatment_menu,
     user,
 )
-from app.core.config import APP_ENV, SENTRY_DSN
+from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
@@ -30,12 +30,14 @@ from app.exceptions import CustomException
 # 기타
 
 # 로그 설정
-setup_logging(app_env=APP_ENV)
+setup_logging(app_env=settings.APP_ENV)
 
 # Sentry 설정
+# SENTRY_DSN 이 비어 있어도 init_sentry 를 무조건 호출한다(현행 동작 보존).
+# sentry_sdk.init(dsn="") 는 no-op 이므로 예외 없이 Sentry 비활성으로 기동한다.
 init_sentry(
-    dsn=SENTRY_DSN,
-    environment=APP_ENV,
+    dsn=settings.SENTRY_DSN,
+    environment=settings.APP_ENV,
     traces_sample_rate=0.2,
     profiles_sample_rate=0.0,
 )
@@ -62,7 +64,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    debug=APP_ENV == "debug",
+    debug=settings.APP_ENV == "debug",
     openapi_tags=tags_metadata,
 )
 

@@ -5,7 +5,7 @@ from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 from passlib.context import CryptContext
 
-from app.core.config import ALGORITHM, FERNET_KEY, SECRET_KEY
+from app.core.config import settings
 
 # 신규 해시는 argon2(argon2id), 기존 bcrypt 해시는 검증만 허용(deprecated).
 # - default="argon2": hash_password() 는 항상 argon2id 로 해싱한다.
@@ -19,7 +19,7 @@ pwd_context = CryptContext(
     default="argon2",
 )
 
-fernet = Fernet(FERNET_KEY.encode())
+fernet = Fernet(settings.FERNET_KEY.encode())
 
 
 class TokenDecodeError(Exception):
@@ -82,13 +82,21 @@ def create_jwt_token(data: dict, expires_delta: timedelta) -> str:
             "nbf": now,  # 이 시점부터 유효 (optional)
         },
     )
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
     return encoded_jwt
 
 
 def decode_jwt_token(token: str) -> dict:
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
     except ExpiredSignatureError as e:
         raise TokenDecodeError(e) from e
     except JWTError as e:

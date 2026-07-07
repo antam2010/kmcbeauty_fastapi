@@ -13,7 +13,7 @@ from datetime import timedelta
 
 import pytest
 
-from app.core.config import ALGORITHM, REFRESH_TOKEN_EXPIRE_SECONDS, SECRET_KEY
+from app.core.config import settings
 from app.exceptions import CustomException
 from app.services import auth_service
 
@@ -46,7 +46,7 @@ def fake_redis(monkeypatch):
 
     def set_refresh(user_id: int, token: str) -> None:
         store[user_id] = token
-        ttls.setdefault(user_id, REFRESH_TOKEN_EXPIRE_SECONDS)
+        ttls.setdefault(user_id, settings.REFRESH_TOKEN_EXPIRE_SECONDS)
 
     def get_refresh(user_id: int):
         return store.get(user_id)
@@ -82,7 +82,7 @@ def test_rotation_stores_token_with_user_id(fake_redis, monkeypatch):
     token = _make_refresh_token(42)
     fake_redis["store"][42] = token
     # 절반 이하 TTL → 회전 트리거
-    fake_redis["ttls"][42] = REFRESH_TOKEN_EXPIRE_SECONDS // 4
+    fake_redis["ttls"][42] = settings.REFRESH_TOKEN_EXPIRE_SECONDS // 4
 
     request = FakeRequest(token)
     access, new_refresh = auth_service.refresh_access_token(db=None, request=request)
@@ -134,7 +134,7 @@ def test_logout_revokes_then_refresh_blocked(fake_redis, monkeypatch):
 
     token = _make_refresh_token(7)
     fake_redis["store"][7] = token
-    fake_redis["ttls"][7] = REFRESH_TOKEN_EXPIRE_SECONDS
+    fake_redis["ttls"][7] = settings.REFRESH_TOKEN_EXPIRE_SECONDS
 
     # 로그아웃 → 서버측 무효화(Redis 삭제)
     assert auth_service.logout_user(token) is True
@@ -163,7 +163,7 @@ def test_logout_with_expired_token_still_clears_redis(fake_redis, monkeypatch):
     expired_token = _make_refresh_token(user_id, expired=True)
     # 만료 이전에 저장되어 있던 세션을 시뮬레이션한다.
     fake_redis["store"][user_id] = expired_token
-    fake_redis["ttls"][user_id] = REFRESH_TOKEN_EXPIRE_SECONDS
+    fake_redis["ttls"][user_id] = settings.REFRESH_TOKEN_EXPIRE_SECONDS
 
     result = auth_service.logout_user(expired_token)
 
@@ -183,7 +183,7 @@ def test_valid_token_with_plenty_ttl_reused(fake_redis, monkeypatch):
 
     token = _make_refresh_token(3)
     fake_redis["store"][3] = token
-    fake_redis["ttls"][3] = REFRESH_TOKEN_EXPIRE_SECONDS  # 풀 TTL
+    fake_redis["ttls"][3] = settings.REFRESH_TOKEN_EXPIRE_SECONDS  # 풀 TTL
 
     request = FakeRequest(token)
     access, new_refresh = auth_service.refresh_access_token(db=None, request=request)

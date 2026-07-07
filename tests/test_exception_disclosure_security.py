@@ -5,13 +5,13 @@
 - debug 환경에서는 노출 허용 (AC-004-3)
 """
 
-from app import exceptions
+from app.core.config import settings
 from app.exceptions import CustomException
 
 
 def _build_exc(monkeypatch, app_env: str) -> dict:
-    # exceptions 모듈이 import 시점에 캡처한 APP_ENV 를 테스트 값으로 교체
-    monkeypatch.setattr(exceptions, "APP_ENV", app_env)
+    # exceptions 모듈은 중앙 settings.APP_ENV 를 참조하므로 싱글톤 속성을 교체한다.
+    monkeypatch.setattr(settings, "APP_ENV", app_env)
     exc = CustomException(
         status_code=400,
         domain="TEST",

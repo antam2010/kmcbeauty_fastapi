@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app.core.config import REFRESH_TOKEN_EXPIRE_SECONDS
+from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.database import get_db
 from app.docs.common_responses import COMMON_ERROR_RESPONSES
@@ -52,7 +52,7 @@ def login(
         httponly=True,
         secure=True,
         samesite="None",  # Lax, Strict, None
-        max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_SECONDS,
     )
     return response
 
@@ -84,7 +84,7 @@ def refresh_token_handler(
         httponly=True,
         secure=True,
         samesite="None",  # Lax, Strict, None
-        max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_SECONDS,
     )
     return response
 

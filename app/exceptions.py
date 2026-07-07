@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sentry_sdk import capture_exception
 from starlette import status
 
-from app.core.config import APP_ENV
+from app.core.config import settings
 
 # 기본 메시지 매핑
 DEFAULT_MESSAGES = {
@@ -61,7 +61,7 @@ class CustomException(HTTPException):
 
         # 정보 노출 방지: raw exception 문자열은 debug 환경에서만 응답 본문에 포함한다.
         # 비-debug 환경에서는 로깅/Sentry 로만 기록하고 응답에는 노출하지 않는다.
-        if exception and APP_ENV == "debug":
+        if exception and settings.APP_ENV == "debug":
             error_response["exception"] = exception_str
 
         # 500 이상 에러는 Sentry로
