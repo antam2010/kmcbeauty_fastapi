@@ -2,6 +2,10 @@
 __pycache__/
 *.pyc
 .env
+# 배포용 env 는 서버에서만 관리한다 — 템플릿(.env.prod.example)만 커밋 (SPEC-INFRA-001)
+.env.prod
+.env.stage
+.env.dev
 logs/*
 celerybeat-schedule
 
