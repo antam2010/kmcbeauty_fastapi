@@ -1,0 +1,42 @@
+# ==============================================================================
+# 로컬 개발용 Compose (SPEC-INFRA-001, REQ-INFRA-012)
+#
+# 목적: 로컬 개발/테스트에서 Redis(필수)와 MySQL(선택)을 빠르게 띄운다.
+#   docker compose -f docker/compose/compose.dev.yml up -d          # Redis 만
+#   docker compose -f docker/compose/compose.dev.yml --profile mysql up -d   # Redis + MySQL
+#
+# ⚠️ 개발 전용(DEV ONLY): 이 파일은 운영에 사용하지 않는다.
+#   운영 MySQL 은 컨테이너 외부(관리형/호스트)에 있으며 docker-stack.yml 에 포함하지 않는다.
+#   앱은 로컬 uvicorn(`./scripts/start_local.sh`)으로 실행하고, 이 compose 는 백킹 서비스만 제공한다.
+# ==============================================================================
+
+services:
+  # --- Redis (필수) : 레이트리밋/캐시/Celery 브로커 ---------------------------
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      # 로컬 앱은 REDIS_URL=redis://localhost:6379/0 으로 접근(.env).
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+
+  # --- MySQL (선택) : `--profile mysql` 로만 기동 -----------------------------
+  # 운영 DB 를 대체하지 않는 순수 로컬 개발 편의용.
+  mysql:
+    image: mysql:8.0
+    profiles: ["mysql"]
+    environment:
+      MYSQL_ROOT_PASSWORD: devroot
+      MYSQL_DATABASE: kmcbeauty
+      MYSQL_USER: kmc
+      MYSQL_PASSWORD: kmc
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  redis_dev_data:
+  mysql_dev_data:
