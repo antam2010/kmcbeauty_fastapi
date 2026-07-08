@@ -32,7 +32,7 @@ def test_usercreate_rejects_client_role() -> None:
 def test_resolve_signup_role_defaults_to_master() -> None:
     """AC-003-1: 초대 코드 없으면 서버가 기본 비특권 role(MASTER)로 결정."""
     # password 는 테스트용 더미 비밀번호로 실제 시크릿이 아니다.
-    user = UserCreate(name="원장", email="master@test.com", password="pass1234")  # noqa: S106
+    user = UserCreate(name="김원장", email="master@test.com", password="pass1234")  # noqa: S106
     assert resolve_signup_role(user) == UserRole.MASTER
 
 

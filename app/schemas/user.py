@@ -66,7 +66,7 @@ class UserResponse(UserBase, UserRoleMixin):
     """유저 응답 스키마."""
 
     id: int = Field(..., description="유저 고유 ID")
-    role_name: str = Field(None, description="유저 권한 이름(소스코드)")
+    role_name: str | None = Field(None, description="유저 권한 이름(소스코드)")
     created_at: datetime = Field(..., description="생성일시")
     updated_at: datetime = Field(..., description="수정일시")
 

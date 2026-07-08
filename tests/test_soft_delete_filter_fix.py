@@ -11,6 +11,8 @@ DB 없이 db.query().filter() 체인을 기록하는 스파이 세션을 사용�
 정적으로 확인한다(AC-001-5).
 """
 
+import pytest
+
 from app.crud import shop_crud, user_crud
 from app.models.shop import Shop
 from app.models.user import User
@@ -74,8 +76,18 @@ def test_get_user_shop_by_id_filters_soft_deleted() -> None:
     assert _has_deleted_at_is_null(db.criteria, Shop)
 
 
-def test_get_user_shops_filters_soft_deleted() -> None:
-    """AC-001-2: 샵 목록 조회가 deleted_at IS NULL 필터를 포함한다."""
+def test_get_user_shops_filters_soft_deleted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """AC-001-2: 샵 목록 조회가 deleted_at IS NULL 필터를 포함한다.
+
+    get_user_shops 는 filter 체인을 구성한 뒤 fastapi_pagination.paginate 로 넘긴다.
+    검증 대상은 filter 인자(deleted_at IS NULL)이며, 이는 paginate 호출 이전에 이미
+    SpyQuery 에 기록된다. paginate 는 실제 Query/Select 를 요구하고 fake SpyQuery 에는
+    관여하지 않는 pagination 내부 로직이므로(버전별 시그니처 디스패치 포함) 여기서는
+    stub 하여 CRUD 필터 계약만 관찰한다(테스트 의도 보존).
+    """
+    monkeypatch.setattr(shop_crud, "paginate", lambda query: query)
     db = SpySession()
     shop_crud.get_user_shops(db, user_id=1)
     assert _has_deleted_at_is_null(db.criteria, Shop)

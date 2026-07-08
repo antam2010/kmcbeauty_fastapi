@@ -20,14 +20,16 @@ import app.models  # noqa: F401
 
 
 def _options_repr(stmt: object) -> str:
-    """Select 에 부착된 loader 옵션들의 repr 을 소문자로 이어붙인다.
+    """Select 에 부착된 loader 옵션들의 관계 경로를 소문자로 이어붙인다.
 
     plain Select.compile() 은 Core 컴파일러라 joinedload 를 JOIN 으로 확장하지
-    않을 수 있어(세션 실행 시에만 확장) 컴파일 SQL 은 불안정하다. 대신 문에
-    부착된 loader 옵션(_with_options)의 repr 을 관찰하는 것이 버전 간 안정적이다.
+    않을 수 있어(세션 실행 시에만 확장) 컴파일 SQL 은 불안정하다. 또한 Load 객체의
+    repr() 은 SQLAlchemy 버전에 따라 관계 경로를 포함하지 않을 수 있다(2.0.51 기준
+    <Load object at 0x...> 형태). 대신 각 옵션의 구조적 로더 경로(Load.path)를 관찰하는
+    것이 버전 간 안정적이며 내부 repr 포맷에 의존하지 않는다.
     """
     options = getattr(stmt, "_with_options", ())
-    return " ".join(repr(o).lower() for o in options)
+    return " ".join(str(getattr(o, "path", "")).lower() for o in options)
 
 
 # ---------------------------------------------------------------------------
