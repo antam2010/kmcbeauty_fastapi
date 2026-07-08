@@ -19,7 +19,7 @@ from sqlalchemy.orm import configure_mappers
 import app.models  # noqa: F401
 
 
-def _options_repr(stmt) -> str:
+def _options_repr(stmt: object) -> str:
     """Select 에 부착된 loader 옵션들의 repr 을 소문자로 이어붙인다.
 
     plain Select.compile() 은 Core 컴파일러라 joinedload 를 JOIN 으로 확장하지
@@ -35,7 +35,7 @@ def _options_repr(stmt) -> str:
 # ---------------------------------------------------------------------------
 
 
-def test_stmt_treatment_list_has_eager_load_options_attached():
+def test_stmt_treatment_list_has_eager_load_options_attached() -> None:
     """AC-001-2 가드: 목록 문에 eager load 옵션 3개가 부착돼 있다.
 
     _with_options 는 SQLAlchemy 2.0 Select 의 loader 옵션 컨테이너다. 소스가
@@ -52,7 +52,7 @@ def test_stmt_treatment_list_has_eager_load_options_attached():
     assert len(options) >= 3
 
 
-def test_stmt_treatment_list_eager_load_covers_relations():
+def test_stmt_treatment_list_eager_load_covers_relations() -> None:
     """목록 문의 eager load 가 items/phonebook/staff 관계를 덮는지 확인.
 
     부착된 loader 옵션 repr 에 각 관계 경로가 나타나는지 관찰한다. 특정 관계의
@@ -70,7 +70,7 @@ def test_stmt_treatment_list_eager_load_covers_relations():
     assert "staff_user" in reprs  # Treatment.staff_user
 
 
-def test_today_reservation_list_eager_loads_relations():
+def test_today_reservation_list_eager_loads_relations() -> None:
     """오늘예약+인사이트 조립 경로가 eager load 로 항목별 지연 쿼리를 피한다.
 
     get_today_reservation_list_with_customer_insight 는 목록 문에서 joinedload
@@ -93,7 +93,7 @@ def test_today_reservation_list_eager_loads_relations():
 # ---------------------------------------------------------------------------
 
 
-def test_statistics_crud_uses_sql_group_by_not_python_loops():
+def test_statistics_crud_uses_sql_group_by_not_python_loops() -> None:
     """AC-003-2 가드: 집계 함수 소스가 group_by + 집계 함수를 사용한다.
 
     소스 정적 검사로 SQL 집계(group_by/func.count/func.sum)가 존재함을 확인한다.
@@ -110,7 +110,7 @@ def test_statistics_crud_uses_sql_group_by_not_python_loops():
     assert "func.sum" in source
 
 
-def test_customer_insight_is_bulk_not_per_row():
+def test_customer_insight_is_bulk_not_per_row() -> None:
     """고객 인사이트가 phonebook_id 리스트를 받는 일괄(bulk) 시그니처를 유지한다.
 
     per-row 조회로 회귀하면 N+1 이 되므로, bulk 함수가 여러 id 를 한 번에 받는

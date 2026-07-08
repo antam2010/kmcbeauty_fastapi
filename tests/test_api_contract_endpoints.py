@@ -15,6 +15,8 @@ DB 없이 CRUD 함수를 monkeypatch 로 스텁하고, commit/rollback 호출을
 - shop-user 쓰기는 대표원장(is_primary_owner) 게이트를 통과해야 한다(SECURITY-001 관례).
 """
 
+from datetime import datetime
+
 import pytest
 
 from app.enum.treatment_status import PaymentMethod, TreatmentStatus
@@ -37,10 +39,10 @@ class SpySession:
     def rollback(self) -> None:
         self.rollback_count += 1
 
-    def refresh(self, _obj) -> None:
+    def refresh(self, _obj: object) -> None:
         self.refresh_count += 1
 
-    def delete(self, obj) -> None:
+    def delete(self, obj: object) -> None:
         self.deleted.append(obj)
 
 
@@ -78,7 +80,9 @@ class FakeShopUser:
 # ---------------------------------------------------------------------------
 
 
-def test_cancel_treatment_transitions_status_to_cancelled(monkeypatch):
+def test_cancel_treatment_transitions_status_to_cancelled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-001-1: 소유 예약 삭제 시 status 를 CANCELLED 로 전환하고 commit 한다.
 
     Treatment 는 deleted_at 이 없으므로 소프트삭제 대신 상태 전환을 검증한다.
@@ -105,7 +109,9 @@ def test_cancel_treatment_transitions_status_to_cancelled(monkeypatch):
     assert not hasattr(treatment, "deleted_at")
 
 
-def test_cancel_treatment_other_shop_is_rejected_404(monkeypatch):
+def test_cancel_treatment_other_shop_is_rejected_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-001-1: 다른 상점의 예약 삭제 시도는 404(BOLA 방지)."""
     # 조회는 되지만 shop_id 가 현재 상점과 다르다.
     treatment = FakeTreatment(shop_id=999, status_=TreatmentStatus.RESERVED)
@@ -128,7 +134,7 @@ def test_cancel_treatment_other_shop_is_rejected_404(monkeypatch):
     assert db.commit_count == 0
 
 
-def test_cancel_treatment_missing_is_404(monkeypatch):
+def test_cancel_treatment_missing_is_404(monkeypatch: pytest.MonkeyPatch) -> None:
     """엣지: 존재하지 않는 treatment_id 삭제 시 404(무음 성공 금지)."""
     monkeypatch.setattr(
         treatment_service,
@@ -148,7 +154,9 @@ def test_cancel_treatment_missing_is_404(monkeypatch):
     assert db.commit_count == 0
 
 
-def test_cancel_treatment_already_cancelled_is_idempotent(monkeypatch):
+def test_cancel_treatment_already_cancelled_is_idempotent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """엣지: 이미 CANCELLED 인 예약 재삭제는 멱등하게 204(재-commit 없음)."""
     treatment = FakeTreatment(shop_id=10, status_=TreatmentStatus.CANCELLED)
     monkeypatch.setattr(
@@ -169,7 +177,7 @@ def test_cancel_treatment_already_cancelled_is_idempotent(monkeypatch):
     assert db.commit_count == 0  # 상태 불변 → 추가 commit 불필요
 
 
-def test_treatment_model_has_no_deleted_at_regression():
+def test_treatment_model_has_no_deleted_at_regression() -> None:
     """FIX-001 보존: Treatment 는 여전히 deleted_at 컬럼이 없어야 한다.
 
     API-001 의 삭제 구현이 스키마에 deleted_at 을 추가하지 않았음을 회귀 방지로 확인.
@@ -179,12 +187,12 @@ def test_treatment_model_has_no_deleted_at_regression():
     assert "deleted_at" not in Treatment.__table__.columns
 
 
-def test_payment_method_enum_unchanged():
+def test_payment_method_enum_unchanged() -> None:
     """REQ-API-002.4 정본 확인: 백엔드 PaymentMethod 값 집합이 CARD/CASH/UNPAID 유지."""
     assert {m.value for m in PaymentMethod} == {"CARD", "CASH", "UNPAID"}
 
 
-def test_treatment_status_enum_unchanged():
+def test_treatment_status_enum_unchanged() -> None:
     """REQ-API-004.3 정본 확인: TreatmentStatus 5개 값 집합 유지(IN_PROGRESS 부재)."""
     assert {s.value for s in TreatmentStatus} == {
         "RESERVED",
@@ -200,7 +208,10 @@ def test_treatment_status_enum_unchanged():
 # ---------------------------------------------------------------------------
 
 
-def _patch_get_shop_user(monkeypatch, requester):
+def _patch_get_shop_user(
+    monkeypatch: pytest.MonkeyPatch,
+    requester: object,
+) -> None:
     """요청자 권한 조회(get_shop_user)를 requester 로 스텁."""
     monkeypatch.setattr(
         shop_user_service,
@@ -209,7 +220,9 @@ def _patch_get_shop_user(monkeypatch, requester):
     )
 
 
-def test_create_shop_user_requires_primary_owner(monkeypatch):
+def test_create_shop_user_requires_primary_owner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-001-2: 대표원장이 아니면 연결 생성이 403(SECURITY-001 관례 재사용)."""
     # 요청자는 멤버지만 대표원장 아님.
     _patch_get_shop_user(
@@ -230,7 +243,7 @@ def test_create_shop_user_requires_primary_owner(monkeypatch):
     assert db.commit_count == 0
 
 
-def test_create_shop_user_non_member_is_403(monkeypatch):
+def test_create_shop_user_non_member_is_403(monkeypatch: pytest.MonkeyPatch) -> None:
     """비멤버(요청자 매핑 없음)는 403."""
     _patch_get_shop_user(monkeypatch, None)
 
@@ -246,7 +259,9 @@ def test_create_shop_user_non_member_is_403(monkeypatch):
     assert exc.value.status_code == 403
 
 
-def test_create_shop_user_target_email_not_found_is_404(monkeypatch):
+def test_create_shop_user_target_email_not_found_is_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """대상 유저 email 미존재 시 404."""
     _patch_get_shop_user(
         monkeypatch,
@@ -271,13 +286,13 @@ def test_create_shop_user_target_email_not_found_is_404(monkeypatch):
     assert db.commit_count == 0
 
 
-def test_create_shop_user_duplicate_is_409(monkeypatch):
+def test_create_shop_user_duplicate_is_409(monkeypatch: pytest.MonkeyPatch) -> None:
     """이미 연결된 유저 재연결 시 409."""
     owner = FakeShopUser(shop_id=1, user_id=5, is_primary_owner=1)
     target = FakeUser(7, email="dup@test.com")
     existing = FakeShopUser(shop_id=1, user_id=7, is_primary_owner=0)
 
-    def fake_get_shop_user(_db, _sid, uid):
+    def fake_get_shop_user(_db: object, _sid: object, uid: int) -> object:
         # 첫 호출은 요청자(uid=5)=owner, 두번째는 대상 중복확인(uid=7)=existing.
         return owner if uid == 5 else existing
 
@@ -301,12 +316,12 @@ def test_create_shop_user_duplicate_is_409(monkeypatch):
     assert db.commit_count == 0
 
 
-def test_create_shop_user_success_commits(monkeypatch):
+def test_create_shop_user_success_commits(monkeypatch: pytest.MonkeyPatch) -> None:
     """정상 흐름: 대표원장이 신규 유저를 연결하면 create+commit 후 응답 반환."""
     owner = FakeShopUser(shop_id=1, user_id=5, is_primary_owner=1)
     target = FakeUser(7, email="new@test.com")
 
-    def fake_get_shop_user(_db, _sid, uid):
+    def fake_get_shop_user(_db: object, _sid: object, uid: int) -> object:
         # 요청자(uid=5)는 owner, 대상 중복확인(uid=7)은 없음.
         return owner if uid == 5 else None
 
@@ -318,7 +333,7 @@ def test_create_shop_user_success_commits(monkeypatch):
     )
     created_holder = {}
 
-    def fake_create_shop_user(_db, shop_user):
+    def fake_create_shop_user(_db: object, shop_user: object) -> object:
         created_holder["obj"] = shop_user
         return shop_user
 
@@ -350,7 +365,7 @@ def test_create_shop_user_success_commits(monkeypatch):
     assert resp.user_id == 7
 
 
-def test_update_shop_user_success_commits(monkeypatch):
+def test_update_shop_user_success_commits(monkeypatch: pytest.MonkeyPatch) -> None:
     """정상 흐름: 대표원장이 연결(대표원장 여부)을 수정하면 commit."""
     owner = FakeShopUser(shop_id=1, user_id=5, is_primary_owner=1)
     _patch_get_shop_user(monkeypatch, owner)
@@ -377,7 +392,9 @@ def test_update_shop_user_success_commits(monkeypatch):
     assert resp.user_id == 7
 
 
-def test_update_shop_user_missing_mapping_is_404(monkeypatch):
+def test_update_shop_user_missing_mapping_is_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """연결이 없는 user_id 수정 시 404."""
     owner = FakeShopUser(shop_id=1, user_id=5, is_primary_owner=1)
     _patch_get_shop_user(monkeypatch, owner)
@@ -401,19 +418,21 @@ def test_update_shop_user_missing_mapping_is_404(monkeypatch):
     assert db.commit_count == 0
 
 
-def test_delete_shop_user_success_removes_mapping(monkeypatch):
+def test_delete_shop_user_success_removes_mapping(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """정상 흐름: 대표원장이 연결을 해제하면 매핑을 delete 하고 commit."""
     owner = FakeShopUser(shop_id=1, user_id=5, is_primary_owner=1)
     mapping = FakeShopUser(shop_id=1, user_id=7, is_primary_owner=0)
 
-    def fake_get_shop_user(_db, _sid, uid):
+    def fake_get_shop_user(_db: object, _sid: object, uid: int) -> object:
         return owner if uid == 5 else mapping
 
     monkeypatch.setattr(shop_user_service, "get_shop_user", fake_get_shop_user)
 
     deleted_holder = {}
 
-    def fake_delete_shop_user(_db, obj):
+    def fake_delete_shop_user(_db: object, obj: object) -> None:
         deleted_holder["obj"] = obj
 
     monkeypatch.setattr(
@@ -435,7 +454,9 @@ def test_delete_shop_user_success_removes_mapping(monkeypatch):
     assert deleted_holder["obj"] is mapping
 
 
-def test_delete_shop_user_requires_primary_owner(monkeypatch):
+def test_delete_shop_user_requires_primary_owner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """대표원장이 아니면 연결 해제 403."""
     _patch_get_shop_user(
         monkeypatch,
@@ -455,11 +476,13 @@ def test_delete_shop_user_requires_primary_owner(monkeypatch):
     assert db.commit_count == 0
 
 
-def test_delete_shop_user_missing_mapping_is_404(monkeypatch):
+def test_delete_shop_user_missing_mapping_is_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """연결이 없는 user_id 해제 시 404."""
     owner = FakeShopUser(shop_id=1, user_id=5, is_primary_owner=1)
 
-    def fake_get_shop_user(_db, _sid, uid):
+    def fake_get_shop_user(_db: object, _sid: object, uid: int) -> object:
         return owner if uid == 5 else None
 
     monkeypatch.setattr(shop_user_service, "get_shop_user", fake_get_shop_user)
@@ -482,7 +505,7 @@ def test_delete_shop_user_missing_mapping_is_404(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_associate_request_schema_has_no_role_field():
+def test_associate_request_schema_has_no_role_field() -> None:
     """SECURITY-001 보존: 샵 유저 연결 요청 스키마에 role/password 필드가 없다."""
     from app.schemas.shop_user import (
         ShopUserAssociateRequest,
@@ -505,13 +528,13 @@ def test_associate_request_schema_has_no_role_field():
 # ---------------------------------------------------------------------------
 
 
-def _associate_payload(email: str, is_primary_owner: int):
+def _associate_payload(email: str, is_primary_owner: int) -> object:
     from app.schemas.shop_user import ShopUserAssociateRequest
 
     return ShopUserAssociateRequest(email=email, is_primary_owner=is_primary_owner)
 
 
-def _associate_update_payload(is_primary_owner: int):
+def _associate_update_payload(is_primary_owner: int) -> object:
     from app.schemas.shop_user import ShopUserAssociateUpdateRequest
 
     return ShopUserAssociateUpdateRequest(is_primary_owner=is_primary_owner)
@@ -547,11 +570,14 @@ class _ShopUserRow:
         self.user = _UserRow(user)
 
 
-def _shop_user_row_with_user(shop_id, user, is_primary_owner=0):
+def _shop_user_row_with_user(
+    shop_id: int,
+    user: FakeUser,
+    is_primary_owner: int = 0,
+) -> _ShopUserRow:
     return _ShopUserRow(shop_id, user, is_primary_owner)
 
 
-def _fixed_dt():
-    from datetime import datetime
-
-    return datetime(2026, 7, 3, 12, 0, 0)
+def _fixed_dt() -> datetime:
+    # DTZ001: DB 저장값과 동일하게 naive datetime 을 쓰는 테스트 stand-in 이다.
+    return datetime(2026, 7, 3, 12, 0, 0)  # noqa: DTZ001  # naive 의도

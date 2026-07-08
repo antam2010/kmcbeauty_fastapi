@@ -26,10 +26,10 @@ class SpySession:
     def flush(self) -> None:
         self.flush_count += 1
 
-    def add(self, _obj) -> None:
+    def add(self, _obj: object) -> None:
         self.add_count += 1
 
-    def refresh(self, _obj) -> None:
+    def refresh(self, _obj: object) -> None:
         self.refresh_count += 1
 
 
@@ -37,12 +37,12 @@ class FakeUserRow:
     def __init__(self) -> None:
         self.name = "old"
         self.email = "old@test.com"
-        self.password = "oldhash"
+        self.password = "oldhash"  # noqa: S105  # 테스트용 더미 해시
         self.token = None
         self.role = UserRole.MASTER
 
 
-def test_update_user_db_does_not_commit():
+def test_update_user_db_does_not_commit() -> None:
     """AC-005-3: update_user_db 는 내부에서 커밋하지 않는다(경계 서비스 이관)."""
     from app.crud.user_crud import update_user_db
 
@@ -54,7 +54,7 @@ def test_update_user_db_does_not_commit():
     assert db.commit_count == 0  # 커밋은 서비스가 담당
 
 
-def test_create_treatment_menu_detail_does_not_commit():
+def test_create_treatment_menu_detail_does_not_commit() -> None:
     """AC-005-4: create_treatment_menu_detail 은 내부에서 커밋하지 않는다.
 
     add + flush 까지만 수행하고 commit 은 서비스가 담당한다.

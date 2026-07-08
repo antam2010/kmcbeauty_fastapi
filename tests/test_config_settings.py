@@ -10,7 +10,9 @@
 """
 
 import warnings
+from pathlib import Path
 
+import pytest
 from cryptography.fernet import Fernet
 
 from app.core.config import Settings
@@ -29,12 +31,15 @@ _BASE_ENV = {
 }
 
 
-def _write_secret(directory, name: str, value: str) -> None:
+def _write_secret(directory: Path, name: str, value: str) -> None:
     """secrets_dir 규약(파일명 == 필드명, 내용 == 값)으로 시크릿 파일을 생성한다."""
     (directory / name).write_text(value, encoding="utf-8")
 
 
-def test_env_var_beats_secrets_file(tmp_path, monkeypatch) -> None:
+def test_env_var_beats_secrets_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-2: env var 와 secrets_dir 파일이 동시 존재하면 env var 가 우선한다."""
     for key, value in _BASE_ENV.items():
         monkeypatch.setenv(key, value)
@@ -46,7 +51,10 @@ def test_env_var_beats_secrets_file(tmp_path, monkeypatch) -> None:
     assert settings.SECRET_KEY == "env-val"  # noqa: S105  # 테스트 픽스처 값
 
 
-def test_secrets_file_fallback_when_env_absent(tmp_path, monkeypatch) -> None:
+def test_secrets_file_fallback_when_env_absent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-2 역방향: env var 부재 시 secrets_dir 파일값으로 fallback 한다."""
     for key, value in _BASE_ENV.items():
         monkeypatch.setenv(key, value)
@@ -60,7 +68,10 @@ def test_secrets_file_fallback_when_env_absent(tmp_path, monkeypatch) -> None:
     assert settings.SECRET_KEY == "file-val"  # noqa: S105  # 테스트 픽스처 값
 
 
-def test_sentry_dsn_degrades_to_empty_string(tmp_path, monkeypatch) -> None:
+def test_sentry_dsn_degrades_to_empty_string(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-4: SENTRY_DSN 이 env/secrets 어디에도 없으면 빈 문자열로 degrade."""
     for key, value in _BASE_ENV.items():
         monkeypatch.setenv(key, value)
@@ -71,7 +82,9 @@ def test_sentry_dsn_degrades_to_empty_string(tmp_path, monkeypatch) -> None:
     assert settings.SENTRY_DSN == ""
 
 
-def test_missing_run_secrets_dir_does_not_raise(monkeypatch) -> None:
+def test_missing_run_secrets_dir_does_not_raise(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """EC-2: /run/secrets 부재(로컬/CI)에서 Settings 초기화가 예외 없이 완료된다."""
     for key, value in _BASE_ENV.items():
         monkeypatch.setenv(key, value)
@@ -84,7 +97,10 @@ def test_missing_run_secrets_dir_does_not_raise(monkeypatch) -> None:
     assert settings.SECRET_KEY == "base-secret"  # noqa: S105  # 테스트 픽스처 값
 
 
-def test_fernet_key_is_plain_str_and_consumable(tmp_path, monkeypatch) -> None:
+def test_fernet_key_is_plain_str_and_consumable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC: FERNET_KEY 는 plain str 로 유지되어 Fernet 이 바로 소비 가능하다."""
     for key, value in _BASE_ENV.items():
         monkeypatch.setenv(key, value)
@@ -95,7 +111,10 @@ def test_fernet_key_is_plain_str_and_consumable(tmp_path, monkeypatch) -> None:
     assert isinstance(Fernet(settings.FERNET_KEY.encode()), Fernet)
 
 
-def test_redis_url_single_source_default(tmp_path, monkeypatch) -> None:
+def test_redis_url_single_source_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """REQ-INFRA-103: REDIS_URL 이 접근 가능하며 기본값이 내부 오버레이 DNS 다."""
     for key, value in _BASE_ENV.items():
         monkeypatch.setenv(key, value)
@@ -106,7 +125,10 @@ def test_redis_url_single_source_default(tmp_path, monkeypatch) -> None:
     assert settings.REDIS_URL == "redis://redis:6379/0"
 
 
-def test_field_name_equals_secret_file_name(tmp_path, monkeypatch) -> None:
+def test_field_name_equals_secret_file_name(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """EC-5: 시크릿 파일명(필드명, 대소문자 정확)으로 값이 로딩된다."""
     monkeypatch.delenv("DATABASE_URL", raising=False)
     for key, value in _BASE_ENV.items():

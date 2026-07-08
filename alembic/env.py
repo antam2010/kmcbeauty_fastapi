@@ -24,8 +24,9 @@ load_dotenv(dotenv_path=env_path, override=False)
 # 모델 import: 자동 생성에 필요함
 
 # 2. DB 연결 정보 설정 (중앙 settings 에서 DATABASE_URL 단일 소싱)
-from app.core.config import settings
-from app.models.base import Base
+# settings 는 import 시점에 env 를 읽으므로 반드시 load_dotenv 이후에 import 해야 한다.
+from app.core.config import settings  # noqa: E402
+from app.models.base import Base  # noqa: E402
 
 # Alembic 설정 객체
 config = context.config

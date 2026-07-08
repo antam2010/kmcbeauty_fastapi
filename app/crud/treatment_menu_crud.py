@@ -12,7 +12,11 @@ from app.models.treatment_menu_detail import TreatmentMenuDetail
 logger = logging.getLogger(__name__)
 
 
-def create_treatment_menu(db: Session, name: str, shop_id: int) -> TreatmentMenu:
+def create_treatment_menu(
+    db: Session,  # noqa: ARG001  # 호출부가 db= 키워드로 전달하므로 시그니처를 유지한다
+    name: str,
+    shop_id: int,
+) -> TreatmentMenu:
     return TreatmentMenu(
         name=name,
         shop_id=shop_id,
@@ -28,8 +32,8 @@ def create_treatment_menu_detail(
 ) -> TreatmentMenuDetail:
     # 트랜잭션 경계는 서비스 계층이 소유한다(SPEC-FIX-001 REQ-FIX-005).
     # CRUD 는 인스턴스 생성 + 영속화(add/flush)까지만 수행하고 commit 은 하지 않는다.
-    # 커밋/refresh 는 호출부(treatment_menu_service.create_treatment_menu_detail_service)가
-    # 담당한다.
+    # 커밋/refresh 는 호출부
+    # (treatment_menu_service.create_treatment_menu_detail_service)가 담당한다.
     detail = TreatmentMenuDetail(
         menu_id=menu_id,
         name=name,
@@ -44,7 +48,7 @@ def create_treatment_menu_detail(
 def get_treatment_menus_by_user(
     db: Session,
     shop_id: int,
-    search: str = None,
+    search: str | None = None,
 ) -> Page[TreatmentMenu]:
     query = (
         db.query(TreatmentMenu)
@@ -124,7 +128,7 @@ def get_menu_detail_by_id(
     db: Session,
     menu_id: int,
     detail_id: int,
-    shop_id: int,
+    shop_id: int,  # noqa: ARG001  # 호출부가 shop_id= 키워드로 전달하므로 시그니처를 유지한다
 ) -> TreatmentMenuDetail | None:
     return (
         db.query(TreatmentMenuDetail)

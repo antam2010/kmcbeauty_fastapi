@@ -56,7 +56,8 @@ def authenticate_user_service(db: Session, email: str, password: str) -> User:
         )
 
     # 레거시 bcrypt 해시였다면 new_hash 에 argon2 해시가 담겨온다.
-    # 검증에 성공한 경우에만 도달하므로, 이 write-back 은 로그인 성공 경로에서만 일어난다.
+    # 검증에 성공한 경우에만 도달하므로, 이 write-back 은 로그인 성공 경로에서만
+    # 일어난다.
     if new_hash is not None:
         _persist_upgraded_password_hash(db, user, new_hash)
 
@@ -163,7 +164,8 @@ def refresh_access_token(db: Session, request: Request) -> tuple[str, str]:
         )
         sub = payload.get("sub")
         if sub is None:
-            raise ValueError("sub claim missing")
+            msg = "sub claim missing"
+            raise ValueError(msg)
         user_id = int(sub)
     except (ValueError, TypeError) as e:
         # sub 클레임이 없거나 정수로 변환할 수 없으면 크래시(500) 대신

@@ -133,7 +133,7 @@ def get_selected_shop(
     },
 )
 def delete_selected_shop(
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db),  # noqa: ARG001  # 요청당 DB 세션 수명주기 유지를 위해 주입을 보존한다
     current_user: User = Depends(get_current_user),
 ) -> None:
     return delete_selected_shop_service(user=current_user)

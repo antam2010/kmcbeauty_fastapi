@@ -28,7 +28,9 @@ router = APIRouter(prefix="/device-tokens", tags=["디바이스 푸시 토큰"])
     "",
     response_model=DevicePushTokenResponse,
     summary="디바이스 푸시 토큰 등록",
-    description="디바이스의 FCM 토큰을 등록합니다. 이미 존재하는 토큰이면 업데이트합니다.",
+    description=(
+        "디바이스의 FCM 토큰을 등록합니다. 이미 존재하는 토큰이면 업데이트합니다."
+    ),
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_409_CONFLICT: COMMON_ERROR_RESPONSES[status.HTTP_409_CONFLICT],

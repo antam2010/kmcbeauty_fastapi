@@ -159,7 +159,7 @@ def delete_device_token_service(
 def send_fcm_notification_service(
     db: Session,
     fcm_request: FCMMessageRequest,
-    current_user: User,
+    current_user: User,  # noqa: ARG001  # 호출부가 current_user= 키워드로 전달하므로 시그니처를 유지한다
 ) -> FCMMessageResponse:
     """FCM 푸시 알림 전송."""
     try:

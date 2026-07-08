@@ -11,7 +11,7 @@ from app.schemas.user import UserCreate
 from app.services.user_service import resolve_signup_role
 
 
-def test_usercreate_rejects_client_role():
+def test_usercreate_rejects_client_role() -> None:
     """AC-003-1: UserCreate 는 클라이언트가 보낸 role 을 필드로 수용하지 않는다.
 
     BaseResponseModel 이 extra 를 무시/금지하든, role 은 모델 필드가 아니므로
@@ -29,18 +29,19 @@ def test_usercreate_rejects_client_role():
     assert not hasattr(user, "role") or "role" not in user.model_dump()
 
 
-def test_resolve_signup_role_defaults_to_master():
+def test_resolve_signup_role_defaults_to_master() -> None:
     """AC-003-1: 초대 코드 없으면 서버가 기본 비특권 role(MASTER)로 결정."""
-    user = UserCreate(name="원장", email="master@test.com", password="pass1234")
+    # password 는 테스트용 더미 비밀번호로 실제 시크릿이 아니다.
+    user = UserCreate(name="원장", email="master@test.com", password="pass1234")  # noqa: S106
     assert resolve_signup_role(user) == UserRole.MASTER
 
 
-def test_resolve_signup_role_manager_with_invite():
+def test_resolve_signup_role_manager_with_invite() -> None:
     """AC-003-1: 초대 코드가 있으면 MANAGER 로 결정 (ADMIN 은 절대 부여 안됨)."""
     user = UserCreate(
         name="매니저",
         email="manager@test.com",
-        password="pass1234",
+        password="pass1234",  # noqa: S106  # 테스트용 더미 비밀번호
         invite_code="ABCDEFGHIJ",
     )
     role = resolve_signup_role(user)
@@ -54,7 +55,7 @@ class FakeUserRow:
     def __init__(self) -> None:
         self.name = "old"
         self.email = "old@test.com"
-        self.password = "oldhash"
+        self.password = "oldhash"  # noqa: S105  # 테스트용 더미 해시
         self.token = None
         self.role = UserRole.MASTER
 
@@ -63,11 +64,11 @@ class FakeSession:
     def commit(self) -> None:
         pass
 
-    def refresh(self, _obj) -> None:
+    def refresh(self, _obj: object) -> None:
         pass
 
 
-def test_update_user_db_whitelists_out_role():
+def test_update_user_db_whitelists_out_role() -> None:
     """AC-003-2: 화이트리스트에 없는 role 은 무시되어 변경되지 않는다."""
     from app.crud.user_crud import update_user_db
 
@@ -80,7 +81,7 @@ def test_update_user_db_whitelists_out_role():
     assert updated.role == UserRole.MASTER  # role 은 그대로 (상승 차단)
 
 
-def test_update_user_db_ignores_id():
+def test_update_user_db_ignores_id() -> None:
     """AC-003-2: id 등 불변 필드도 화이트리스트에서 제외되어 무시된다."""
     from app.crud.user_crud import update_user_db
 

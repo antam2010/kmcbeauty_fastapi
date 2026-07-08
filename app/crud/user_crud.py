@@ -11,16 +11,13 @@ def create_user(db: Session, user_data: dict) -> User:
     return new_user
 
 
-# @MX:NOTE: [AUTO] 활성 유저 조회 불변식 — 인증/활성 조회 경로는 소프트삭제 유저를 제외한다.
-#            (SPEC-FIX-001 REQ-FIX-001) auth_service.refresh_access_token 의 is_deleted()
-#            체크(SECURITY-001)와 정합하도록 로그인/재발급 양 경로에서 삭제 유저를 차단한다.
+# @MX:NOTE: [AUTO] 활성 유저 조회 불변식 — 인증/활성 조회 경로는 소프트삭제
+#            유저를 제외한다. (SPEC-FIX-001 REQ-FIX-001)
+#            auth_service.refresh_access_token 의 is_deleted() 체크(SECURITY-001)와
+#            정합하도록 로그인/재발급 양 경로에서 삭제 유저를 차단한다.
 def get_user_by_id(db: Session, user_id: int) -> User | None:
     """user_id 기준 사용자 단순 조회 (권한 체크 없음, 소프트삭제 제외)."""
-    return (
-        db.query(User)
-        .filter(User.id == user_id, User.deleted_at.is_(None))
-        .first()
-    )
+    return db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
 
 
 # 권한 상승 방지: 자기 정보 수정으로 변경 가능한 필드 화이트리스트.
@@ -28,7 +25,7 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
 _UPDATABLE_USER_FIELDS = frozenset({"name", "email", "password", "token"})
 
 
-def update_user_db(db: Session, user: User, user_data: dict) -> User:
+def update_user_db(_db: Session, user: User, user_data: dict) -> User:
     # 트랜잭션 경계는 서비스 계층이 소유한다(SPEC-FIX-001 REQ-FIX-005).
     # CRUD 는 영속 상태 변경(setattr)까지만 수행하고 commit 은 하지 않는다.
     # 커밋/refresh 는 호출부(user_service.update_user_service)가 담당한다.
@@ -45,11 +42,7 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     소프트삭제된(deleted_at IS NOT NULL) 유저는 로그인 인증 대상에서 제외한다.
     (SPEC-FIX-001 REQ-FIX-001: 삭제 유저 재로그인 차단)
     """
-    return (
-        db.query(User)
-        .filter(User.email == email, User.deleted_at.is_(None))
-        .first()
-    )
+    return db.query(User).filter(User.email == email, User.deleted_at.is_(None)).first()
 
 
 def delete_user_db(db: Session, user: User, is_soft_delete: bool = True) -> None:

@@ -25,7 +25,7 @@ DEFAULT_MESSAGES = {
 
 
 class CustomException(HTTPException):
-    def __init__(
+    def __init__(  # noqa: PLR0913  # 에러 응답 구성 필드가 본질적으로 많다(키워드 전용)
         self,
         *,
         status_code: int,
@@ -34,7 +34,7 @@ class CustomException(HTTPException):
         detail: str | None = None,
         hint: str | None = "놉",
         exception: Exception | None = None,
-    ):
+    ) -> None:
         # 기본 메시지 및 코드 설정
         default_code, default_detail = DEFAULT_MESSAGES.get(
             status_code,

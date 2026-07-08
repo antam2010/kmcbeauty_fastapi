@@ -39,7 +39,7 @@ class FakeRequest:
 
 
 @pytest.fixture
-def fake_redis(monkeypatch):
+def fake_redis(monkeypatch: pytest.MonkeyPatch) -> dict:
     """auth_service 가 사용하는 redis auth 헬퍼를 인메모리 store 로 대체."""
     store: dict[int, str] = {}
     ttls: dict[int, int] = {}
@@ -48,7 +48,7 @@ def fake_redis(monkeypatch):
         store[user_id] = token
         ttls.setdefault(user_id, settings.REFRESH_TOKEN_EXPIRE_SECONDS)
 
-    def get_refresh(user_id: int):
+    def get_refresh(user_id: int) -> str | None:
         return store.get(user_id)
 
     def get_ttl(user_id: int) -> int:
@@ -74,7 +74,10 @@ def _make_refresh_token(user_id: int = 1, expired: bool = False) -> str:
     return create_jwt_token({"sub": str(user_id), "type": "refresh"}, delta)
 
 
-def test_rotation_stores_token_with_user_id(fake_redis, monkeypatch):
+def test_rotation_stores_token_with_user_id(
+    fake_redis: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-001-1: TTL 절반 이하일 때 회전하며 user.id 키로 저장, 저장==반환."""
     user = FakeUser(user_id=42)
     monkeypatch.setattr(auth_service, "get_user_by_id", lambda _db, _uid: user)
@@ -93,7 +96,10 @@ def test_rotation_stores_token_with_user_id(fake_redis, monkeypatch):
     assert new_refresh != token  # 실제 회전됨
 
 
-def test_expired_ttl_token_not_reused(fake_redis, monkeypatch):
+def test_expired_ttl_token_not_reused(
+    fake_redis: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-001-2: TTL==0(만료) 토큰은 재사용되지 않고 401."""
     user = FakeUser(user_id=1)
     monkeypatch.setattr(auth_service, "get_user_by_id", lambda _db, _uid: user)
@@ -108,7 +114,9 @@ def test_expired_ttl_token_not_reused(fake_redis, monkeypatch):
     assert exc.value.status_code == 401
 
 
-def test_expired_signature_distinct_from_invalid(fake_redis):
+def test_expired_signature_distinct_from_invalid(
+    fake_redis: dict,  # noqa: ARG001  # redis 패치 부작용을 위한 픽스처 주입
+) -> None:
     """AC-001-3: ExpiredSignatureError 는 만료 코드로 구분되는 401."""
     expired_token = _make_refresh_token(1, expired=True)
     request = FakeRequest(expired_token)
@@ -118,7 +126,9 @@ def test_expired_signature_distinct_from_invalid(fake_redis):
     assert exc.value.detail["code"] == "AUTH_REFRESH_TOKEN_EXPIRED"
 
 
-def test_invalid_signature_returns_invalid_code(fake_redis):
+def test_invalid_signature_returns_invalid_code(
+    fake_redis: dict,  # noqa: ARG001  # redis 패치 부작용을 위한 픽스처 주입
+) -> None:
     """AC-001-3: 서명 위조/손상 토큰은 무효 코드로 401."""
     request = FakeRequest("this.is.not-a-valid-jwt")
     with pytest.raises(CustomException) as exc:
@@ -127,7 +137,10 @@ def test_invalid_signature_returns_invalid_code(fake_redis):
     assert exc.value.detail["code"] == "AUTH_REFRESH_TOKEN_INVALID"
 
 
-def test_logout_revokes_then_refresh_blocked(fake_redis, monkeypatch):
+def test_logout_revokes_then_refresh_blocked(
+    fake_redis: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-002-1: 로그아웃 후 동일 토큰으로 재발급 시도 시 401."""
     user = FakeUser(user_id=7)
     monkeypatch.setattr(auth_service, "get_user_by_id", lambda _db, _uid: user)
@@ -147,12 +160,17 @@ def test_logout_revokes_then_refresh_blocked(fake_redis, monkeypatch):
     assert exc.value.status_code == 401
 
 
-def test_logout_with_missing_token_returns_false(fake_redis):
+def test_logout_with_missing_token_returns_false(
+    fake_redis: dict,  # noqa: ARG001  # redis 패치 부작용을 위한 픽스처 주입
+) -> None:
     """엣지: 토큰이 없으면 예외 없이 False."""
     assert auth_service.logout_user(None) is False
 
 
-def test_logout_with_expired_token_still_clears_redis(fake_redis, monkeypatch):
+def test_logout_with_expired_token_still_clears_redis(
+    fake_redis: dict,
+    monkeypatch: pytest.MonkeyPatch,  # noqa: ARG001  # 픽스처 조합 유지를 위한 주입
+) -> None:
     """REQ-SEC-002: 만료된 리프레시 토큰으로 로그아웃해도 Redis 세션을 폐기한다.
 
     ExpiredSignatureError 가 sub 추출 전에 발생해 revoke 를 건너뛰면
@@ -171,12 +189,17 @@ def test_logout_with_expired_token_still_clears_redis(fake_redis, monkeypatch):
     assert user_id not in fake_redis["store"]  # Redis 세션 실제 삭제됨
 
 
-def test_logout_with_invalid_token_returns_false(fake_redis):
+def test_logout_with_invalid_token_returns_false(
+    fake_redis: dict,  # noqa: ARG001  # redis 패치 부작용을 위한 픽스처 주입
+) -> None:
     """진짜 무효(서명 위조/손상) 토큰은 폐기 대상이 없으므로 False."""
     assert auth_service.logout_user("this.is.not-a-valid-jwt") is False
 
 
-def test_valid_token_with_plenty_ttl_reused(fake_redis, monkeypatch):
+def test_valid_token_with_plenty_ttl_reused(
+    fake_redis: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """정상 회귀: TTL 이 절반 초과로 충분히 남으면 기존 토큰 유지, 새 액세스만 발급."""
     user = FakeUser(user_id=3)
     monkeypatch.setattr(auth_service, "get_user_by_id", lambda _db, _uid: user)

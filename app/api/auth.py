@@ -34,7 +34,7 @@ router = APIRouter(prefix="/auth", tags=["인증"])
 )
 @limiter.limit("5/minute")
 def login(
-    request: Request,
+    request: Request,  # noqa: ARG001  # slowapi limiter 가 IP 추출을 위해 request 를 요구한다
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ) -> JSONResponse:

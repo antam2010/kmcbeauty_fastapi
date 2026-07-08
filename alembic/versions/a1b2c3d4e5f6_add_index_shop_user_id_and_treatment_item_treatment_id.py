@@ -1,4 +1,4 @@
-"""add index shop.user_id and treatment_item.treatment_id
+"""add index shop.user_id and treatment_item.treatment_id.
 
 FK 필터/조인 정확성·견고성을 위한 최소 인덱스 추가 (SPEC-FIX-001 REQ-FIX-005).
 - ix_shop_user_id: 유저별 샵 조회(get_user_shops/get_user_shop_by_id) FK 필터

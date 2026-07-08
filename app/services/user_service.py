@@ -141,7 +141,8 @@ def update_user_service(
 ) -> UserResponse:
     try:
         # 권한 상승 방지: 자기 정보 수정 경로에서는 role 을 변경할 수 없다.
-        # UserUpdate 스키마에 role 이 없고, update_user_db 화이트리스트로도 이중 차단된다.
+        # UserUpdate 스키마에 role 이 없고, update_user_db 화이트리스트로도 이중
+        # 차단된다.
         user = get_user_by_id(db, current_user.id)
         if not user or user.is_deleted():
             raise CustomException(status_code=status.HTTP_404_NOT_FOUND, domain=DOMAIN)

@@ -23,7 +23,7 @@ class FakeUpdateQuery:
     def __init__(self, recorder: dict) -> None:
         self._recorder = recorder
 
-    def filter(self, criterion) -> "FakeUpdateQuery":
+    def filter(self, criterion: object) -> "FakeUpdateQuery":
         # Treatment.id.in_(complete_ids) 표현식에서 우변 리터럴(ID 목록)을 추출한다.
         try:
             self._recorder["ids"] = list(criterion.right.value)
@@ -31,7 +31,11 @@ class FakeUpdateQuery:
             self._recorder["ids"] = "unparsed"
         return self
 
-    def update(self, values, synchronize_session=False) -> None:  # noqa: ANN001
+    def update(
+        self,
+        values: dict,
+        synchronize_session: bool = False,  # noqa: ARG002  # Session.update API 시그니처 유지
+    ) -> None:
         self._recorder["updated"] = True
         self._recorder["values"] = values
 
@@ -40,7 +44,7 @@ class FakeSession:
     def __init__(self, recorder: dict) -> None:
         self._recorder = recorder
 
-    def query(self, _model):
+    def query(self, _model: object) -> FakeUpdateQuery:
         return FakeUpdateQuery(self._recorder)
 
     def commit(self) -> None:
@@ -54,13 +58,14 @@ class FakeSession:
 
 
 @pytest.fixture
-def patched(monkeypatch):
+def patched(monkeypatch: pytest.MonkeyPatch) -> dict:
     recorder: dict = {}
     fake_session = FakeSession(recorder)
 
     monkeypatch.setattr(treatment_task, "SessionLocal", lambda: fake_session)
     # 고정된 "현재 시각"(UTC-naive) 을 주입해 결정적 판정.
-    fixed_now = datetime(2026, 7, 2, 12, 0, 0)  # UTC-naive
+    # DTZ001: 태스크가 UTC-naive 로 비교하므로 의도적으로 naive datetime 을 만든다.
+    fixed_now = datetime(2026, 7, 2, 12, 0, 0)  # noqa: DTZ001  # UTC-naive 의도
     # 태스크는 now_utc().replace(tzinfo=None) 로 UTC-naive 를 얻으므로,
     # now_utc 는 aware(UTC) 를 반환하도록 패치한다.
     monkeypatch.setattr(
@@ -71,7 +76,11 @@ def patched(monkeypatch):
     return {"recorder": recorder, "now": fixed_now}
 
 
-def _row(treatment_id: int, reserved_at: datetime, duration):  # noqa: ANN001
+def _row(
+    treatment_id: int,
+    reserved_at: datetime,
+    duration: int | None,
+) -> SimpleNamespace:
     return SimpleNamespace(
         treatment_id=treatment_id,
         reserved_at=reserved_at,
@@ -79,7 +88,10 @@ def _row(treatment_id: int, reserved_at: datetime, duration):  # noqa: ANN001
     )
 
 
-def test_only_elapsed_treatments_completed(patched, monkeypatch):
+def test_only_elapsed_treatments_completed(
+    patched: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-004-1/2: 종료 시각 경과 시술만 완료 대상에 포함된다."""
     now = patched["now"]
     rows = [
@@ -89,7 +101,9 @@ def test_only_elapsed_treatments_completed(patched, monkeypatch):
         _row(2, now - timedelta(minutes=10), 60),
     ]
     monkeypatch.setattr(
-        treatment_task, "get_treatments_to_autocomplete", lambda _db: rows,
+        treatment_task,
+        "get_treatments_to_autocomplete",
+        lambda _db: rows,
     )
 
     treatment_task.auto_complete_treatment()
@@ -98,7 +112,10 @@ def test_only_elapsed_treatments_completed(patched, monkeypatch):
     assert patched["recorder"]["committed"] is True
 
 
-def test_none_duration_does_not_crash_and_is_skipped(patched, monkeypatch):
+def test_none_duration_does_not_crash_and_is_skipped(
+    patched: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC-004-3: total_duration_min == None 이어도 크래시 없이 건너뛴다."""
     now = patched["now"]
     rows = [
@@ -106,26 +123,35 @@ def test_none_duration_does_not_crash_and_is_skipped(patched, monkeypatch):
         _row(2, now - timedelta(hours=3), 30),  # 경과 → 완료 대상
     ]
     monkeypatch.setattr(
-        treatment_task, "get_treatments_to_autocomplete", lambda _db: rows,
+        treatment_task,
+        "get_treatments_to_autocomplete",
+        lambda _db: rows,
     )
 
-    # float(None) 크래시가 나면 CustomException(500) 으로 감싸지므로 예외 없이 통과해야 한다.
+    # float(None) 크래시가 나면 CustomException(500) 으로 감싸지므로
+    # 예외 없이 통과해야 한다.
     treatment_task.auto_complete_treatment()
 
     assert patched["recorder"]["ids"] == [2]
 
 
-def test_utc_naive_comparison_no_9h_skew(patched, monkeypatch):
-    """AC-004-4: reserved_at(UTC-naive) 와 UTC-naive 현재시각 비교로 9시간 오판정이 없다.
+def test_utc_naive_comparison_no_9h_skew(
+    patched: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """AC-004-4: reserved_at 과 UTC-naive 현재시각 비교로 9시간 오판정이 없다.
 
-    reserved_at + duration 이 현재 시각보다 30분 앞선(=아직 미종료) 시술은 완료되면 안 된다.
-    이전 KST-naive 비교(+9h)였다면 이 시술이 잘못 완료 처리되었을 것이다.
+    reserved_at + duration 이 현재 시각보다 30분 앞선(=아직 미종료) 시술은
+    완료되면 안 된다. 이전 KST-naive 비교(+9h)였다면 이 시술이 잘못 완료
+    처리되었을 것이다.
     """
     now = patched["now"]
     # 종료 예정: now + 30분 (아직 미도래). KST 기준(+9h)으로 비교했다면 경과로 오판정됨.
     rows = [_row(1, now - timedelta(minutes=30), 60)]
     monkeypatch.setattr(
-        treatment_task, "get_treatments_to_autocomplete", lambda _db: rows,
+        treatment_task,
+        "get_treatments_to_autocomplete",
+        lambda _db: rows,
     )
 
     treatment_task.auto_complete_treatment()

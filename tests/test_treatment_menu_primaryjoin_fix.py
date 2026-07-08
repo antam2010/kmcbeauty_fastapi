@@ -19,14 +19,14 @@ import app.models  # noqa: F401
 from app.models.treatment_menu import TreatmentMenu
 
 
-def test_mappers_configure_without_error():
+def test_mappers_configure_without_error() -> None:
     """AC-003-1: 매퍼 구성이 오류 없이 성공한다(깨진 primaryjoin 이면 여기서 실패)."""
     configure_mappers()
     rel = TreatmentMenu.__mapper__.relationships["details"]
     assert rel is not None
 
 
-def test_primaryjoin_excludes_soft_deleted_details():
+def test_primaryjoin_excludes_soft_deleted_details() -> None:
     """AC-003-2: primaryjoin 이 deleted_at IS NULL 조건을 포함한다."""
     configure_mappers()
     rel = TreatmentMenu.__mapper__.relationships["details"]
@@ -35,7 +35,7 @@ def test_primaryjoin_excludes_soft_deleted_details():
     assert "MENU_ID" in primaryjoin_sql
 
 
-def test_relationship_options_preserved():
+def test_relationship_options_preserved() -> None:
     """AC-003-3: cascade / back_populates 설정이 유지된다."""
     configure_mappers()
     rel = TreatmentMenu.__mapper__.relationships["details"]

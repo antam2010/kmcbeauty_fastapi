@@ -41,10 +41,12 @@ class FCMMessageRequest(BaseResponseModel):
     """FCM 메시지 전송 요청 스키마."""
 
     user_id: int | None = Field(
-        None, description="유저 ID (user_id 또는 shop_id 중 하나 필수)"
+        None,
+        description="유저 ID (user_id 또는 shop_id 중 하나 필수)",
     )
     shop_id: int | None = Field(
-        None, description="샵 ID (user_id 또는 shop_id 중 하나 필수)"
+        None,
+        description="샵 ID (user_id 또는 shop_id 중 하나 필수)",
     )
     title: str = Field(..., description="푸시 알림 제목")
     body: str = Field(..., description="푸시 알림 내용")

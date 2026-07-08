@@ -18,8 +18,8 @@ DOMAIN = "treatment_task"
 #             전송, 서버 TimestampMixin/SoftDeleteMixin 모두 UTC 사용)이므로 비교 기준을
 #             반드시 UTC-naive 로 맞춰야 한다. 이전 now_kst().replace(tzinfo=None) 는
 #             KST-naive 로 9시간 어긋나 오판정을 유발했다(SPEC-FIX-001 REQ-FIX-004).
-#             (2) 항목 없는 시술은 total_duration_min(SUM)이 None 이라 float(None) 크래시
-#             위험이 있으므로 None 은 건너뛴다.
+#             (2) 항목 없는 시술은 total_duration_min(SUM)이 None 이라 float(None)
+#             크래시 위험이 있으므로 None 은 건너뛴다.
 @celery_app.task
 def auto_complete_treatment() -> None:
     db: Session = SessionLocal()
@@ -30,8 +30,9 @@ def auto_complete_treatment() -> None:
         rows = get_treatments_to_autocomplete(db)
 
         # 완료 대상만 필터링.
-        # total_duration_min 이 None(항목 없는 시술)이면 종료 시각을 계산할 수 없으므로
-        # 크래시 없이 건너뛴다(COALESCE 대신 스킵 — 항목 없는 예약은 자동완료 대상 아님).
+        # total_duration_min 이 None(항목 없는 시술)이면 종료 시각을 계산할 수
+        # 없으므로 크래시 없이 건너뛴다(COALESCE 대신 스킵 — 항목 없는 예약은
+        # 자동완료 대상 아님).
         complete_ids = [
             row.treatment_id
             for row in rows

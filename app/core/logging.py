@@ -1,11 +1,12 @@
+import contextlib
 import logging
-import os
+from pathlib import Path
 
 import sqlparse
 
 
-def setup_logging(app_env: str):
-    """로깅 설정 함수
+def setup_logging(app_env: str) -> None:
+    """로깅 설정 함수.
 
     Args:
         app_env (str): 실행 환경 (local, debug, production)
@@ -29,11 +30,10 @@ def setup_logging(app_env: str):
         log_file = "logs/local.log"
         sql_log_level = logging.INFO
     else:
-        raise ValueError(
-            "Invalid app_env. Choose from: local, debug, stage, production.",
-        )
+        msg = "Invalid app_env. Choose from: local, debug, stage, production."
+        raise ValueError(msg)
     # 2) 로그 디렉토리 생성
-    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+    Path(log_file).parent.mkdir(parents=True, exist_ok=True)
 
     # 3) 기본 로깅 설정 (파일 + 콘솔)
     logging.basicConfig(
@@ -47,16 +47,15 @@ def setup_logging(app_env: str):
 
     # 4) SQLFormatterHandler 정의 (SQL 문장 예쁘게 출력)
     class SQLFormatterHandler(logging.StreamHandler):
-        def emit(self, record):
+        def emit(self, record: logging.LogRecord) -> None:
             if isinstance(record.msg, str):
-                try:
+                # 포매팅 실패가 로깅 자체를 중단시키면 안 되므로 광범위 억제한다.
+                with contextlib.suppress(Exception):
                     record.msg = sqlparse.format(
                         record.msg,
                         reindent=True,
                         keyword_case="upper",
                     )
-                except Exception:
-                    pass
             super().emit(record)
 
     # 5) SQLAlchemy 엔진 로그 설정

@@ -82,12 +82,11 @@ def create_jwt_token(data: dict, expires_delta: timedelta) -> str:
             "nbf": now,  # 이 시점부터 유효 (optional)
         },
     )
-    encoded_jwt = jwt.encode(
+    return jwt.encode(
         to_encode,
         settings.SECRET_KEY,
         algorithm=settings.ALGORITHM,
     )
-    return encoded_jwt
 
 
 def decode_jwt_token(token: str) -> dict:

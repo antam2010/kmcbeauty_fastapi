@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.schemas.mixin.base import BaseResponseModel
 
@@ -11,7 +11,7 @@ class TreatmentMenuDetailCreate(BaseResponseModel):
     duration_min: int = Field(..., description="시술 소요 시간(분)", gt=0)
     base_price: int = Field(..., description="기본 가격", gt=0)
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 시술 메뉴 상세 응답
@@ -24,14 +24,14 @@ class TreatmentMenuDetailResponse(BaseResponseModel):
     created_at: datetime = Field(..., description="생성일")
     updated_at: datetime = Field(..., description="수정일")
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 시술 메뉴 생성 요청
 class TreatmentMenuCreate(BaseResponseModel):
     name: str = Field(..., description="시술 메뉴 이름", max_length=255)
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 시술 메뉴 생성 응답
@@ -41,13 +41,13 @@ class TreatmentMenuCreateResponse(BaseResponseModel):
     created_at: datetime = Field(..., description="생성일")
     updated_at: datetime = Field(..., description="수정일")
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 시술 메뉴 목록 필터 요청
 class TreatmentMenuFilter(BaseResponseModel):
     search: str | None = Field(default=None, description="검색어 (시술 메뉴 이름)")
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 시술 메뉴 상세 응답 (하위 상세 리스트 포함)
@@ -62,4 +62,4 @@ class TreatmentMenuResponse(BaseResponseModel):
         description="시술 메뉴 상세 목록",
     )
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)

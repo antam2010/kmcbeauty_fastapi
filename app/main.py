@@ -47,8 +47,10 @@ app = FastAPI(
     title="뷰티앱",
     description=(
         "이 프로젝트는 FastAPI로 개발된 API 서비스입니다.\n\n"
-        "- 공통 미들웨어를 통해 사용자 인증 및 샵(상점) 선택 정보가 응답에 포함됩니다.\n"
-        "- 액세스 토큰이 만료되었거나 리프레시 토큰이 없으면 `401 Unauthorized` 에러가 발생합니다.\n"
+        "- 공통 미들웨어를 통해 사용자 인증 및 샵(상점) 선택 정보가 "
+        "응답에 포함됩니다.\n"
+        "- 액세스 토큰이 만료되었거나 리프레시 토큰이 없으면 "
+        "`401 Unauthorized` 에러가 발생합니다.\n"
         "- 상점이 선택되지 않은 경우, 다음과 같은 에러 응답이 반환됩니다:\n"
         "  ```json\n"
         "  {\n"
@@ -57,8 +59,10 @@ app = FastAPI(
         '      "message": "상점이 선택되지 않았습니다."\n'
         "    }\n"
         "  }\n\n"
-        "- 각 API의 응답에는 도메인별 에러 코드가 포함되며, 코드 앞에는 도메인 이름(`{DOMAIN}`)이 붙습니다.\n"
-        "  예: `USER_NOT_FOUND`, `TREATMENT_MENU_CONFLICT`, `PHONEBOOK_VALIDATION_ERROR` 등\n"
+        "- 각 API의 응답에는 도메인별 에러 코드가 포함되며, 코드 앞에는 "
+        "도메인 이름(`{DOMAIN}`)이 붙습니다.\n"
+        "  예: `USER_NOT_FOUND`, `TREATMENT_MENU_CONFLICT`, "
+        "`PHONEBOOK_VALIDATION_ERROR` 등\n"
         "- `{DOMAIN}` 값은 각 API 설명 옆에 명시되어 있습니다."
     ),
     version="1.0.0",
@@ -111,8 +115,10 @@ async def error_logger(
     except Exception as e:
         # 핸들되지 않은 예외(500) 일 때 스택트레이스 포함 로깅
         logging.exception(
-            f"[UNHANDLED 500] {request.client.host} "
-            f"{request.method} {request.url.path}",
+            "[UNHANDLED 500] %s %s %s",
+            request.client.host,
+            request.method,
+            request.url.path,
         )
         # Sentry 전송
         capture_exception(e)

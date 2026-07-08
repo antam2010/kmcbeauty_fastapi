@@ -25,14 +25,20 @@ def _offending_lines(path: Path) -> list[str]:
     if not path.exists():
         return []
     offending = []
-    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for lineno, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(),
+        start=1,
+    ):
         if ":latest" in line:
             offending.append(f"{path.name}:{lineno}: {line.strip()}")
     return offending
 
 
 def test_no_latest_tag_in_deployment_artifacts() -> None:
-    """배포 스택/스크립트에 `:latest` 가 하나도 남아 있지 않아야 한다 (REQ-INFRA-003)."""
+    """배포 스택/스크립트에 `:latest` 가 하나도 남아 있지 않아야 한다.
+
+    (REQ-INFRA-003)
+    """
     offenders: list[str] = []
     for path in GUARDED_FILES:
         offenders.extend(_offending_lines(path))
@@ -45,4 +51,6 @@ def test_no_latest_tag_in_deployment_artifacts() -> None:
 
 def test_guarded_files_exist() -> None:
     """가드 대상 핵심 파일(docker-stack.yml)이 실제로 존재하는지 확인한다."""
-    assert (REPO_ROOT / "docker-stack.yml").exists(), "docker-stack.yml 이 존재하지 않습니다."
+    assert (REPO_ROOT / "docker-stack.yml").exists(), (
+        "docker-stack.yml 이 존재하지 않습니다."
+    )

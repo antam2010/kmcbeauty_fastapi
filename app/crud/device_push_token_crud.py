@@ -31,9 +31,7 @@ def get_device_tokens_by_user(
     # 캡(.limit) 전에 결정적 정렬을 보장한다(SPEC-PERF-001 REQ-PERF-004).
     # FCM 전송 경로도 이 함수를 공유하므로 안정적 순서가 운영에서도 의미가 있다.
     tokens = (
-        query.order_by(DevicePushToken.id.desc())
-        .limit(USER_DEVICE_TOKENS_MAX)
-        .all()
+        query.order_by(DevicePushToken.id.desc()).limit(USER_DEVICE_TOKENS_MAX).all()
     )
     if len(tokens) >= USER_DEVICE_TOKENS_MAX:
         logger.warning(
@@ -97,7 +95,7 @@ def deactivate_device_token(
     return device_token
 
 
-def get_or_create_device_token(
+def get_or_create_device_token(  # noqa: PLR0913  # 토큰 레코드 필드가 본질적으로 6개다
     db: Session,
     user_id: int | None,
     shop_id: int | None,

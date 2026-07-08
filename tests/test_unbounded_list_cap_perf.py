@@ -21,6 +21,8 @@ DB 없이 filter/join/options/order_by/limit 체인을 기록하는 스파이 �
 
 import logging
 
+import pytest
+
 from app.core.limits import (
     MENU_DETAILS_MAX,
     PHONEBOOK_GROUP_ITEMS_MAX,
@@ -47,20 +49,20 @@ class SpyQuery:
         self._recorder = recorder
         self._rows = rows_to_return
 
-    def filter(self, *_criteria) -> "SpyQuery":
+    def filter(self, *_criteria: object) -> "SpyQuery":
         return self
 
-    def join(self, *_args, **_kwargs) -> "SpyQuery":
+    def join(self, *_args: object, **_kwargs: object) -> "SpyQuery":
         return self
 
-    def options(self, *_args) -> "SpyQuery":
+    def options(self, *_args: object) -> "SpyQuery":
         self._recorder["options_called"] = True
         return self
 
-    def order_by(self, *_args) -> "SpyQuery":
+    def order_by(self, *_args: object) -> "SpyQuery":
         return self
 
-    def limit(self, value) -> "SpyQuery":
+    def limit(self, value: int) -> "SpyQuery":
         self._recorder["limit"] = value
         return self
 
@@ -73,7 +75,7 @@ class SpySession:
         self.recorder: dict = {}
         self._rows = rows_to_return
 
-    def query(self, *_models):
+    def query(self, *_models: object) -> SpyQuery:
         return SpyQuery(self.recorder, self._rows)
 
 
@@ -82,21 +84,21 @@ class SpySession:
 # ---------------------------------------------------------------------------
 
 
-def test_get_all_phonebooks_by_shop_applies_cap():
+def test_get_all_phonebooks_by_shop_applies_cap() -> None:
     """전화번호부 전체 조회가 PHONEBOOK_GROUP_ITEMS_MAX 상한을 적용한다."""
     db = SpySession(rows_to_return=[])
     phonebook_crud.get_all_phonebooks_by_shop(db, shop_id=1)
     assert db.recorder["limit"] == PHONEBOOK_GROUP_ITEMS_MAX
 
 
-def test_get_shop_users_by_shop_id_applies_cap():
+def test_get_shop_users_by_shop_id_applies_cap() -> None:
     """샵 유저 목록 조회가 SHOP_USERS_MAX 상한을 적용한다."""
     db = SpySession(rows_to_return=[])
     shop_user_crud.get_shop_users_by_shop_id(db, shop_id=1)
     assert db.recorder["limit"] == SHOP_USERS_MAX
 
 
-def test_get_treatment_menu_details_applies_cap():
+def test_get_treatment_menu_details_applies_cap() -> None:
     """메뉴 상세 목록 조회가 MENU_DETAILS_MAX 상한을 적용한다."""
     db = SpySession(rows_to_return=[])
     treatment_menu_crud.get_treatment_menu_details_by_user(
@@ -107,7 +109,7 @@ def test_get_treatment_menu_details_applies_cap():
     assert db.recorder["limit"] == MENU_DETAILS_MAX
 
 
-def test_get_device_tokens_by_user_applies_cap():
+def test_get_device_tokens_by_user_applies_cap() -> None:
     """내 디바이스 토큰 목록 조회가 USER_DEVICE_TOKENS_MAX 상한을 적용한다."""
     db = SpySession(rows_to_return=[])
     device_push_token_crud.get_device_tokens_by_user(db, user_id=1)
@@ -119,7 +121,7 @@ def test_get_device_tokens_by_user_applies_cap():
 # ---------------------------------------------------------------------------
 
 
-def test_no_warning_below_cap(caplog):
+def test_no_warning_below_cap(caplog: pytest.LogCaptureFixture) -> None:
     """반환 행 수가 상한 미만이면 절단 경고를 남기지 않는다."""
     db = SpySession(rows_to_return=[object(), object()])  # 2 rows << cap
     with caplog.at_level(logging.WARNING):
@@ -132,7 +134,9 @@ def test_no_warning_below_cap(caplog):
 # ---------------------------------------------------------------------------
 
 
-def test_warning_emitted_when_cap_hit_phonebook(caplog):
+def test_warning_emitted_when_cap_hit_phonebook(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """전화번호부 조회가 상한만큼 반환하면 절단 가능성 경고를 남긴다."""
     rows = [object()] * PHONEBOOK_GROUP_ITEMS_MAX
     db = SpySession(rows_to_return=rows)
@@ -142,7 +146,9 @@ def test_warning_emitted_when_cap_hit_phonebook(caplog):
     assert "row cap" in caplog.text
 
 
-def test_warning_emitted_when_cap_hit_shop_users(caplog):
+def test_warning_emitted_when_cap_hit_shop_users(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """샵 유저 조회가 상한만큼 반환하면 절단 가능성 경고를 남긴다."""
     rows = [object()] * SHOP_USERS_MAX
     db = SpySession(rows_to_return=rows)
@@ -151,7 +157,9 @@ def test_warning_emitted_when_cap_hit_shop_users(caplog):
     assert "row cap" in caplog.text
 
 
-def test_warning_emitted_when_cap_hit_menu_details(caplog):
+def test_warning_emitted_when_cap_hit_menu_details(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """메뉴 상세 조회가 상한만큼 반환하면 절단 가능성 경고를 남긴다."""
     rows = [object()] * MENU_DETAILS_MAX
     db = SpySession(rows_to_return=rows)
@@ -164,7 +172,9 @@ def test_warning_emitted_when_cap_hit_menu_details(caplog):
     assert "row cap" in caplog.text
 
 
-def test_warning_emitted_when_cap_hit_device_tokens(caplog):
+def test_warning_emitted_when_cap_hit_device_tokens(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """디바이스 토큰 조회가 상한만큼 반환하면 절단 가능성 경고를 남긴다."""
     rows = [object()] * USER_DEVICE_TOKENS_MAX
     db = SpySession(rows_to_return=rows)
@@ -178,7 +188,7 @@ def test_warning_emitted_when_cap_hit_device_tokens(caplog):
 # ---------------------------------------------------------------------------
 
 
-def test_caps_are_positive_finite():
+def test_caps_are_positive_finite() -> None:
     """모든 상한은 양의 유한값이어야 한다(언바운드 방지의 핵심)."""
     for cap in (
         PHONEBOOK_GROUP_ITEMS_MAX,

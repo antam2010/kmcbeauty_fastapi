@@ -41,7 +41,7 @@ def _make_legacy_bcrypt_hash(password: str = _PLAINTEXT) -> str:
 # ---------------------------------------------------------------------------
 # (1) 신규 해시 = argon2
 # ---------------------------------------------------------------------------
-def test_new_hash_is_argon2_and_verifies():
+def test_new_hash_is_argon2_and_verifies() -> None:
     hashed = hash_password(_PLAINTEXT)
 
     # argon2id 접두사 확인 (passlib default 스킴이 argon2 임을 증명)
@@ -55,11 +55,11 @@ def test_new_hash_is_argon2_and_verifies():
 # ---------------------------------------------------------------------------
 # (2) 레거시 bcrypt 해시 하위호환 — 계속 verify 됨
 # ---------------------------------------------------------------------------
-def test_legacy_bcrypt_hash_still_verifies():
+def test_legacy_bcrypt_hash_still_verifies() -> None:
     legacy = _make_legacy_bcrypt_hash()
 
     # 사전 조건: 실제로 bcrypt 형식이어야 의미가 있다.
-    assert legacy.startswith("$2b$") or legacy.startswith("$2a$")
+    assert legacy.startswith(("$2b$", "$2a$"))
 
     # 운영 verify 함수가 bcrypt 해시를 그대로 검증(사용자 락아웃 없음)
     assert verify_password(_PLAINTEXT, legacy) is True
@@ -69,7 +69,7 @@ def test_legacy_bcrypt_hash_still_verifies():
 # ---------------------------------------------------------------------------
 # (3) verify_and_upgrade_password: bcrypt -> argon2 승급
 # ---------------------------------------------------------------------------
-def test_verify_and_upgrade_upgrades_bcrypt_to_argon2():
+def test_verify_and_upgrade_upgrades_bcrypt_to_argon2() -> None:
     legacy = _make_legacy_bcrypt_hash()
 
     valid, new_hash = verify_and_upgrade_password(_PLAINTEXT, legacy)
@@ -82,7 +82,7 @@ def test_verify_and_upgrade_upgrades_bcrypt_to_argon2():
     assert verify_password(_PLAINTEXT, new_hash) is True
 
 
-def test_verify_and_upgrade_no_rehash_for_argon2():
+def test_verify_and_upgrade_no_rehash_for_argon2() -> None:
     """이미 argon2 해시면 재해싱하지 않는다(new_hash 는 None)."""
     current = hash_password(_PLAINTEXT)  # argon2
 
@@ -92,7 +92,7 @@ def test_verify_and_upgrade_no_rehash_for_argon2():
     assert new_hash is None  # 최신 스킴이므로 승급 불필요
 
 
-def test_verify_and_upgrade_rejects_wrong_password():
+def test_verify_and_upgrade_rejects_wrong_password() -> None:
     """검증 실패 시 (False, None) — 승급 로직이 인증 실패를 우회시키지 않는다."""
     legacy = _make_legacy_bcrypt_hash()
 
@@ -125,14 +125,17 @@ class FakeSession:
         if self._fail_commit:
             from sqlalchemy.exc import SQLAlchemyError
 
-            raise SQLAlchemyError("simulated commit failure")
+            msg = "simulated commit failure"
+            raise SQLAlchemyError(msg)
         self.committed = True
 
     def rollback(self) -> None:
         self.rolled_back = True
 
 
-def test_login_rehashes_bcrypt_user_and_writes_back(monkeypatch):
+def test_login_rehashes_bcrypt_user_and_writes_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC: bcrypt 사용자가 로그인하면 argon2 로 승급되어 DB 에 기록된다."""
     legacy = _make_legacy_bcrypt_hash()
     user = FakeUser(password_hash=legacy, user_id=42)
@@ -151,7 +154,9 @@ def test_login_rehashes_bcrypt_user_and_writes_back(monkeypatch):
     assert verify_password(_PLAINTEXT, user.password) is True
 
 
-def test_login_with_argon2_user_does_not_write_back(monkeypatch):
+def test_login_with_argon2_user_does_not_write_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """이미 argon2 사용자는 불필요한 commit 이 일어나지 않는다."""
     current = hash_password(_PLAINTEXT)  # argon2
     user = FakeUser(password_hash=current, user_id=7)
@@ -166,7 +171,9 @@ def test_login_with_argon2_user_does_not_write_back(monkeypatch):
     assert db.committed is False  # write-back 없음
 
 
-def test_login_write_back_failure_still_logs_in(monkeypatch):
+def test_login_write_back_failure_still_logs_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """AC(best-effort): DB commit 이 실패해도 로그인은 성공한다.
 
     이미 유효한 자격증명으로 인증에 성공한 사용자를 승급 기록 실패로
@@ -186,7 +193,9 @@ def test_login_write_back_failure_still_logs_in(monkeypatch):
     assert db.committed is False
 
 
-def test_login_wrong_password_raises_401_and_no_write_back(monkeypatch):
+def test_login_wrong_password_raises_401_and_no_write_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """SECURITY-001 무약화: 틀린 비밀번호는 승급 없이 여전히 401."""
     from app.exceptions import CustomException
 
@@ -205,7 +214,7 @@ def test_login_wrong_password_raises_401_and_no_write_back(monkeypatch):
     assert db.committed is False
 
 
-def test_login_unknown_user_raises_401(monkeypatch):
+def test_login_unknown_user_raises_401(monkeypatch: pytest.MonkeyPatch) -> None:
     """사용자가 없으면 해시 검증을 시도하지 않고 401(기존 동작 유지)."""
     from app.exceptions import CustomException
 

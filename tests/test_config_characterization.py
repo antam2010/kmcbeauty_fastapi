@@ -35,12 +35,18 @@ def test_token_expire_seconds_are_int() -> None:
 
     assert isinstance(config.settings.ACCESS_TOKEN_EXPIRE_SECONDS, int)
     assert isinstance(config.settings.REFRESH_TOKEN_EXPIRE_SECONDS, int)
-    assert int(
-        os.environ["ACCESS_TOKEN_EXPIRE_SECONDS"],
-    ) == config.settings.ACCESS_TOKEN_EXPIRE_SECONDS
-    assert int(
-        os.environ["REFRESH_TOKEN_EXPIRE_SECONDS"],
-    ) == config.settings.REFRESH_TOKEN_EXPIRE_SECONDS
+    assert (
+        int(
+            os.environ["ACCESS_TOKEN_EXPIRE_SECONDS"],
+        )
+        == config.settings.ACCESS_TOKEN_EXPIRE_SECONDS
+    )
+    assert (
+        int(
+            os.environ["REFRESH_TOKEN_EXPIRE_SECONDS"],
+        )
+        == config.settings.REFRESH_TOKEN_EXPIRE_SECONDS
+    )
 
 
 def test_app_main_imports_without_exception_when_sentry_dsn_empty() -> None:

@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.models.shop import Shop
 from app.schemas.shop import ShopCreate
 
-
 # 소유권 미검증 헬퍼 get_shop_by_id 는 호출부 0건의 미사용 코드였으며,
 # 향후 shop-scoped 접근에서 소유권 없는 조회 경로로 오용될 위험이 있어 제거했다
 # (SPEC-SECURITY-001 REQ-SEC-003, 죽은 코드 심층방어 하드닝).
