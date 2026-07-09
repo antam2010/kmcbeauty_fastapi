@@ -33,9 +33,9 @@ KMCBeauty FastAPI 프로젝트 실행 가이드
 서비스 DNS ``redis://redis:6379/0`` 로 설정). 최초 1회 ``cp .env.prod.example .env.prod``
 후 실제 값을 채웁니다. 이미지 태그는 가변 ``latest`` 가 아니라 불변 커밋 SHA(IMAGE_TAG)를 사용합니다.
 
-스테이지/운영 배포(단일 노드)::
+Swarm 배포(단일 노드, 로컬 빌드 이미지)::
 
-    ./scripts/start_stage.sh
+    ./scripts/start_swarm.sh
     # 또는 수동(불변 태그 주입):
     IMAGE_TAG=ghcr.io/antam2010/kmcbeauty-api:<git-sha> \
         docker stack deploy -c docker-stack.yml kmcbeauty
@@ -95,7 +95,9 @@ DB에 마이그레이션 롤백::
     Dockerfile
     scripts/
     ├── start_local.sh
-    ├── start_stage.sh
+    ├── start_swarm.sh
+    ├── deploy_migrate.sh
+    ├── setup_github_secrets.sh
     └── stop.sh
 
 7. 로컬 개발 워크플로우

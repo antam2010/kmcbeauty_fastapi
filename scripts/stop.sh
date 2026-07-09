@@ -2,7 +2,7 @@
 
 echo "🛑 FastAPI 중지 중..."
 
-# Swarm 스택 배포(start_stage.sh) 사용 시 제거. docker-compose 구성은 제거됨.
+# Swarm 스택 배포(start_swarm.sh) 사용 시 제거. docker-compose 구성은 제거됨.
 if docker info 2>/dev/null | grep -q "Swarm: active"; then
     docker stack rm kmcbeauty
     echo "✅ Swarm 스택(kmcbeauty) 제거 완료."

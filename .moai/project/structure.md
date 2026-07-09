@@ -144,7 +144,6 @@ tests/
 |------|------|
 | `scripts/start_swarm.sh` | Swarm init + overlay 네트워크 생성 + 스택 배포 |
 | `scripts/start_local.sh` | 로컬 개발 실행 |
-| `scripts/start_stage.sh` | 스테이징 환경 실행 |
 | `scripts/stop.sh` | 서비스 중지 |
 | `scripts/deploy_migrate.sh` | 배포 전 Alembic 마이그레이션 실행 (일회성 Swarm 서비스로 시크릿 마운트) |
 | `scripts/setup_github_secrets.sh` | `gh secret set` 기반 GitHub Actions 시크릿 등록·갱신 자동화 |
