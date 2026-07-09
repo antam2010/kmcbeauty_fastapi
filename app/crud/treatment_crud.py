@@ -86,11 +86,16 @@ def stmt_treatment_list(
         )
 
     # 정렬
+    # sort_order 는 {asc, desc} 화이트리스트로 명시 검증한다. 무효값(조작된 값)은
+    # getattr(sort_column, sort_order, None)() 로 None 을 호출해 500 크래시가 나므로
+    # 기본값 desc 로 안전하게 대체한다. (SPEC-FIX-001 REQ-FIX-005)
     if filters.sort_by and hasattr(Treatment, filters.sort_by):
         sort_column = getattr(Treatment, filters.sort_by)
-        sort_expr = getattr(sort_column, filters.sort_order, None)
-        if sort_expr:
-            stmt = stmt.order_by(sort_expr())
+        sort_order = (
+            filters.sort_order if filters.sort_order in {"asc", "desc"} else "desc"
+        )
+        sort_expr = getattr(sort_column, sort_order)
+        stmt = stmt.order_by(sort_expr())
 
     return stmt
 

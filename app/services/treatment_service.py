@@ -10,6 +10,7 @@ from app.crud.treatment_crud import (
     get_treatment_list,
     validate_menu_detail_exists,
 )
+from app.enum.treatment_status import TreatmentStatus
 from app.exceptions import CustomException
 from app.models.shop import Shop
 from app.models.treatment import Treatment
@@ -90,6 +91,63 @@ def upsert_treatment_service(
     except CustomException:
         db.rollback()
         raise
+    except Exception as e:
+        db.rollback()
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+            exception=e,
+        ) from e
+
+
+# @MX:ANCHOR: [AUTO] 외부 앱(kmcbeauty-native)이 의존하는 예약 삭제 계약 경계.
+# @MX:REASON: app/api/services/treatment.ts::remove 가 호출하는 DELETE /treatments/{id}
+#             의 백엔드 진입점. shop 소유권(get_current_shop, SECURITY-001)과
+#             삭제 시맨틱(상태 CANCELLED 전환)을 이 지점에서 강제한다.
+def cancel_treatment_service(
+    db: Session,
+    current_shop: Shop,
+    treatment_id: int,
+) -> None:
+    """시술 예약 삭제 서비스(상태 전환 방식의 논리 삭제).
+
+    Treatment 모델은 SoftDeleteMixin(deleted_at)을 갖지 않으므로(SPEC-FIX-001에서
+    Phonebook/Shop/TreatmentMenu(+Detail)/User 에만 적용) 물리적 소프트삭제 대신
+    예약 상태를 CANCELLED 로 전환해 이력을 보존한다. 물리 삭제는 예약/시술항목
+    이력을 파기하므로 채택하지 않는다.
+
+    :param db: DB 세션
+    :param current_shop: 현재 상점(get_current_shop 로 소유권 검증됨)
+    :param treatment_id: 삭제할 시술 예약 ID
+    :raises CustomException: 404(예약 없음/타 상점 예약), 500(DB/알 수 없는 오류)
+    """
+    treatment = get_treatment_by_id(db, treatment_id)
+    # shop 소유권 검증: 다른 상점의 예약은 조회되더라도 삭제 불가(BOLA 방지).
+    if not treatment or treatment.shop_id != current_shop.id:
+        raise CustomException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            domain=DOMAIN,
+            detail="시술 예약을 찾을 수 없습니다.",
+        )
+
+    # 멱등 처리: 이미 CANCELLED 인 예약은 재삭제 시에도 성공(204)으로 처리한다.
+    if treatment.status == TreatmentStatus.CANCELLED:
+        return
+
+    try:
+        treatment.status = TreatmentStatus.CANCELLED
+        db.commit()
+    except CustomException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise CustomException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            domain=DOMAIN,
+            detail="DB Error",
+            exception=e,
+        ) from e
     except Exception as e:
         db.rollback()
         raise CustomException(

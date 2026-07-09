@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from sentry_sdk import capture_exception
 from starlette import status
 
+from app.core.config import settings
+
 # 기본 메시지 매핑
 DEFAULT_MESSAGES = {
     status.HTTP_400_BAD_REQUEST: ("BAD_REQUEST", "잘못된 요청입니다."),
@@ -23,7 +25,7 @@ DEFAULT_MESSAGES = {
 
 
 class CustomException(HTTPException):
-    def __init__(
+    def __init__(  # noqa: PLR0913  # 에러 응답 구성 필드가 본질적으로 많다(키워드 전용)
         self,
         *,
         status_code: int,
@@ -32,7 +34,7 @@ class CustomException(HTTPException):
         detail: str | None = None,
         hint: str | None = "놉",
         exception: Exception | None = None,
-    ):
+    ) -> None:
         # 기본 메시지 및 코드 설정
         default_code, default_detail = DEFAULT_MESSAGES.get(
             status_code,
@@ -57,7 +59,9 @@ class CustomException(HTTPException):
         if hint:
             error_response["hint"] = hint
 
-        if exception:
+        # 정보 노출 방지: raw exception 문자열은 debug 환경에서만 응답 본문에 포함한다.
+        # 비-debug 환경에서는 로깅/Sentry 로만 기록하고 응답에는 노출하지 않는다.
+        if exception and settings.APP_ENV == "debug":
             error_response["exception"] = exception_str
 
         # 500 이상 에러는 Sentry로

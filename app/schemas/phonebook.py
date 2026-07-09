@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from app.schemas.mixin.base import BaseResponseModel
 from app.utils.phone import is_valid_korean_phone_number, normalize_korean_phone_number
@@ -72,7 +72,7 @@ class PhonebookGroupedByGroupnameResponse(BaseResponseModel):
     group_name: str = Field(..., description="그룹 이름")
     count: int = Field(..., description="전화번호부 개수")
     items: list["PhonebookResponse"] = Field(default=[], description="전화번호부 목록")
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 # 전화번호부 응답 스키마
@@ -86,4 +86,4 @@ class PhonebookResponse(BaseResponseModel):
     created_at: datetime = Field(..., description="생성일")
     updated_at: datetime = Field(..., description="수정일")
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)

@@ -4,6 +4,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_pagination import add_pagination
 from sentry_sdk import capture_exception
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
@@ -17,8 +19,9 @@ from app.api import (
     treatment_menu,
     user,
 )
-from app.core.config import APP_ENV, SENTRY_DSN
+from app.core.config import settings
 from app.core.logging import setup_logging
+from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
 from app.docs import api_change
 from app.docs.tags_metadata import tags_metadata
@@ -27,12 +30,14 @@ from app.exceptions import CustomException
 # 기타
 
 # 로그 설정
-setup_logging(app_env=APP_ENV)
+setup_logging(app_env=settings.APP_ENV)
 
 # Sentry 설정
+# SENTRY_DSN 이 비어 있어도 init_sentry 를 무조건 호출한다(현행 동작 보존).
+# sentry_sdk.init(dsn="") 는 no-op 이므로 예외 없이 Sentry 비활성으로 기동한다.
 init_sentry(
-    dsn=SENTRY_DSN,
-    environment=APP_ENV,
+    dsn=settings.SENTRY_DSN,
+    environment=settings.APP_ENV,
     traces_sample_rate=0.2,
     profiles_sample_rate=0.0,
 )
@@ -42,8 +47,10 @@ app = FastAPI(
     title="뷰티앱",
     description=(
         "이 프로젝트는 FastAPI로 개발된 API 서비스입니다.\n\n"
-        "- 공통 미들웨어를 통해 사용자 인증 및 샵(상점) 선택 정보가 응답에 포함됩니다.\n"
-        "- 액세스 토큰이 만료되었거나 리프레시 토큰이 없으면 `401 Unauthorized` 에러가 발생합니다.\n"
+        "- 공통 미들웨어를 통해 사용자 인증 및 샵(상점) 선택 정보가 "
+        "응답에 포함됩니다.\n"
+        "- 액세스 토큰이 만료되었거나 리프레시 토큰이 없으면 "
+        "`401 Unauthorized` 에러가 발생합니다.\n"
         "- 상점이 선택되지 않은 경우, 다음과 같은 에러 응답이 반환됩니다:\n"
         "  ```json\n"
         "  {\n"
@@ -52,16 +59,22 @@ app = FastAPI(
         '      "message": "상점이 선택되지 않았습니다."\n'
         "    }\n"
         "  }\n\n"
-        "- 각 API의 응답에는 도메인별 에러 코드가 포함되며, 코드 앞에는 도메인 이름(`{DOMAIN}`)이 붙습니다.\n"
-        "  예: `USER_NOT_FOUND`, `TREATMENT_MENU_CONFLICT`, `PHONEBOOK_VALIDATION_ERROR` 등\n"
+        "- 각 API의 응답에는 도메인별 에러 코드가 포함되며, 코드 앞에는 "
+        "도메인 이름(`{DOMAIN}`)이 붙습니다.\n"
+        "  예: `USER_NOT_FOUND`, `TREATMENT_MENU_CONFLICT`, "
+        "`PHONEBOOK_VALIDATION_ERROR` 등\n"
         "- `{DOMAIN}` 값은 각 API 설명 옆에 명시되어 있습니다."
     ),
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    debug=APP_ENV == "debug",
+    debug=settings.APP_ENV == "debug",
     openapi_tags=tags_metadata,
 )
+
+# Rate limiting (slowapi) 등록: limiter 상태 + 429 예외 핸들러
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # CORS 설정 (Cross-Origin Resource Sharing)
@@ -79,8 +92,13 @@ app.add_middleware(
     r"192\.168(?:\.\d{1,3}){2}"
     r")(?::\d+)?$",
     allow_credentials=True,  # 쿠키 허용
-    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    # 와일드카드 대신 실제 사용하는 메서드만 명시적으로 허용한다.
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    # 와일드카드 대신 실제 사용하는 헤더만 명시적으로 허용한다.
+    # - Content-Type: JSON/폼 요청 본문
+    # - Authorization: Bearer 액세스 토큰
+    # - X-Refresh-Token: 리프레시 토큰 헤더 전달(auth_service.py:103)
+    allow_headers=["Content-Type", "Authorization", "X-Refresh-Token"],
 )
 
 
@@ -97,8 +115,10 @@ async def error_logger(
     except Exception as e:
         # 핸들되지 않은 예외(500) 일 때 스택트레이스 포함 로깅
         logging.exception(
-            f"[UNHANDLED 500] {request.client.host} "
-            f"{request.method} {request.url.path}",
+            "[UNHANDLED 500] %s %s %s",
+            request.client.host,
+            request.method,
+            request.url.path,
         )
         # Sentry 전송
         capture_exception(e)

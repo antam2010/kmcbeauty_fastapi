@@ -1,14 +1,18 @@
+from typing import Any
+
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+from app.core.config import settings
 
-def before_send(event, hint):
-    import os
 
-    env = os.getenv("APP_ENV", "local")
-
-    if env in ["local", "debug"]:
+def before_send(
+    event: dict[str, Any],
+    _hint: dict[str, Any],
+) -> dict[str, Any] | None:
+    # _hint 는 Sentry before_send 콜백 시그니처가 요구하는 인자로 미사용이다.
+    if settings.APP_ENV in ["local", "debug"]:
         return None  # 완전히 차단하고 싶으면 이렇게
 
     return event
@@ -19,8 +23,8 @@ def init_sentry(
     environment: str,
     traces_sample_rate: float = 0.2,
     profiles_sample_rate: float = 0.0,
-):
-    """Sentry SDK 초기화 함수
+) -> None:
+    """Sentry SDK 초기화 함수.
 
     Args:
         dsn (str): Sentry DSN URL

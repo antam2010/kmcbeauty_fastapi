@@ -16,5 +16,5 @@ class ShopInviteResponse(BaseModel):
 class ShopInviteCreateRequest(BaseModel):
     expire_in: int | None = Field(
         default=60 * 60 * 24 * 7,
-        description="초대코드 만료 기간(분 단위)",
+        description="초대코드 만료 기간(초 단위)",
     )

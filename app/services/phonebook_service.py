@@ -48,8 +48,7 @@ def get_phonebook_list_service(
 
     """
     # 매장별 전화번호부 목록 조회 (검색 조건 포함)
-    list = get_phonebooks_by_user(db=db, shop_id=current_shop.id, search=params.search)
-    return list
+    return get_phonebooks_by_user(db=db, shop_id=current_shop.id, search=params.search)
 
 
 def get_phonebook_service(
@@ -127,7 +126,7 @@ def create_phonebook_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
             exception=e,
-        )
+        ) from e
     except Exception as e:
         # 그 외 예상치 못한 에러 처리
         db.rollback()
@@ -135,7 +134,7 @@ def create_phonebook_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
             exception=e,
-        )
+        ) from e
 
     # 생성된 객체 새로고침하여 최신 정보 반환
     db.refresh(phonebook)
@@ -183,26 +182,30 @@ def update_phonebook_service(
     except SQLAlchemyError as e:
         # 데이터베이스 관련 에러 처리
         db.rollback()
-        logging.exception(f"SQLAlchemyError: {e}")
+        logging.exception("SQLAlchemyError")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+        ) from e
     except Exception as e:
         # 그 외 예상치 못한 에러 처리
         db.rollback()
-        logging.exception(f"Unexpected error: {e}")
+        logging.exception("Unexpected error")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+        ) from e
 
     # 수정된 객체 새로고침하여 최신 정보 반환
     db.refresh(phonebook)
     return phonebook
 
 
-def delete_phonebook_service(db: Session, phonebook_id: int, current_shop: Shop):
+def delete_phonebook_service(
+    db: Session,
+    phonebook_id: int,
+    current_shop: Shop,
+) -> None:
     """전화번호부 삭제 서비스 (소프트 삭제).
 
     Args:
@@ -231,19 +234,19 @@ def delete_phonebook_service(db: Session, phonebook_id: int, current_shop: Shop)
     except SQLAlchemyError as e:
         # 데이터베이스 관련 에러 처리
         db.rollback()
-        logging.exception(f"SQLAlchemyError occurred while deleting phonebook: {e}")
+        logging.exception("SQLAlchemyError occurred while deleting phonebook")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+        ) from e
     except Exception as e:
         # 그 외 예상치 못한 에러 처리
         db.rollback()
-        logging.exception(f"Unexpected error occurred while deleting phonebook: {e}")
+        logging.exception("Unexpected error occurred while deleting phonebook")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+        ) from e
 
 
 def get_grouped_by_groupname_service(
@@ -318,21 +321,21 @@ def check_duplicate_phone_number_service(
     try:
         existing = get_phonebook_by_phone_number(db, phone_number, current_shop.id)
         exists = existing is not None
-        return DuplicateCheckResponse(
-            exists=exists,
-            phone_number=phone_number,
-        )
     except SQLAlchemyError as e:
-        logging.exception(f"SQLAlchemyError during duplicate check: {e}")
+        logging.exception("SQLAlchemyError during duplicate check")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
             exception=e,
-        )
+        ) from e
     except Exception as e:
-        logging.exception(f"Unexpected error during duplicate check: {e}")
+        logging.exception("Unexpected error during duplicate check")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
             exception=e,
-        )
+        ) from e
+    return DuplicateCheckResponse(
+        exists=exists,
+        phone_number=phone_number,
+    )

@@ -149,5 +149,5 @@ def delete_phonebook_handler(
     phonebook_id: int,
     db: Session = Depends(get_db),
     current_shop: Shop = Depends(get_current_shop),
-):
+) -> None:
     delete_phonebook_service(db, phonebook_id, current_shop)

@@ -33,7 +33,10 @@ from app.utils.redis.dashboard import (
 T = TypeVar("T")
 
 
-def get_dashboard_summary_service(
+# 대시보드 집계 오케스트레이션: 캐시 키 정의·타입 디스패치·최종 조립이 한 흐름에
+# 묶여 있어 분리 시 다수 지역 클로저(shop/db 캡처)와 캐시 경계가 흩어진다.
+# 동작 보존 우선으로 복잡도 규칙을 억제한다.
+def get_dashboard_summary_service(  # noqa: C901, PLR0915
     db: Session,
     shop: Shop,
     params: DashboardFilter,
@@ -61,14 +64,15 @@ def get_dashboard_summary_service(
     def _is_iterable_but_not_str(x: object) -> bool:
         return isinstance(x, Iterable) and not isinstance(x, (str, bytes, bytearray))
 
-    def _row_to_plain(x: object):
+    def _row_to_plain(x: object) -> object:
         """SQLAlchemy Row 지원: Row -> dict, 그 외는 그대로."""
         if hasattr(x, "_mapping"):  # sqlalchemy.engine.Row
-            return dict(x._mapping)
+            # SQLAlchemy Row 는 dict 변환용 공개 API 로 _mapping 을 노출한다.
+            return dict(x._mapping)  # noqa: SLF001
         return x
 
-    def _to_cacheable(obj: object):
-        """캐시에 넣을 때: Pydantic 모델이면 model_dump(), Row면 dict, 리스트는 원소별 처리."""
+    def _to_cacheable(obj: object) -> object:
+        """캐시 저장용 변환: 모델이면 model_dump, Row면 dict, 리스트는 원소별 처리."""
         if isinstance(obj, list):
             out = []
             for it in obj:
@@ -82,7 +86,9 @@ def get_dashboard_summary_service(
         return _row_to_plain(obj)
 
     # ---- 공통 캐시 처리 함수 ----
-    def get_or_set_cache(
+    # 반환형 확정(제너레이터/Row/tuple/Mapping 방어) 분기가 본질적으로 많아
+    # 분리하면 오히려 타입 디스패치 흐름이 흩어진다. 동작 보존 우선으로 억제한다.
+    def get_or_set_cache(  # noqa: C901, PLR0912
         key_tuple: tuple[str, str],
         get_func: Callable[[], list[T] | T],
         pydantic_model: type[T] | None = None,
@@ -98,20 +104,32 @@ def get_dashboard_summary_service(
             if pydantic_model:
                 if isinstance(cached, list):
                     logging.debug(
-                        f"Cache hit for {field} on {period} for shop {shop.id} - multiple items",
+                        "Cache hit for %s on %s for shop %s - multiple items",
+                        field,
+                        period,
+                        shop.id,
                     )
                     return [pydantic_model.model_validate(v) for v in cached]
                 logging.debug(
-                    f"Cache hit for {field} on {period} for shop {shop.id} - single item",
+                    "Cache hit for %s on %s for shop %s - single item",
+                    field,
+                    period,
+                    shop.id,
                 )
                 return pydantic_model.model_validate(cached)
             logging.debug(
-                f"Cache hit for {field} on {period} for shop {shop.id} - raw data",
+                "Cache hit for %s on %s for shop %s - raw data",
+                field,
+                period,
+                shop.id,
             )
             return cached
 
         logging.debug(
-            f"Cache miss for {field} on {period} for shop {shop.id}, fetching data...",
+            "Cache miss for %s on %s for shop %s, fetching data...",
+            field,
+            period,
+            shop.id,
         )
 
         # 1) 원본 취득

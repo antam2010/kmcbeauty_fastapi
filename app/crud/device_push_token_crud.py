@@ -1,6 +1,11 @@
+import logging
+
 from sqlalchemy.orm import Session
 
+from app.core.limits import USER_DEVICE_TOKENS_MAX
 from app.models.device_push_token import DevicePushToken
+
+logger = logging.getLogger(__name__)
 
 
 def get_device_token_by_id(db: Session, token_id: int) -> DevicePushToken | None:
@@ -13,11 +18,29 @@ def get_device_tokens_by_user(
     user_id: int,
     is_active: bool = True,
 ) -> list[DevicePushToken]:
-    """유저 ID로 디바이스 푸시 토큰 목록 조회."""
+    """유저 ID로 디바이스 푸시 토큰 목록 조회.
+
+    SPEC-PERF-001 REQ-PERF-004: `/device-tokens/me` 언바운드 조회 방어 상한.
+    구조적으로 소규모(유저당 디바이스 수)지만 코드상 상한이 없으므로 방어 캡을
+    둔다. 응답 shape(list[...])는 유지한다. 상한 도달 시 절단 가능성을 경고
+    로그로 남긴다.
+    """
     query = db.query(DevicePushToken).filter(DevicePushToken.user_id == user_id)
     if is_active:
         query = query.filter(DevicePushToken.is_active == is_active)
-    return query.all()
+    # 캡(.limit) 전에 결정적 정렬을 보장한다(SPEC-PERF-001 REQ-PERF-004).
+    # FCM 전송 경로도 이 함수를 공유하므로 안정적 순서가 운영에서도 의미가 있다.
+    tokens = (
+        query.order_by(DevicePushToken.id.desc()).limit(USER_DEVICE_TOKENS_MAX).all()
+    )
+    if len(tokens) >= USER_DEVICE_TOKENS_MAX:
+        logger.warning(
+            "get_device_tokens_by_user hit row cap (%d) for user_id=%s; "
+            "result may be truncated",
+            USER_DEVICE_TOKENS_MAX,
+            user_id,
+        )
+    return tokens
 
 
 def get_device_tokens_by_shop(
@@ -72,7 +95,7 @@ def deactivate_device_token(
     return device_token
 
 
-def get_or_create_device_token(
+def get_or_create_device_token(  # noqa: PLR0913  # 토큰 레코드 필드가 본질적으로 6개다
     db: Session,
     user_id: int | None,
     shop_id: int | None,

@@ -1,4 +1,4 @@
-"""update treatment add customer fields and make phonebook_id nullable with indexes
+"""update treatment add customer fields and make phonebook_id nullable with indexes.
 
 Revision ID: 1e1480804309
 Revises: 311e5e0e6ce1
@@ -26,7 +26,10 @@ def upgrade() -> None:
     op.add_column(
         "treatment",
         sa.Column(
-            "customer_name", sa.String(length=100), nullable=True, comment="고객명"
+            "customer_name",
+            sa.String(length=100),
+            nullable=True,
+            comment="고객명",
         ),
     )
     op.add_column(
@@ -64,10 +67,16 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_index(
-        op.f("ix_treatment_phonebook_id"), "treatment", ["phonebook_id"], unique=False
+        op.f("ix_treatment_phonebook_id"),
+        "treatment",
+        ["phonebook_id"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_treatment_shop_id"), "treatment", ["shop_id"], unique=False
+        op.f("ix_treatment_shop_id"),
+        "treatment",
+        ["shop_id"],
+        unique=False,
     )
     # ### end Alembic commands ###
 

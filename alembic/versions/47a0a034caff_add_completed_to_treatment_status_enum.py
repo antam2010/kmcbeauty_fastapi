@@ -1,4 +1,4 @@
-"""Add COMPLETED to treatment_status enum
+"""Add COMPLETED to treatment_status enum.
 
 Revision ID: 47a0a034caff
 Revises: 9fa616bc2c95
@@ -19,7 +19,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.execute("""
-        ALTER TABLE treatment 
+        ALTER TABLE treatment
         MODIFY COLUMN status ENUM(
             'RESERVED',
             'VISITED',

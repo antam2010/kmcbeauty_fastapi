@@ -9,7 +9,11 @@ from app.models.shop import Shop
 from app.models.user import User
 from app.schemas.shop import ShopCreate, ShopResponse, ShopSelect, ShopUpdate
 from app.schemas.shop_invite import ShopInviteCreateRequest, ShopInviteResponse
-from app.schemas.shop_user import ShopUserUserResponse
+from app.schemas.shop_user import (
+    ShopUserAssociateRequest,
+    ShopUserAssociateUpdateRequest,
+    ShopUserUserResponse,
+)
 from app.services.shop_invite_service import (
     delete_invite_code_service,
     generate_invite_code_service,
@@ -22,7 +26,12 @@ from app.services.shop_service import (
     set_selected_shop_service,
     upsert_shop_service,
 )
-from app.services.shop_user_service import get_shop_users_service
+from app.services.shop_user_service import (
+    create_shop_user_service,
+    delete_shop_user_service,
+    get_shop_users_service,
+    update_shop_user_service,
+)
 
 router = APIRouter(prefix="/shops", tags=["상점"])
 
@@ -124,7 +133,7 @@ def get_selected_shop(
     },
 )
 def delete_selected_shop(
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db),  # noqa: ARG001  # 요청당 DB 세션 수명주기 유지를 위해 주입을 보존한다
     current_user: User = Depends(get_current_user),
 ) -> None:
     return delete_selected_shop_service(user=current_user)
@@ -209,3 +218,95 @@ def get_shop_users(
     current_user: User = Depends(get_current_user),
 ) -> list[ShopUserUserResponse]:
     return get_shop_users_service(db=db, shop_id=shop_id, current_user=current_user)
+
+
+# @MX:ANCHOR: [AUTO] 외부 앱이 의존하는 직원(샵 유저) 쓰기 계약 경계.
+# @MX:REASON: app/api/services/staff.ts 의 createUser/updateUser/deleteUser 가
+#             호출하는 POST/PUT/DELETE /shops/{shop_id}/users[/{user_id}] 진입점.
+#             인가는 서비스의 _require_primary_owner(멤버십+대표원장) 로 강제하며
+#             role 등 권한 상승 필드는 계약에 포함하지 않는다(SPEC-SECURITY-001).
+@router.post(
+    "/{shop_id}/users",
+    response_model=ShopUserUserResponse,
+    summary="샵 유저 연결",
+    description=(
+        "기존 유저(email)를 샵에 연결(멤버십 부여)합니다. 대표원장만 가능. "
+        "유저 계정 생성/role 결정은 하지 않습니다(SECURITY-001 소관)."
+    ),
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+        status.HTTP_409_CONFLICT: COMMON_ERROR_RESPONSES[status.HTTP_409_CONFLICT],
+    },
+)
+def create_shop_user(
+    shop_id: int,
+    payload: ShopUserAssociateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ShopUserUserResponse:
+    return create_shop_user_service(
+        db=db,
+        shop_id=shop_id,
+        current_user=current_user,
+        payload=payload,
+    )
+
+
+@router.put(
+    "/{shop_id}/users/{user_id}",
+    response_model=ShopUserUserResponse,
+    summary="샵 유저 연결 수정",
+    description=(
+        "샵-유저 연결(대표원장 여부)을 수정합니다. 대표원장만 가능. "
+        "role 등 권한 필드는 다루지 않습니다(SECURITY-001 소관)."
+    ),
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def update_shop_user(
+    shop_id: int,
+    user_id: int,
+    payload: ShopUserAssociateUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ShopUserUserResponse:
+    return update_shop_user_service(
+        db=db,
+        shop_id=shop_id,
+        user_id=user_id,
+        current_user=current_user,
+        payload=payload,
+    )
+
+
+@router.delete(
+    "/{shop_id}/users/{user_id}",
+    response_model=None,
+    summary="샵 유저 연결 삭제",
+    description=(
+        "샵-유저 연결(멤버십)을 해제합니다. 대표원장만 가능. 연결 테이블 매핑만 "
+        "제거하며 유저 계정은 유지됩니다."
+    ),
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_403_FORBIDDEN: COMMON_ERROR_RESPONSES[status.HTTP_403_FORBIDDEN],
+        status.HTTP_404_NOT_FOUND: COMMON_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND],
+    },
+)
+def delete_shop_user(
+    shop_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    return delete_shop_user_service(
+        db=db,
+        shop_id=shop_id,
+        user_id=user_id,
+        current_user=current_user,
+    )

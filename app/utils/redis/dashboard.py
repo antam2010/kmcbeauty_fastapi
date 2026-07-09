@@ -7,7 +7,7 @@ REDIS_TTL = 1800  # 30분
 
 
 def get_dashboard_cache_key(shop_id: int, field: str, period: str) -> str:
-    """Redis 키 생성 함수"""
+    """Redis 키 생성 함수."""
     return f"{REDIS_PREFIX}:{shop_id}:{field}:{period}"
 
 

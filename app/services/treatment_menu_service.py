@@ -34,13 +34,12 @@ def get_treatment_menus_service(
     current_shop: Shop,
     filters: TreatmentMenuFilter,
 ) -> Page[TreatmentMenu]:
-    """시술 메뉴 목록 조회 서비스"""
-    list = get_treatment_menus_by_user(
+    """시술 메뉴 목록 조회 서비스."""
+    return get_treatment_menus_by_user(
         db=db,
         shop_id=current_shop.id,
         search=filters.search,
     )
-    return list
 
 
 # 시술 메뉴 생성 및 수정 서비스
@@ -63,7 +62,10 @@ def create_treatment_menu_service(
                 raise CustomException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     domain=DOMAIN,
-                    hint="시술 메뉴를 찾을 수 없거나 다른 상점의 메뉴이거나 삭제된 메뉴입니다.",
+                    hint=(
+                        "시술 메뉴를 찾을 수 없거나 다른 상점의 메뉴이거나 "
+                        "삭제된 메뉴입니다."
+                    ),
                 )
 
             menu.name = params.name
@@ -88,19 +90,19 @@ def create_treatment_menu_service(
             domain=DOMAIN,
             hint="이미 존재하는 시술 메뉴입니다.",
             exception=e,
-        )
-    except CustomException as e:
+        ) from e
+    except CustomException:
         db.rollback()
-        raise e
+        raise
 
     except Exception as e:
         db.rollback()
-        logging.exception(f"SQLAlchemyError: {e}")
+        logging.exception("SQLAlchemyError")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
             exception=e,
-        )
+        ) from e
 
     return TreatmentMenuCreateResponse.model_validate(menu)
 
@@ -113,7 +115,7 @@ def delete_treatment_menu_service(
     current_shop: Shop,
     menu_id: int,
 ) -> None:
-    """시술 메뉴 삭제 서비스"""
+    """시술 메뉴 삭제 서비스."""
     try:
         menu = get_menu_by_id(
             db=db,
@@ -133,17 +135,17 @@ def delete_treatment_menu_service(
 
         db.commit()
 
-    except CustomException as e:
+    except CustomException:
         db.rollback()
-        raise e
+        raise
 
     except Exception as e:
         db.rollback()
-        logging.exception(f"Treatment menu 삭제 중 오류: {e}")
+        logging.exception("Treatment menu 삭제 중 오류")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+        ) from e
 
 
 # 시술 메뉴 복구 서비스
@@ -152,7 +154,7 @@ def restore_treatment_menu_service(
     current_shop: Shop,
     menu_id: int,
 ) -> None:
-    """시술 메뉴 복구 서비스"""
+    """시술 메뉴 복구 서비스."""
     try:
         menu = get_menu_by_id(
             db=db,
@@ -172,17 +174,17 @@ def restore_treatment_menu_service(
 
         db.commit()
 
-    except CustomException as e:
+    except CustomException:
         db.rollback()
-        raise e
+        raise
 
     except Exception as e:
         db.rollback()
-        logging.exception(f"Treatment menu 복구 중 오류: {e}")
+        logging.exception("Treatment menu 복구 중 오류")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+        ) from e
 
 
 # 시술 메뉴 상세 조회 서비스
@@ -191,12 +193,11 @@ def get_treatment_menu_detail_service(
     current_shop: Shop,
     db: Session,
 ) -> TreatmentMenuDetailResponse:
-    result = get_treatment_menu_details_by_user(
+    return get_treatment_menu_details_by_user(
         db=db,
         menu_id=menu_id,
         shop_id=current_shop.id,
     )
-    return result
 
 
 # 시술 메뉴 상세 항목 생성 서비스
@@ -220,14 +221,18 @@ def create_treatment_menu_detail_service(
                 raise CustomException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     domain=DOMAIN,
-                    hint="시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴이거나 삭제된 메뉴입니다.",
+                    hint=(
+                        "시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴이거나 "
+                        "삭제된 메뉴입니다."
+                    ),
                 )
 
             menu_detail.name = filters.name
             menu_detail.duration_min = filters.duration_min
             menu_detail.base_price = filters.base_price
         else:
-            # 시술 메뉴 상세 생성
+            # 시술 메뉴 상세 생성 (CRUD 가 add/flush 까지 수행; 커밋 경계는 서비스 소유)
+            # SPEC-FIX-001 REQ-FIX-005: CRUD 내부 db.commit() 을 서비스로 이관.
             menu_detail = create_treatment_menu_detail(
                 db=db,
                 menu_id=menu_id,
@@ -235,22 +240,21 @@ def create_treatment_menu_detail_service(
                 duration_min=filters.duration_min,
                 base_price=filters.base_price,
             )
-            db.add(menu_detail)
 
         db.commit()
         db.refresh(menu_detail)
 
-    except CustomException as e:
+    except CustomException:
         db.rollback()
-        raise e
+        raise
     except Exception as e:
         db.rollback()
-        logging.exception(f"SQLAlchemyError: {e}")
+        logging.exception("SQLAlchemyError")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
             exception=e,
-        )
+        ) from e
     return TreatmentMenuDetailResponse.model_validate(menu_detail)
 
 
@@ -261,7 +265,7 @@ def delete_treatment_menu_detail_service(
     menu_id: int,
     detail_id: int,
 ) -> None:
-    """시술 메뉴 상세 삭제 서비스"""
+    """시술 메뉴 상세 삭제 서비스."""
     try:
         menu_detail = get_menu_detail_by_id(
             db=db,
@@ -274,20 +278,23 @@ def delete_treatment_menu_detail_service(
             raise CustomException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 domain=DOMAIN,
-                hint="삭제할 시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴 이거나 삭제된 메뉴입니다.",
+                hint=(
+                    "삭제할 시술 메뉴 상세를 찾을 수 없거나 다른 상점의 메뉴 이거나 "
+                    "삭제된 메뉴입니다."
+                ),
             )
 
         menu_detail.deleted_at = datetime.now(UTC)
         db.commit()
 
-    except CustomException as e:
+    except CustomException:
         db.rollback()
-        raise e
+        raise
 
     except Exception as e:
         db.rollback()
-        logging.exception(f"Treatment menu 상세 삭제 중 오류: {e}")
+        logging.exception("Treatment menu 상세 삭제 중 오류")
         raise CustomException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             domain=DOMAIN,
-        )
+        ) from e
