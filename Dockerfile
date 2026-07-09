@@ -4,7 +4,7 @@
 # Production Dockerfile (Docker Swarm)
 # - Single-stage, production-oriented image for `docker stack deploy`.
 # - App code is COPIED into the image (Swarm deploys images, not bind mounts).
-# - Runs as a non-root user and listens on internal port 3100.
+# - Runs as a non-root user and listens on internal port 3200.
 # ==============================================================================
 FROM python:3.13-slim
 
@@ -46,11 +46,11 @@ RUN groupadd --system appgroup \
 USER appuser
 
 # 내부 서비스 포트(호스트로 노출하지 않음; 외부 NGINX 가 오버레이 네트워크에서 접근)
-EXPOSE 3100
+EXPOSE 3200
 
 # 헬스체크: 앱의 /health 엔드포인트(app/main.py) 확인
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost:3100/health || exit 1
+    CMD curl -fsS http://localhost:3200/health || exit 1
 
-# 컨테이너 실행 커맨드(uvicorn, 내부 포트 3100)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3100"]
+# 컨테이너 실행 커맨드(uvicorn, 내부 포트 3200)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3200"]

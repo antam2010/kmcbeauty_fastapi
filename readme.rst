@@ -22,7 +22,7 @@ KMCBeauty FastAPI 프로젝트 실행 가이드
 2. 개발 서버 / 배포
 ===========================
 
-로컬 개발 서버 실행 (uvicorn, localhost:3100)::
+로컬 개발 서버 실행 (uvicorn, localhost:3200)::
 
     ./scripts/start_local.sh
 
@@ -61,10 +61,10 @@ DB에 마이그레이션 롤백::
 
 브라우저에서 아래 주소로 접속:
 
-- Swagger UI: http://localhost:3100/docs
-- ReDoc: http://localhost:3100/redoc
+- Swagger UI: http://localhost:3200/docs
+- ReDoc: http://localhost:3200/redoc
 
-(로컬 uvicorn 기준. Swarm 배포 시 호스트 포트 미공개 — 외부 NGINX가 kmcbeauty_api:3100 라우팅)
+(로컬 uvicorn 기준. Swarm 배포 시 호스트 포트 미공개 — 외부 NGINX가 kmcbeauty_api:3200 라우팅)
 
 
 5. 의존성 목록 저장 (선택)

@@ -27,4 +27,4 @@ docker network create --driver overlay --attachable shared_network_prod 2>/dev/n
 docker build -t "$IMAGE_TAG" .
 docker stack deploy -c docker-stack.yml kmcbeauty
 
-echo "✅ 배포 완료. 호스트 포트 미공개 — 외부 NGINX가 kmcbeauty_api:3100 으로 라우팅."
+echo "✅ 배포 완료. 호스트 포트 미공개 — 외부 NGINX가 kmcbeauty_api:3200 으로 라우팅."

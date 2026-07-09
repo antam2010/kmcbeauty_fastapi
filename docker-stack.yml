@@ -29,17 +29,17 @@
 #
 # 네트워킹:
 #   - 어떤 서비스도 호스트 포트를 공개하지 않는다. 외부 NGINX 가 동일한
-#     `shared_network_prod` 오버레이에 붙어 서비스 DNS(kmcbeauty_api:3100)로 라우팅한다.
+#     `shared_network_prod` 오버레이에 붙어 서비스 DNS(kmcbeauty_api:3200)로 라우팅한다.
 #   - Redis/Celery 는 오버레이 내부 전용이다.
 # ==============================================================================
-version: "3.8"
+# (compose spec 기준 `version:` 필드는 obsolete — 최신 docker stack deploy 도 불필요)
 
 services:
   # --- FastAPI application ---------------------------------------------------
-  # Reachable by NGINX at:  kmcbeauty_api:3100  (over shared_network_prod)
+  # Reachable by NGINX at:  kmcbeauty_api:3200  (over shared_network_prod)
   kmcbeauty_api:
     image: ${IMAGE_TAG:-kmcbeauty-api:local}
-    command: uvicorn app.main:app --host 0.0.0.0 --port 3100
+    command: uvicorn app.main:app --host 0.0.0.0 --port 3200
     env_file:
       # 배포 전용 env. 로컬 `.env` 를 배포에 사용하지 않는다(REQ-INFRA-001).
       - .env.prod
@@ -62,13 +62,13 @@ services:
     # 서비스 레벨 헬스체크(REQ-INFRA-004): 롤링 업데이트가 각 새 레플리카의
     # /health 통과를 확인한 뒤 다음 레플리카로 진행하도록 게이팅한다.
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3100/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:3200/health"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 20s
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: any
         delay: 5s
@@ -142,8 +142,12 @@ services:
         target: DATABASE_URL
     networks:
       - shared_network_prod
+    # 이미지 내장 HEALTHCHECK(curl /health)는 웹서버 전용 — celery 프로세스가 상속하면
+    # 헬스 실패로 태스크가 kill-loop 되므로 명시적으로 비활성화한다.
+    healthcheck:
+      disable: true
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: any
         delay: 5s
@@ -184,6 +188,9 @@ services:
         target: DATABASE_URL
     networks:
       - shared_network_prod
+    # 이미지 내장 HEALTHCHECK 상속 방지(웹서버 아님) — worker 와 동일한 이유.
+    healthcheck:
+      disable: true
     deploy:
       replicas: 1
       # 스케줄러는 단일 인스턴스 — 중복 기동 방지를 위해 stop-first,
